@@ -908,7 +908,7 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
                 FROM opitemrece op
                 WHERE op.vn=$1
                 GROUP BY op.vn,op.hn,op.vstdate,op.vsttime,op.staff,op.pttype
-            `, [vn, newFinanceNumber, vercode || '']);
+            `, [vn, newTrListId, vercode || '']);
             console.log(`[create-rcpt-debt] Step 7 done`);
 
             // Get the newly inserted debt_id (to avoid joining old cancelled records)
@@ -933,15 +933,15 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
             console.log(`[create-rcpt-debt] Step 8 done`);
 
             // Step 9: update opitemrece.finance_number
-            // ต้องใช้ newFinanceNumber (finance_number จาก opd_opi_fn_cr_list / rcpt_debt)
-            // ไม่ใช่ opd_opi_fn_tr_list_id — HOSxP ยกเลิกโดย WHERE finance_number = rcpt_debt.finance_number
+            // ใช้ newTrListId (opd_opi_fn_tr_list_id) — ตรงกับ rcpt_debt.finance_number ที่ใส่ใน Step 7
+            // HOSxP ยกเลิกโดย WHERE finance_number = rcpt_debt.finance_number ทั้งสองต้องเป็นค่าเดียวกัน
             await client.query(`
                 UPDATE opitemrece
                 SET finance_number = $2
                 WHERE vn = $1
                 AND (finance_number IS NULL OR finance_number = '')
-            `, [vn, newFinanceNumber]);
-            console.log(`[create-rcpt-debt] Step 9 done — finance_number=${newFinanceNumber}`);
+            `, [vn, newTrListId]);
+            console.log(`[create-rcpt-debt] Step 9 done — finance_number(tr_list_id)=${newTrListId}`);
 
             await client.query('COMMIT');
 
