@@ -1,9 +1,0 @@
-http://localhost:5000/basic_fdh.html  เฉพาะเมนู คำนำหน้านาม ให้ใช้คิรี่นี้ในการแสดงข้อมูล
-
-select p.name,v.provis_pname_long_name,p.sex,p.provis_code,
- (case when p.provis_code=v.provis_pname_code and p.name=v.provis_pname_short_name then 'Y' else 'N' end)as pname_check
- from pname p 
- left outer join provis_pname v on p.provis_code=v.provis_pname_code 
- order by p.provis_code;
-
-ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

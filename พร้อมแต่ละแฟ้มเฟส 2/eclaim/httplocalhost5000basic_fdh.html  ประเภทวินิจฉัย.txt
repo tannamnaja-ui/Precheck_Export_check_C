@@ -1,7 +1,0 @@
-http://localhost:5000/basic_fdh.html  เฉพาะเมนู ประเภทการวินิจฉัย diagtype ให้ใช้คิรี่นี้ในการแสดงข้อมูล
-select d.diagtype,d.nhso_code,d.name,
-(case when d.nhso_code=p.code then 'Y' else 'N' end)as diagtype_check 
-from diagtype d 
-left outer join provis_diagtype p on p.code=d.nhso_code
-order by d.nhso_code;    
-ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

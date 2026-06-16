@@ -1,8 +1,0 @@
-http://localhost:5000/basic_fdh.html  เฉพาะเมนู ศาสนา religion ให้ใช้คิรี่นี้ในการแสดงข้อมูล
-
-select r.religion,r.name,
-(case when r.religion=p.code and r.name=p.name then 'Y' else 'N' end)as religion_check 
-from religion r 
-left outer join provis_occupa p on p.code=r.nhso_code
-order by r.nhso_code;
-ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด
