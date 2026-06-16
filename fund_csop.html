@@ -2199,7 +2199,7 @@
         async function confirmIssueInvoice() {
             const vercode = document.getElementById('inv-vercode').value.trim();
             const claimamt = parseFloat(document.getElementById('inv-claimamt').value) || 0;
-            if (!vercode) { alert('⚠️ กรุณากรอก Vercode ก่อนยืนยัน'); return; }
+            if (!vercode) { alert('⚠️ กรุณากรอก Approve Code ก่อนยืนยัน'); return; }
             if (claimamt <= 0) { alert('⚠️ กรุณากรอกยอดเรียกเก็บ'); return; }
 
             const config = getDatabaseConfig();
@@ -2436,10 +2436,10 @@
                     placeholder="0.00">
             </div>
             <div>
-                <label style="display:block; font-size:13px; font-weight:600; color:#37474f; margin-bottom:5px;">Vercode <span style="color:#f44336;">*</span></label>
+                <label style="display:block; font-size:13px; font-weight:600; color:#37474f; margin-bottom:5px;">Approve Code <span style="color:#f44336;">*</span></label>
                 <input id="inv-vercode" type="text"
                     style="width:100%; padding:9px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; box-sizing:border-box;"
-                    placeholder="กรอก Vercode">
+                    placeholder="กรอก Approve Code">
             </div>
         </div>
 
