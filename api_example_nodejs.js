@@ -912,10 +912,10 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
             `, [vn, newCrListId]);
             console.log(`[create-rcpt-debt] Step 6 done`);
 
-            // Step 7: rcpt_debt (+ vercode)
+            // Step 7: rcpt_debt (+ vercode) — debt_time = NOW()::time (เวลาปัจจุบัน)
             await client.query(`
                 INSERT INTO rcpt_debt(debt_id, vn, hn, debt_date, debt_time, staff, amount, pt_type, computer, finance_number, pttype, discount_amount, total_amount, debt_date_time, debt_doc_id, department, special_discount_amount, ofc_paid_amount, sss_approval_code)
-                SELECT get_serialnumber('rcpt_debt_id'),op.vn,op.hn,op.vstdate,op.vsttime,op.staff,
+                SELECT get_serialnumber('rcpt_debt_id'),op.vn,op.hn,op.vstdate,NOW()::time,op.staff,
                     SUM(CASE WHEN op.paidst='02' THEN op.sum_price ELSE 0 END),'OPD','App precheck export',$2,op.pttype,SUM(op.discount),
                     SUM(CASE WHEN op.paidst='02' THEN op.sum_price ELSE 0 END),(CONCAT(op.vstdate::text,' ',op.vsttime::text))::timestamp,
                     CONCAT(op.pttype,'/',ROW_NUMBER() OVER (ORDER BY op.pttype)),
