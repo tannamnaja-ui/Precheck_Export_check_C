@@ -825,11 +825,16 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
 
             // Step 2: opd_opi_hos_guid_transfer — one row per opitemrece item using real hos_guid
             // HOSxP cancel: SELECT opi_guid WHERE opd_opi_fn_tr_list_id=X → UPDATE opitemrece SET finance_number=NULL WHERE hos_guid=opi_guid
+            // Delete stale entries first so INSERT doesn't conflict (VN may have been invoiced before)
+            await client.query(`
+                DELETE FROM opd_opi_hos_guid_transfer
+                WHERE hos_guid IN (SELECT hos_guid FROM opitemrece WHERE vn = $1)
+            `, [vn]);
             await client.query(`
                 INSERT INTO opd_opi_hos_guid_transfer(opi_guid, hos_guid, vn, opd_opi_fn_tr_list_id)
                 SELECT oi.hos_guid, oi.hos_guid, oi.vn, $2
                 FROM opitemrece oi
-                WHERE oi.vn = $1 AND (oi.finance_number IS NULL OR oi.finance_number = '')
+                WHERE oi.vn = $1
             `, [vn, newTrListId]);
             console.log(`[create-rcpt-debt] Step 2 done`);
 
@@ -944,11 +949,11 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
 
             // Step 9: update opitemrece.finance_number = opd_opi_fn_cr_list.finance_number
             // HOSxP cancel chain clears opitemrece WHERE finance_number = cr_list.finance_number → must match
+            // Update ALL rows (not just NULL) so VNs with stale finance_number are also covered
             await client.query(`
                 UPDATE opitemrece
                 SET finance_number = $2
                 WHERE vn = $1
-                AND (finance_number IS NULL OR finance_number = '')
             `, [vn, newFinanceNumber]);
             console.log(`[create-rcpt-debt] Step 9 done — finance_number(cr_list.finance_number)=${newFinanceNumber}`);
 
