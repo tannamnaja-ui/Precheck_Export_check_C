@@ -933,16 +933,15 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
             console.log(`[create-rcpt-debt] Step 8 done`);
 
             // Step 9: update opitemrece.finance_number
+            // ต้องใช้ newFinanceNumber (finance_number จาก opd_opi_fn_cr_list / rcpt_debt)
+            // ไม่ใช่ opd_opi_fn_tr_list_id — HOSxP ยกเลิกโดย WHERE finance_number = rcpt_debt.finance_number
             await client.query(`
-                UPDATE opitemrece op SET finance_number=o.max_id
-                FROM (
-                    SELECT vn, MAX(opd_opi_fn_tr_list_id) AS max_id
-                    FROM opd_opi_fn_tr_list WHERE vn=$1 GROUP BY vn
-                ) o
-                WHERE o.vn=op.vn
-                AND (op.finance_number IS NULL OR op.finance_number='')
-            `, [vn]);
-            console.log(`[create-rcpt-debt] Step 9 done`);
+                UPDATE opitemrece
+                SET finance_number = $2
+                WHERE vn = $1
+                AND (finance_number IS NULL OR finance_number = '')
+            `, [vn, newFinanceNumber]);
+            console.log(`[create-rcpt-debt] Step 9 done — finance_number=${newFinanceNumber}`);
 
             await client.query('COMMIT');
 
