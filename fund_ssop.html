@@ -947,7 +947,7 @@
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">${actualIndex}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; white-space: nowrap;">
                             ${isEditing
-                                ? `<button onclick="saveBilltranVercode('${row.debt_id}')" style="padding:4px 10px;background:linear-gradient(135deg,#2e7d32,#43a047);color:white;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;">💾</button><button onclick="billtranEditVn=null;renderBilltranTable()" style="padding:4px 8px;background:#9e9e9e;color:white;border:none;border-radius:5px;font-size:12px;cursor:pointer;">✕</button>`
+                                ? `<button onclick="saveBilltranHmain('${row.debt_id}','${row.vn}')" style="padding:4px 10px;background:linear-gradient(135deg,#2e7d32,#43a047);color:white;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;">💾</button><button onclick="billtranEditVn=null;renderBilltranTable()" style="padding:4px 8px;background:#9e9e9e;color:white;border:none;border-radius:5px;font-size:12px;cursor:pointer;">✕</button>`
                                 : row.check_invno === 'N'
                                     ? `<button onclick="issueInvoice('${row.vn}')" style="padding:4px 10px;background:linear-gradient(135deg,#e65100,#ff6d00);color:white;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📄 ออกใบแจ้งหนี้</button>`
                                     : `<button onclick="billtranEditVn='${row.debt_id}';renderBilltranTable()" style="padding:4px 10px;background:#1565c0;color:white;border:none;border-radius:5px;font-size:12px;cursor:pointer;">แก้ไข ✏️</button>`
@@ -968,11 +968,8 @@
                         <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.memberno || '-'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.amount ? parseFloat(row.amount).toFixed(2) : '0.00'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.paid ? parseFloat(row.paid).toFixed(2) : '0.00'}</td>
-                        <td style="padding: 6px 8px; border: 1px solid #e3f2fd; background: ${vercodeBg}; white-space: nowrap;">
-                            ${isEditing
-                                ? `<input id="bt-edit-vercode-${row.debt_id}" value="${row.vercode || ''}" style="padding:4px 8px;border:2px solid #f9a825;border-radius:5px;font-size:13px;width:140px;background:${vercodeBg === bgColor ? 'white' : '#fff3f3'};">`
-                                : `<span style="${getCellColor(row.check_vercode)}">${row.vercode || '-'}</span>`
-                            }
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${vercodeBg}; white-space: nowrap;">
+                            <span style="${getCellColor(row.check_vercode)}">${row.vercode || '-'}</span>
                         </td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
                             <span style="color: ${row.check_vercode === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_vercode || '-'}</span>
@@ -980,7 +977,12 @@
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">${row.tflag || '-'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.pid || '-'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.name || '-'}</td>
-                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_hmain)}; ${getCellColor(row.check_hmain)} white-space: nowrap;">${row.hmain || '-'}</td>
+                        <td style="padding: 6px 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_hmain)}; ${getCellColor(row.check_hmain)} white-space: nowrap;">
+                            ${isEditing
+                                ? `<input id="bt-edit-hmain-${row.debt_id}" value="${row.hmain || ''}" style="padding:4px 8px;border:2px solid #1565c0;border-radius:5px;font-size:13px;width:120px;background:white;color:#1a237e;">`
+                                : `<span style="${getCellColor(row.check_hmain)}">${row.hmain || '-'}</span>`
+                            }
+                        </td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
                             <span style="color: ${row.check_hmain === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_hmain || '-'}</span>
                         </td>
@@ -2254,8 +2256,8 @@
         }
 
         // ==================== Billtran inline edit vercode ====================
-        async function saveBilltranVercode(debtId) {
-            const input = document.getElementById(`bt-edit-vercode-${debtId}`);
+        async function saveBilltranHmain(debtId, vn) {
+            const input = document.getElementById(`bt-edit-hmain-${debtId}`);
             if (!input) return;
             const newVal = input.value.trim();
             const idx = allBilltranData.findIndex(r => String(r.debt_id) === String(debtId));
@@ -2263,14 +2265,14 @@
             const config = getDatabaseConfig();
             if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
             try {
-                const response = await fetch(`${API_BASE}/api/update-billtran-vercode`, {
+                const response = await fetch(`${API_BASE}/api/update-ssop-billtran-hmain`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         host: config.host, port: config.port,
                         database: config.database, user: config.user,
                         password: config.password, type: config.type,
-                        debt_id: debtId, vercode: newVal
+                        vn: vn, hmain: newVal
                     })
                 });
                 const result = await response.json();
@@ -2278,8 +2280,8 @@
                     alert('❌ บันทึกไม่สำเร็จ: ' + (result.error || 'unknown error'));
                     return;
                 }
-                allBilltranData[idx].vercode = newVal;
-                allBilltranData[idx].check_vercode = (newVal !== '') ? 'Y' : 'N';
+                allBilltranData[idx].hmain = newVal;
+                allBilltranData[idx].check_hmain = (newVal !== '') ? 'Y' : 'N';
             } catch (e) {
                 alert('❌ เกิดข้อผิดพลาด: ' + e.message);
                 return;

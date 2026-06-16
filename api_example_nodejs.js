@@ -724,6 +724,36 @@ app.post('/api/get-ssop-billtran', async (req, res) => {
     }
 });
 
+// 5b-2. อัพเดท visit_pttype.hospmain สำหรับ SSOP Billtran
+app.post('/api/update-ssop-billtran-hmain', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, vn, hmain } = req.body;
+        if (!vn) return res.json({ success: false, error: 'vn is required' });
+
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), user, password, database, connectionTimeoutMillis: 10000 });
+            await client.connect();
+            await client.query(
+                `UPDATE visit_pttype SET hospmain = $1 WHERE vn = $2`,
+                [hmain || null, vn]
+            );
+            await client.end();
+        } else {
+            const conn = await mysql.createConnection({ host, port: parseInt(port), user, password, database, connectTimeout: 10000 });
+            await conn.execute(
+                `UPDATE visit_pttype SET hospmain = ? WHERE vn = ?`,
+                [hmain || null, vn]
+            );
+            await conn.end();
+        }
+        console.log(`[update-ssop-billtran-hmain] vn=${vn} hospmain=${hmain}`);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('update-ssop-billtran-hmain error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // 5c. ดึงรายการค่าใช้จ่าย opitemrece สำหรับ VN
 app.post('/api/get-vn-expenses', async (req, res) => {
     try {
