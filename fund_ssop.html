@@ -2147,7 +2147,7 @@
             document.getElementById('inv-memberno').textContent = row.memberno || '-';
             document.getElementById('inv-billno').textContent = row.billno || '-';
             document.getElementById('inv-paid').textContent = row.paid ? parseFloat(row.paid).toFixed(2) : '0.00';
-            document.getElementById('inv-vercode').value = '';
+            document.getElementById('inv-hmain').value = row.hmain || '';
             document.getElementById('inv-claimamt').value = '';
             document.getElementById('inv-items-body').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#78909c;">กำลังโหลดรายการ...</td></tr>';
             document.getElementById('inv-items-total').textContent = '';
@@ -2201,9 +2201,9 @@
         }
 
         async function confirmIssueInvoice() {
-            const vercode = document.getElementById('inv-vercode').value.trim();
+            const hmain = document.getElementById('inv-hmain').value.trim();
             const claimamt = parseFloat(document.getElementById('inv-claimamt').value) || 0;
-            if (!vercode) { alert('⚠️ กรุณากรอก Vercode ก่อนยืนยัน'); return; }
+            if (!hmain) { alert('⚠️ กรุณากรอก Hmain ก่อนยืนยัน'); return; }
             if (claimamt <= 0) { alert('⚠️ กรุณากรอกยอดเรียกเก็บ'); return; }
 
             const config = getDatabaseConfig();
@@ -2214,6 +2214,7 @@
             btn.textContent = 'กำลังบันทึก...';
 
             try {
+                // 1. สร้างใบแจ้งหนี้
                 const resp = await fetch(`${API_BASE}/api/create-rcpt-debt`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -2222,7 +2223,6 @@
                         database: config.database, user: config.user,
                         password: config.password, type: config.type,
                         vn: currentInvoiceVn,
-                        vercode: vercode,
                         amount: claimamt,
                         total_amount: claimamt
                     })
@@ -2234,14 +2234,27 @@
                     btn.textContent = 'ยืนยันออกใบแจ้งหนี้';
                     return;
                 }
-                // Update row in memory
+
+                // 2. อัพเดท visit_pttype.hospmain
+                await fetch(`${API_BASE}/api/update-ssop-billtran-hmain`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        host: config.host, port: config.port,
+                        database: config.database, user: config.user,
+                        password: config.password, type: config.type,
+                        vn: currentInvoiceVn, hmain: hmain
+                    })
+                });
+
+                // อัพเดทข้อมูลใน memory
                 const idx = allBilltranData.findIndex(r => String(r.vn) === String(currentInvoiceVn));
                 if (idx >= 0) {
                     allBilltranData[idx].debt_id = result.debt_id;
                     allBilltranData[idx].invno = result.debt_id;
                     allBilltranData[idx].check_invno = 'Y';
-                    allBilltranData[idx].vercode = vercode;
-                    allBilltranData[idx].check_vercode = 'Y';
+                    allBilltranData[idx].hmain = hmain;
+                    allBilltranData[idx].check_hmain = 'Y';
                     allBilltranData[idx].claimamt = claimamt;
                     allBilltranData[idx].total_amount = claimamt;
                 }
@@ -2438,10 +2451,10 @@
                     placeholder="0.00">
             </div>
             <div>
-                <label style="display:block; font-size:13px; font-weight:600; color:#37474f; margin-bottom:5px;">Vercode <span style="color:#f44336;">*</span></label>
-                <input id="inv-vercode" type="text"
+                <label style="display:block; font-size:13px; font-weight:600; color:#37474f; margin-bottom:5px;">Hmain <span style="color:#f44336;">*</span></label>
+                <input id="inv-hmain" type="text"
                     style="width:100%; padding:9px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; box-sizing:border-box;"
-                    placeholder="กรอก Vercode">
+                    placeholder="กรอกรหัส HMAIN">
             </div>
         </div>
 
