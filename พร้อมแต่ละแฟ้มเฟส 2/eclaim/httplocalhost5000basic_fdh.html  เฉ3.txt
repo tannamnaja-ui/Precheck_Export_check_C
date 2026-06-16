@@ -1,0 +1,9 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู สถานะภาพ marrystatus ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+
+select m.code,m.name,m.nhso_marriage_code,
+(case when m.nhso_marriage_code=p.code and m.name=p.name then 'Y' else 'N' end)as marry_check 
+from marrystatus m 
+left outer join provis_mstatus p on p.code=m.nhso_marriage_code
+order by m.code;
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

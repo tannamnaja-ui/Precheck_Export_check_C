@@ -1,0 +1,72 @@
+http://localhost:8080/fund_ssop.html 
+เมื่อกดเมนู BillItems
+รายการในบิล
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT ov.hn,
+    concat(pt.pname, pt.fname,' ',pt.lname) AS name_patient,
+  rd.debt_id,
+  CASE
+    WHEN rd.debt_id IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END AS check_debt_id, 
+  ov.vstdate,
+  op.income,
+  case
+    when op.income is not null
+    then 'Y' 
+    else 'N'
+  end as check_income,
+  op.icode,
+  CASE
+    WHEN op.income = '03'
+    THEN dr.sks_drug_code
+    ELSE n.billcode
+  END AS stdcode,
+  CASE
+    WHEN dr.sks_drug_code is not null or  n.billcode is not null
+    THEN 'Y'
+    ELSE 'N'
+  END AS check_stdcode,
+  CASE
+    WHEN op.income = '03'
+    THEN dr.name
+    ELSE n.name
+  END AS ชื่อค่าใช้จ่าย, 
+  op.qty, 
+  (case when op.qty is not null then 'Y' else 'N' end)as check_qty,
+  op.unitprice,
+  (case when op.unitprice is not null then 'Y' else 'N' end)as check_unitprice,  
+  op.sum_price, 
+  (case when op.sum_price is not null then 'Y' else 'N' end)as check_sum_price,
+  n.sks_coverage_price,
+  (case when n.sks_coverage_price is not null then 'Y' else 'N' end)as check_sks_coverage_price,
+  --SUM(CASE WHEN op.paidst IN ('02') THEN op.qty * op.unitprice ELSE 0 END) AS claimamt, 
+  (op.qty * op.unitprice) AS claimamt,
+  ov.vn AS Service_Ref_ID ,
+  n.enable_sks_opd  ,
+  --(case when n.enable_sks_opd is not null then 'Y' else 'N' end)as check_enable_sks_opd,
+   CasE WHEN n.sks_coverage_price>0 AND (n.enable_sks_opd='N' OR n.enable_sks_opd='' OR n.enable_sks_opd IS NULL) THEN 'N' 
+  WHEN n.sks_coverage_price<1 AND (n.enable_sks_opd='N' OR n.enable_sks_opd='' OR n.enable_sks_opd IS NULL) THEN 'N'
+  WHEN n.sks_coverage_price<1 AND (n.enable_sks_opd='Y' OR n.enable_sks_opd<>'' OR n.enable_sks_opd IS NOT NULL) THEN 'N'
+  ELSE 'Y' END AS check_claimamt
+FROM ovst ov
+  LEFT JOIN opitemrece op ON op.vn = ov.vn
+  LEFT JOIN rcpt_debt rd ON rd.vn = ov.vn
+  LEFT JOIN nondrugitems n ON n.icode = op.icode
+  LEFT JOIN rcpt_debt_detail rdd ON rdd.debt_id = rd.debt_id
+  LEFT JOIN drugitems dr ON dr.icode = op.icode
+  LEFT JOIN nondrugitems_sks_bc ns ON ns.icode = n.icode
+  LEFT JOIN patient pt ON pt.hn = ov.hn 
+WHERE ov.vstdate between '2025-12-01'  and '2025-12-15'
+and ov.pttype in(select pttype from pttype where isuse='Y' and hipdata_code='SSS' )
+group by ov.hn,pt.pname,pt.fname,pt.lname,rd.debt_id, ov.vstdate, op.income, op.icode,
+ dr.sks_drug_code, n.billcode, dr.name, n.name, op.qty, op.unitprice, op.sum_price,
+  op.paidst, n.sks_coverage_price, rdd.total_amount, ov.vn ,n.enable_sks_opd
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

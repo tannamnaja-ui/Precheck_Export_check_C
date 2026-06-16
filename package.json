@@ -1,0 +1,24 @@
+{
+  "name": "precheck-export",
+  "version": "1.0.0",
+  "main": "api_example_nodejs.js",
+  "scripts": {
+    "start": "node api_example_nodejs.js",
+    "build": "pkg api_example_nodejs.js --target node18-win-x64 --output dist/PreCheckExport.exe --compress GZip"
+  },
+  "pkg": {
+    "targets": [
+      "node18-win-x64"
+    ],
+    "assets": []
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mysql2": "^3.20.0",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  }
+}

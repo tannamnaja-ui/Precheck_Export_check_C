@@ -1,0 +1,71 @@
+http://localhost:8080/fund_ssop.html 
+เมื่อกดเมนู DispensedItem
+รายการยาที่จ่าย
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT od.opi_dispense_id,
+(case when od.opi_dispense_id is not null then 'Y' else 'N' end)as check_opi_dispense_id,
+  ov.vn,
+  op.icode,
+  (case when op.icode is not null then 'Y' else 'N' end)as check_icode,
+  op.qty, 
+  (case when op.qty is not null then 'Y' else 'N' end)as check_qty ,
+  op.drugusage, 
+  (case when (op.drugusage is  null or op.drugusage='') then 'N' else 'Y' end)as check_drugusaged,
+  op.vstdate,
+  op.sum_price,
+  (case when op.sum_price is not null then 'Y' else 'N' end)as check_sum_price,
+  no.sks_product_category_id,  
+  di.icode AS icode1,
+  (case when di.icode is not null then 'Y' else 'N' end)as check_icode,
+  di.sks_drug_code, 
+  (case when   di.sks_drug_code is not null then 'Y' else 'N' end)as check_sks_drug_code,
+  di.units, 
+  (case when di.units is not null then 'Y' else 'N' end)as check_units,
+  ds.shortlist,
+  (case when  ds.shortlist is not null then 'Y' else 'N' end)as check_shortlist,
+  ds.drugusage AS drugusage1, 
+  (case when ds.drugusage is not null then 'Y' else 'N' end)as check_drugusage,
+  op.unitprice AS unitprice1,
+  (case when op.unitprice is not null then 'Y' else 'N' end)as check_unitprice,
+  di.sks_reimb_price,
+  (case when di.sks_reimb_price is not null then 'Y' else 'N' end)as check_sks_reimb_price,
+  sum(op.qty*di.sks_reimb_price) AS reimbamt ,
+  'prdSeCode' AS  prdSeCode   ,
+  'claimcout' AS  claimcout    ,
+  'claimcat'  AS   claimcat,
+  'multiDisp' AS multiDisp,
+  'supplyfor'  AS supplyfor
+FROM ovst ov
+  LEFT JOIN opitemrece op ON op.vn = ov.vn
+  LEFT JOIN opi_dispense od ON od.icode = op.icode
+  LEFT JOIN nondrugitems no ON no.icode = op.icode
+  LEFT JOIN drugitems di ON di.icode = op.icode
+  LEFT JOIN drugusage ds ON ds.drugusage = op.drugusage
+where ov.vstdate between '2025-12-01'  and '2025-12-15'
+and ov.pttype in(select pttype from pttype where isuse='Y' and hipdata_code='SSS' )  
+GROUP BY ov.vn,
+od.opi_dispense_id,
+  op.icode,
+  op.qty,
+  op.drugusage,
+  op.vstdate,
+  op.sum_price,
+  no.sks_product_category_id,
+  di.icode,
+  di.sks_drug_code,
+  od.dose,
+  od.unit_name,
+  od.frequency_code,
+  od.usage_unit_code,
+  di.units,
+  ds.shortlist,
+  ds.drugusage,
+  op.unitprice,
+  di.sks_reimb_price
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

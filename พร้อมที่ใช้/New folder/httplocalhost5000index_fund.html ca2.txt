@@ -1,0 +1,4 @@
+http://localhost:5000/index_fund.html card ข้าราชการผ๔ป่วยใน (cipn) 
+เมื่อคลิกเข้าไป ให้สร้างหน้าใหม่ขึ้นมา 1 หน้า 
+โดยคัดลอกทั้งหมดของหน้า http://localhost:5000/basic_csop.html ให้เหมือนกันทุกอย่าง
+ให้ใช้ชื่อว่า http://localhost:5000/basic_cipn.html

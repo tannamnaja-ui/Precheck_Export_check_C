@@ -1,0 +1,3 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู สถานภาพจำหน่าย dchstts ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select dchstts,name,(case when nhso_dchstts<>'' then 'Y' else 'N' end)as dchstts_check from dchstts order by dchstts;
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

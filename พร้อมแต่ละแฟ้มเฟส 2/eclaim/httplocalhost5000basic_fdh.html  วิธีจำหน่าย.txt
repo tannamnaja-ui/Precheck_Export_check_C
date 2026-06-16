@@ -1,0 +1,3 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู วิธีจำหน่าย dchtype ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select dchtype ,name,(case when nhso_dchtype<>'' then 'Y' else 'N' end)as dchtype_check from dchtype order by dchtype;
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

@@ -1,0 +1,6 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู สิทธิการรักษา provis_instype ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select nhso_code,name,'เพิ่มข้อมูลสิทธิในตาราง provis_instype' as note
+from pttype 
+where nhso_code not in(select code from provis_instype)
+order by nhso_code                                        
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

@@ -1,0 +1,1283 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตรวจสอบป้องกันการติด C - กองทุนทดแทน (FDH)</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .full-width-container {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+            padding: 20px;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            min-height: calc(100vh - 140px);
+        }
+
+        /* Left Sidebar - 16% */
+        .left-sidebar {
+            width: 16%;
+            min-width: 160px;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+            overflow-y: auto;
+        }
+
+        .sidebar-title {
+            color: #1565c0;
+            font-size: 23px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        .file-menu-item {
+            padding: 14px 15px;
+            margin-bottom: 8px;
+            background: #f5f9ff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .file-menu-item:hover {
+            background: #e3f2fd;
+            border-left-color: #42a5f5;
+            transform: translateX(5px);
+        }
+
+        .file-menu-item.active {
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            border-left-color: #1976d2;
+        }
+
+        .file-menu-item-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .file-menu-item-code {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* Right Content - 84% */
+        .right-content {
+            width: 84%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 25px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+        }
+
+        .top-bar h1 {
+            color: #1565c0;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .btn-home {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 21px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-home:hover {
+            background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+            margin-bottom: 20px;
+        }
+
+        .filter-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #546e7a;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .filter-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e3f2fd;
+            border-radius: 8px;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .filter-group input:focus {
+            outline: none;
+            border-color: #42a5f5;
+            box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
+        }
+
+        .btn-search {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-search:hover {
+            background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+            transform: translateY(-2px);
+        }
+
+        /* Dashboard Statistics */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(66, 165, 245, 0.25);
+        }
+
+        .stat-card.total {
+            border-left: 4px solid #42a5f5;
+        }
+
+        .stat-card.correct {
+            border-left: 4px solid #4caf50;
+        }
+
+        .stat-card.needfix {
+            border-left: 4px solid #ff9800;
+        }
+
+        .stat-card.pending {
+            border-left: 4px solid #9e9e9e;
+        }
+
+        .stat-icon {
+            font-size: 47px;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 18px;
+            color: #546e7a;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: #1565c0;
+        }
+
+        .stat-value.green {
+            color: #4caf50;
+        }
+
+        .stat-value.orange {
+            color: #ff9800;
+        }
+
+        .stat-value.gray {
+            color: #9e9e9e;
+        }
+
+        /* Content Area */
+        .content-area {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #546e7a;
+        }
+
+        .welcome-message h2 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="full-width-container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h1>🏛️ ตรวจสอบป้องกันการติด C - กองทุนทดแทน (FDH)</h1>
+            <button class="btn-home" onclick="window.location.href='check_c.html'">← กลับหน้าตรวจสอบป้องกันการติด C</button>
+        </div>
+
+        <!-- Main Layout: Sidebar + Content -->
+        <div class="main-layout">
+            <!-- Left Sidebar (20%) -->
+            <div class="left-sidebar">
+                <div class="sidebar-title">📋 C ที่ตรวจสอบ</div>
+
+                <!-- ช่องค้นหา -->
+                <div style="margin-bottom:12px;">
+                    <input type="text" id="menu-search" placeholder="🔍 ค้นหาเมนู..."
+                        oninput="filterMenuItems()"
+                        style="width:100%; padding:10px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:17px; outline:none; transition:all 0.2s;"
+                        onfocus="this.style.borderColor='#42a5f5'" onblur="this.style.borderColor='#e3f2fd'">
+                </div>
+
+                <div id="menu-list">
+                    <div class="file-menu-item active" data-name="ตรวจสอบทั้งหมด">
+                        <div class="file-menu-item-title">ตรวจสอบทั้งหมด</div>
+                        <div class="file-menu-item-code">All Checks</div>
+                    </div>
+                    <div class="file-menu-item" data-name="C566">
+                        <div class="file-menu-item-title">C566</div>
+                        <div class="file-menu-item-code">ตรวจสอบ C566</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content (80%) -->
+            <div class="right-content">
+                <!-- Filter Panel -->
+        <div class="filter-panel">
+            <div class="filter-content">
+                <div class="filter-group">
+                    <label for="dateFrom">วันที่เริ่มต้น:</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="filter-group">
+                    <label for="dateTo">วันที่สิ้นสุด:</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <div class="filter-buttons">
+                    <button class="btn-search" onclick="searchData()">🔍 ค้นหา</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Statistics (4 boxes) -->
+        <div class="dashboard-stats" id="dashboard-stats">
+            <div class="stat-card total">
+                <div class="stat-icon">👥</div>
+                <div class="stat-label">ผู้รับบริการทั้งหมด</div>
+                <div class="stat-value" id="stat-total">-</div>
+            </div>
+
+            <div class="stat-card correct">
+                <div class="stat-icon">✅</div>
+                <div class="stat-label">ข้อมูลที่ต้องแก้ไข</div>
+                <div class="stat-value green" id="stat-correct">-</div>
+            </div>
+
+            <div class="stat-card needfix">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-label">ข้อมูลที่แก้ไขได้</div>
+                <div class="stat-value orange" id="stat-needfix">-</div>
+            </div>
+
+            <div class="stat-card pending">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-label">รอดำเนินการ</div>
+                <div class="stat-value gray" id="stat-pending">-</div>
+            </div>
+        </div>
+
+                <!-- Content Area -->
+                <div class="content-area" id="content-area">
+                    <div class="welcome-message">
+                        <h2>เลือกช่วงวันที่</h2>
+                        <p>กรุณาเลือกช่วงวันที่แล้วคลิก "🔍 ค้นหา" เพื่อแสดงข้อมูล</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script_check_c_detail.js"></script>
+    <script>
+        window.checkType = 'fdh';
+        window.currentMenu = 'all';
+
+        // ตั้งวันที่เป็นวันนี้เมื่อโหลดหน้า
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = today;
+            document.getElementById('dateTo').value   = today;
+        });
+
+        function filterMenuItems() {
+            const q = document.getElementById('menu-search').value.toLowerCase();
+            document.querySelectorAll('#menu-list .file-menu-item').forEach(item => {
+                const name = (item.getAttribute('data-name') || '').toLowerCase();
+                item.style.display = name.includes(q) ? '' : 'none';
+            });
+        }
+
+        document.querySelectorAll('#menu-list .file-menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('#menu-list .file-menu-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                window.currentMenu = this.getAttribute('data-name');
+                // auto-search ด้วยวันที่ปัจจุบัน
+                searchData();
+            });
+        });
+
+        // Override searchData
+        function searchData() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo   = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            if (window.currentMenu === 'C566') {
+                searchC566(dateFrom, dateTo);
+            } else {
+                // default original behavior
+                const orig = window._origSearch;
+                if (orig) orig();
+            }
+        }
+
+        const C566_ROWS = 20;
+
+        function renderC566Table() {
+            const data = window._c566Data || [];
+            if (!data.length) return;
+            const total = data.length;
+            const page  = window._c566Page || 1;
+            const totalPages = Math.ceil(total / C566_ROWS);
+            const startIdx   = (page - 1) * C566_ROWS;
+            const pageData   = data.slice(startIdx, startIdx + C566_ROWS);
+            const cols = Object.keys(data[0]);
+
+            const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const fmtDate = v => {
+                if (!v) return '';
+                const s = String(v);
+                if (s.includes('T')) return s.split('T')[0];
+                if (s.includes(' ')) return s.split(' ')[0];
+                return s.slice(0, 10);
+            };
+            const DATE_COLS = ['วันที่รับบริการ'];
+            const btnStyle = d => `padding:6px 14px;border:1px solid #42a5f5;border-radius:6px;background:${d?'#e3f2fd':'#1976d2'};color:${d?'#90cad8':'white'};cursor:${d?'default':'pointer'};font-size:13px;font-weight:600;`;
+
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                    <div style="font-size:16px; font-weight:700; color:#1565c0;">
+                        🔬 C566 — ผู้ป่วยมะเร็งที่ยังไม่มี Z510/Z511 (${total.toLocaleString()} รายการ)
+                        &nbsp;<span style="font-size:13px; color:#546e7a;">${window._c566DateFrom} ถึง ${window._c566DateTo}</span>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button onclick="openCancerImportModal()" style="padding:10px 20px; background:linear-gradient(135deg,#6a1b9a,#4a148c); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                            📥 นำเข้ายามะเร็ง
+                        </button>
+                        <button onclick="openZInsertModal()" style="padding:10px 20px; background:linear-gradient(135deg,#e65100,#bf360c); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                            ➕ เพิ่มข้อมูลวินิจฉัย Z ของคนที่มี ICD9
+                        </button>
+                        <button onclick="openErOperModal()" style="padding:10px 20px; background:linear-gradient(135deg,#00838f,#006064); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                            🔍 ตรวจสอบหัตถการ
+                        </button>
+                        <button onclick="exportC566Excel()" style="padding:10px 20px; background:linear-gradient(135deg,#2e7d32,#1b5e20); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                            📊 ส่งออก Excel
+                        </button>
+                    </div>
+                </div>
+                ${totalPages > 1 ? `
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <button onclick="window._c566Page--;renderC566Table()" ${page<=1?'disabled':''} style="${btnStyle(page<=1)}">◀ ก่อนหน้า</button>
+                    <span style="font-size:13px;color:#546e7a;">หน้า ${page}/${totalPages} (${startIdx+1}–${Math.min(startIdx+C566_ROWS,total)} จาก ${total.toLocaleString()})</span>
+                    <button onclick="window._c566Page++;renderC566Table()" ${page>=totalPages?'disabled':''} style="${btnStyle(page>=totalPages)}">ถัดไป ▶</button>
+                </div>` : ''}
+                <div style="overflow-x:auto; padding-bottom:19px;">
+                <table style="width:100%; border-collapse:collapse; font-size:17px;">
+                <thead><tr style="background:linear-gradient(135deg,#42a5f5,#2196f3); color:white;">
+                    <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap; text-align:center;">ลำดับ</th>
+                    ${cols.map(c => `<th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">${e(c)}</th>`).join('')}
+                </tr></thead><tbody>`;
+
+            pageData.forEach((row, idx) => {
+                const bg = idx % 2 === 0 ? '#f5f9ff' : 'white';
+                const needInsert = row['icd10 ที่ต้องลงเพิ่ม'];
+                const rowBg = needInsert ? '#fff3e0' : bg;
+                html += `<tr style="background:${rowBg};">
+                    <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${startIdx+idx+1}</td>`;
+                cols.forEach(col => {
+                    const raw = row[col];
+                    const val = DATE_COLS.includes(col) ? fmtDate(raw) : raw;
+                    const isNeedInsert = col === 'icd10 ที่ต้องลงเพิ่ม' && val;
+                    const isWrap = col === 'diag_text';
+                    html += `<td style="padding:8px; border:1px solid #e3f2fd; ${isWrap ? 'white-space:normal;min-width:180px;max-width:320px;' : 'white-space:nowrap;'} ${isNeedInsert ? 'background:#ff9800; color:white; font-weight:bold;' : ''}">${e(val)}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            document.getElementById('content-area').innerHTML = html;
+        }
+
+        async function searchC566(dateFrom, dateTo) {
+            const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+            if (!cfg) { alert('⚠️ ยังไม่ได้เชื่อมต่อฐานข้อมูล'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = '<div class="welcome-message"><h2>⏳ กำลังโหลด C566...</h2><p>กรุณารอสักครู่</p></div>';
+
+            try {
+                const res = await fetch(`${window.location.origin}/api/get-c566`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: cfg.host, port: cfg.port, database: cfg.database,
+                        user: cfg.user, password: cfg.password, type: cfg.type,
+                        dateFrom, dateTo
+                    })
+                });
+                const result = await res.json();
+
+                if (!result.success) {
+                    contentArea.innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${result.error}</p></div>`;
+                    return;
+                }
+
+                const data = result.data;
+                const total = data.length;
+                const needfix = data.filter(r => !r['icd10 ที่ต้องลงเพิ่ม']).length;
+
+                document.getElementById('stat-total').textContent   = total.toLocaleString();
+                document.getElementById('stat-correct').textContent = total.toLocaleString();
+                document.getElementById('stat-needfix').textContent = data.filter(r => r['icd9']).length.toLocaleString();
+                document.getElementById('stat-pending').textContent = '-';
+
+                if (!data.length) {
+                    contentArea.innerHTML = '<div class="welcome-message"><h2>✅ ไม่พบรายการ</h2><p>ไม่มีผู้ป่วยที่ต้องดำเนินการในช่วงวันที่นี้</p></div>';
+                    return;
+                }
+
+                // เก็บข้อมูลทั้งหมดสำหรับปุ่ม insert และ pagination
+                window._c566Data     = data;
+                window._c566DateFrom = dateFrom;
+                window._c566DateTo   = dateTo;
+                window._c566Page     = 1;
+                renderC566Table();
+
+            } catch(err) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${err.message}</p></div>`;
+            }
+        }
+    </script>
+
+<!-- Modal: เพิ่มข้อมูลวินิจฉัย Z -->
+<div id="z-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto;">
+    <div style="background:white; border-radius:16px; width:98vw; max-width:none; min-height:fit-content; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); margin:auto;">
+        <!-- Header -->
+        <div style="padding:16px 24px; border-bottom:2px solid #fbe9e7; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#fff3e0,#fbe9e7); border-radius:16px 16px 0 0;">
+            <div>
+                <div style="font-size:23px; font-weight:800; color:#bf360c;">➕ เพิ่มข้อมูลวินิจฉัย Z510/Z511</div>
+                <div style="font-size:17px; color:#e65100; margin-top:4px;">เลือกรายการที่ต้องการนำเข้า แล้วกด "นำเข้าข้อมูล ICD10 ร่วม"</div>
+            </div>
+            <button onclick="closeZModal()" style="background:none;border:none;font-size:31px;cursor:pointer;color:#9e9e9e;">✕</button>
+        </div>
+        <!-- Toolbar -->
+        <div style="padding:12px 24px; border-bottom:1px solid #f5f5f5; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <button onclick="zSelectAll(true)"  style="padding:9px 22px; background:#1565c0; color:white; border:none; border-radius:8px; font-size:18px; font-weight:600; cursor:pointer;">☑️ เลือกทั้งหมด</button>
+            <button onclick="zSelectAll(false)" style="padding:9px 22px; background:#9e9e9e; color:white; border:none; border-radius:8px; font-size:18px; font-weight:600; cursor:pointer;">⬜ ไม่เลือกทั้งหมด</button>
+            <span id="z-selected-count" style="font-size:18px; color:#546e7a; font-weight:600;"></span>
+            <div style="flex:1;"></div>
+            <button onclick="doZInsert()" style="padding:12px 32px; background:linear-gradient(135deg,#2e7d32,#388e3c); color:white; border:none; border-radius:8px; font-size:20px; font-weight:700; cursor:pointer;">
+                💾 นำเข้าข้อมูล ICD10 ร่วม
+            </button>
+        </div>
+        <!-- Table -->
+        <div id="z-modal-body" style="padding:16px 24px; overflow-x:auto;">
+            <div style="text-align:center; color:#9e9e9e; padding:40px;">⏳ กำลังโหลด...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+let zPreviewData = [];
+
+async function openZInsertModal() {
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) { alert('⚠️ ยังไม่ได้เชื่อมต่อฐานข้อมูล'); return; }
+    const dateFrom = window._c566DateFrom;
+    const dateTo   = window._c566DateTo;
+    if (!dateFrom || !dateTo) { alert('⚠️ กรุณาค้นหาข้อมูล C566 ก่อน'); return; }
+
+    const modal = document.getElementById('z-modal');
+    modal.style.display = 'flex';
+    document.getElementById('z-modal-body').innerHTML = '<div style="text-align:center;color:#9e9e9e;padding:40px;">⏳ กำลังโหลด...</div>';
+    zPreviewData = [];
+
+    try {
+        const res = await fetch(`${window.location.origin}/api/get-c566-z-preview`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host:cfg.host, port:cfg.port, database:cfg.database, user:cfg.user, password:cfg.password, type:cfg.type, dateFrom, dateTo })
+        });
+        const result = await res.json();
+        if (!result.success) { document.getElementById('z-modal-body').innerHTML = `<div style="color:#f44336;padding:20px;">❌ ${result.error}</div>`; return; }
+
+        zPreviewData = result.data;
+        renderZTable();
+    } catch(err) {
+        document.getElementById('z-modal-body').innerHTML = `<div style="color:#f44336;padding:20px;">❌ ${err.message}</div>`;
+    }
+}
+
+function renderZTable() {
+    const session = JSON.parse(localStorage.getItem('loginSession') || '{}');
+    const staffName = session.name || '';
+    const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    if (!zPreviewData.length) {
+        document.getElementById('z-modal-body').innerHTML = '<div style="text-align:center;color:#4caf50;padding:40px;font-size:16px;">✅ ไม่มีรายการที่ต้องเพิ่ม</div>';
+        return;
+    }
+
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:20px;">
+    <thead><tr style="background:linear-gradient(135deg,#e65100,#bf360c);color:white;position:sticky;top:0;">
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;text-align:center;white-space:nowrap;">เลือก</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">VN</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;background:#f57c00;">เพิ่ม ICD10</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">icd9</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">หัตถการ</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">HN</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">เวลามา</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">วันที่รับบริการ</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">diagtype</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">doctor_code</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">แพทย์วินิจฉัย</th>
+        <th style="padding:10px 8px;border:1px solid #fbe9e7;white-space:nowrap;">staff</th>
+    </tr></thead><tbody>`;
+
+    // ฟังก์ชันแปลง vstdate ให้แสดงแค่วันที่ YYYY-MM-DD
+    const fmtDate = v => {
+        if (!v) return '';
+        const s = String(v);
+        // รองรับ ISO string, Date object, หรือ YYYY-MM-DD
+        if (s.includes('T')) return s.split('T')[0];
+        if (s.includes(' ')) return s.split(' ')[0];
+        return s.slice(0, 10);
+    };
+
+    zPreviewData.forEach((row, idx) => {
+        const bg = idx%2===0?'#fff8f5':'white';
+        const icdColor = row.icd10_add === 'Z510' ? '#1565c0' : '#6a1b9a';
+        const displayDate = fmtDate(row.vstdate);
+        html += `<tr style="background:${bg};">
+            <td style="padding:8px;border:1px solid #fbe9e7;text-align:center;">
+                <input type="checkbox" class="z-cb" data-idx="${idx}" checked onchange="updateZCount()" style="width:16px;height:16px;cursor:pointer;accent-color:#e65100;">
+            </td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(row.vn)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;font-weight:800;color:${icdColor};font-size:21px;">${e(row.icd10_add)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(row.icd9)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(row.er_oper_name)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(row.hn)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(row.vsttime)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(displayDate)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;text-align:center;">4</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(row.doctor_code)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(row.doctor)}</td>
+            <td style="padding:8px;border:1px solid #fbe9e7;white-space:nowrap;">${e(staffName)}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('z-modal-body').innerHTML = html;
+    updateZCount();
+}
+
+function zSelectAll(val) {
+    document.querySelectorAll('.z-cb').forEach(cb => cb.checked = val);
+    updateZCount();
+}
+
+function updateZCount() {
+    const total = document.querySelectorAll('.z-cb').length;
+    const checked = document.querySelectorAll('.z-cb:checked').length;
+    document.getElementById('z-selected-count').textContent = `เลือก ${checked} / ${total} รายการ`;
+}
+
+function closeZModal() {
+    document.getElementById('z-modal').style.display = 'none';
+}
+
+async function doZInsert() {
+    const selected = [...document.querySelectorAll('.z-cb:checked')].map(cb => zPreviewData[parseInt(cb.getAttribute('data-idx'))]);
+    if (!selected.length) { alert('⚠️ กรุณาเลือกอย่างน้อย 1 รายการ'); return; }
+    if (!confirm(`ต้องการนำเข้า ${selected.length} รายการ เข้าสู่ตาราง ovstdiag หรือไม่?`)) return;
+
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) return;
+    const session = JSON.parse(localStorage.getItem('loginSession') || '{}');
+
+    const btn = document.querySelector('#z-modal button[onclick="doZInsert()"]');
+    btn.textContent = '⏳ กำลังนำเข้า...';
+    btn.disabled = true;
+
+    // ส่ง officer_login_name เป็น staff (session.username = officer_login_name)
+    const loginName = session.username || session.name || '';
+
+    try {
+        const res = await fetch(`${window.location.origin}/api/insert-c566-z-diag`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                host:cfg.host, port:cfg.port, database:cfg.database,
+                user:cfg.user, password:cfg.password, type:cfg.type,
+                records: selected,   // เฉพาะที่ติ๊กเลือก
+                loginName            // officer_login_name สำหรับฟิล staff
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert(`✅ นำเข้าสำเร็จ ${result.inserted} รายการ${result.failed > 0 ? `\n⚠️ ล้มเหลว ${result.failed} รายการ` : ''}`);
+            closeZModal();
+            // กลับไปที่เมนู C566 และโหลดข้อมูลใหม่
+            searchC566(window._c566DateFrom, window._c566DateTo);
+        } else {
+            alert('❌ เกิดข้อผิดพลาด: ' + result.error);
+        }
+    } catch(err) {
+        alert('❌ ' + err.message);
+    } finally {
+        btn.textContent = '💾 นำเข้าข้อมูล ICD10 ร่วม';
+        btn.disabled = false;
+    }
+}
+
+// ปิด modal เมื่อคลิกนอก
+document.getElementById('z-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeZModal();
+});
+</script>
+<!-- ==================== Modal: ตรวจสอบหัตถการ er_oper_code ==================== -->
+<div id="er-oper-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto;">
+    <div style="background:white; border-radius:16px; width:96vw; max-width:860px; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); margin:auto;">
+        <!-- Header -->
+        <div style="padding:16px 24px; border-bottom:2px solid #e0f7fa; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#e0f7fa,#b2ebf2); border-radius:16px 16px 0 0;">
+            <div>
+                <div style="font-size:21px; font-weight:800; color:#006064;">🔍 ตรวจสอบหัตถการ — er_oper_code</div>
+                <div style="font-size:14px; color:#00838f; margin-top:4px;">icd9cm IN ('9925','9224')</div>
+            </div>
+            <button onclick="closeErOperModal()" style="background:none; border:none; font-size:30px; cursor:pointer; color:#9e9e9e; line-height:1;">✕</button>
+        </div>
+        <!-- Body -->
+        <div style="padding:20px 24px;">
+            <div id="er-oper-content"><div style="text-align:center; padding:40px; color:#9e9e9e;">⏳ กำลังโหลด...</div></div>
+        </div>
+        <!-- Footer -->
+        <div style="padding:14px 24px; border-top:1px solid #e0f7fa; display:flex; justify-content:flex-end;">
+            <button onclick="closeErOperModal()" style="padding:11px 28px; background:#9e9e9e; color:white; border:none; border-radius:8px; font-size:16px; font-weight:600; cursor:pointer;">ปิด</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== Modal: นำเข้ายามะเร็ง ==================== -->
+<div id="cancer-import-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto;">
+    <div style="background:white; border-radius:16px; width:96vw; max-width:860px; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); margin:auto;">
+        <!-- Header -->
+        <div style="padding:16px 24px; border-bottom:2px solid #ede7f6; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#ede7f6,#d1c4e9); border-radius:16px 16px 0 0;">
+            <div>
+                <div style="font-size:22px; font-weight:800; color:#4a148c;">📥 นำเข้ายามะเร็ง → drugitems_cancer</div>
+                <div style="font-size:15px; color:#6a1b9a; margin-top:4px;">หัวคอลัมน์ใน Excel ต้องตรงกับชื่อฟิลด์: <b>icode, name, strength, units</b></div>
+            </div>
+            <button onclick="closeCancerImportModal()" style="background:none;border:none;font-size:30px;cursor:pointer;color:#9e9e9e;line-height:1;">✕</button>
+        </div>
+        <!-- Body -->
+        <div style="padding:20px 24px; display:flex; flex-direction:column; gap:16px;">
+            <!-- Description -->
+            <div style="background:#f3e5f5; border-left:4px solid #7b1fa2; border-radius:8px; padding:14px 18px; color:#4a148c; font-size:15px; line-height:1.7;">
+                <div style="font-weight:700; font-size:16px; margin-bottom:6px;">📋 วิธีใช้งาน</div>
+                <div>ใช้นำเข้ายามะเร็ง เพื่อนำมาตรวจสอบ error ใส่ข้อมูลตาม Excel ที่ Export แล้วนำเข้าไฟล์</div>
+                <div style="margin-top:8px; font-size:14px; color:#6a1b9a;">คอลัมน์ที่ต้องมีใน Excel: <b>icode, name, strength, units</b></div>
+                <div style="margin-top:4px; font-size:14px; color:#6a1b9a;">กดปุ่ม <b>Export โครงสร้าง Excel</b> เพื่อดาวน์โหลดไฟล์ตัวอย่างสำหรับกรอกข้อมูล</div>
+            </div>
+            <!-- File input -->
+            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                <label style="font-size:17px; font-weight:600; color:#4a148c; white-space:nowrap;">เลือกไฟล์ Excel:</label>
+                <input type="file" id="cancer-excel-file" accept=".xlsx,.xls"
+                    onchange="parseCancerExcel(this)"
+                    style="font-size:16px; padding:8px 12px; border:2px solid #ce93d8; border-radius:8px; cursor:pointer; flex:1; min-width:0;">
+            </div>
+            <!-- Error -->
+            <div id="cancer-import-error" style="display:none; padding:12px 16px; background:#ffebee; color:#c62828; border-left:4px solid #f44336; border-radius:8px; font-size:15px; font-weight:600;"></div>
+            <!-- Row count -->
+            <div id="cancer-row-count" style="font-size:16px; font-weight:700; color:#2e7d32;"></div>
+            <!-- Preview table -->
+            <div id="cancer-preview"></div>
+        </div>
+        <!-- Footer -->
+        <div style="padding:14px 24px; border-top:1px solid #f3e5f5; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button onclick="exportCancerTemplate()" style="padding:11px 24px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">📥 Export โครงสร้าง Excel</button>
+                <button onclick="openCancerViewModal()" style="padding:11px 24px; background:linear-gradient(135deg,#1565c0,#0d47a1); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">🧬 ดูข้อมูล</button>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button onclick="closeCancerImportModal()" style="padding:11px 28px; background:#9e9e9e; color:white; border:none; border-radius:8px; font-size:17px; font-weight:600; cursor:pointer;">ยกเลิก</button>
+                <button id="btn-do-cancer-import" onclick="doImportCancer()" style="padding:11px 32px; background:linear-gradient(135deg,#6a1b9a,#4a148c); color:white; border:none; border-radius:8px; font-size:17px; font-weight:700; cursor:pointer;">💾 นำเข้าข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== Modal: ดูข้อมูล drugitems_cancer ==================== -->
+<div id="cancer-view-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:10000; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto;">
+    <div style="background:white; border-radius:16px; width:96vw; max-width:1040px; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.35); margin:auto; max-height:92vh; overflow:hidden;">
+        <!-- Header -->
+        <div style="padding:16px 24px; border-bottom:2px solid #ede7f6; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:16px 16px 0 0; flex-shrink:0;">
+            <div>
+                <div style="font-size:22px; font-weight:800; color:#0d47a1;">🧬 ข้อมูลยามะเร็ง (drugitems_cancer)</div>
+                <div id="cancer-view-count" style="font-size:15px; color:#1565c0; margin-top:4px;"></div>
+            </div>
+            <button onclick="closeCancerViewModal()" style="background:none; border:none; font-size:30px; cursor:pointer; color:#9e9e9e; line-height:1;">✕</button>
+        </div>
+        <!-- Body -->
+        <div style="padding:20px 24px; overflow-y:auto; flex:1;">
+            <div id="cancer-view-content"><div style="text-align:center; padding:40px; color:#9e9e9e;">⏳ กำลังโหลด...</div></div>
+        </div>
+        <!-- Footer -->
+        <div style="padding:14px 24px; border-top:1px solid #e3f2fd; display:flex; justify-content:flex-end; flex-shrink:0;">
+            <button onclick="closeCancerViewModal()" style="padding:11px 28px; background:#9e9e9e; color:white; border:none; border-radius:8px; font-size:16px; font-weight:600; cursor:pointer;">ปิด</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let cancerImportData = [];
+
+function openCancerImportModal() {
+    document.getElementById('cancer-import-modal').style.display = 'flex';
+    document.getElementById('cancer-excel-file').value = '';
+    document.getElementById('cancer-preview').innerHTML = '';
+    document.getElementById('cancer-row-count').textContent = '';
+    showCancerError('');
+    cancerImportData = [];
+}
+
+function closeCancerImportModal() {
+    document.getElementById('cancer-import-modal').style.display = 'none';
+}
+
+function exportCancerTemplate() {
+    const wb = XLSX.utils.book_new();
+    const templateData = [
+        { icode: '', name: '', strength: '', units: '' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData, { header: ['icode', 'name', 'strength', 'units'] });
+
+    // Style header row
+    ['A1','B1','C1','D1'].forEach(addr => {
+        if (!ws[addr]) return;
+        ws[addr].s = {
+            fill: { patternType: 'solid', fgColor: { rgb: '6A1B9A' } },
+            font: { bold: true, color: { rgb: 'FFFFFF' } },
+            alignment: { horizontal: 'center' }
+        };
+    });
+
+    ws['!cols'] = [
+        { wch: 18 },
+        { wch: 40 },
+        { wch: 20 },
+        { wch: 12 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'ยามะเร็ง');
+    XLSX.writeFile(wb, 'template_drugitems_cancer.xlsx');
+}
+
+function showCancerError(msg) {
+    const el = document.getElementById('cancer-import-error');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+}
+
+function parseCancerExcel(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const wb   = XLSX.read(data, { type: 'array' });
+            const ws   = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+            if (!rows.length) { showCancerError('⚠️ ไม่พบข้อมูลในไฟล์'); return; }
+
+            const required = ['icode', 'name', 'strength', 'units'];
+            const headers  = Object.keys(rows[0]);
+            const missing  = required.filter(h => !headers.includes(h));
+            if (missing.length) {
+                showCancerError(`⚠️ ไม่พบคอลัมน์: ${missing.join(', ')} — ต้องมี: icode, name, strength, units`);
+                cancerImportData = [];
+                document.getElementById('cancer-preview').innerHTML = '';
+                document.getElementById('cancer-row-count').textContent = '';
+                return;
+            }
+
+            cancerImportData = rows
+                .map(r => ({
+                    icode:    String(r.icode    ?? '').trim(),
+                    name:     String(r.name     ?? '').trim(),
+                    strength: String(r.strength ?? '').trim(),
+                    units:    String(r.units    ?? '').trim()
+                }))
+                .filter(r => r.icode);
+
+            showCancerError('');
+            renderCancerPreview();
+        } catch(err) {
+            showCancerError('❌ อ่านไฟล์ไม่ได้: ' + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function renderCancerPreview() {
+    const data = cancerImportData;
+    document.getElementById('cancer-row-count').textContent = `✅ พบข้อมูล ${data.length.toLocaleString()} รายการ`;
+    const preview = data.slice(0, 10);
+    const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    let html = `
+        <div style="font-size:13px; color:#546e7a; margin-bottom:6px;">แสดง ${Math.min(10, data.length)} รายการแรก</div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:15px;">
+        <thead><tr style="background:linear-gradient(135deg,#6a1b9a,#4a148c); color:white;">
+            <th style="padding:8px 10px; border:1px solid #ce93d8; text-align:center;">#</th>
+            <th style="padding:8px 10px; border:1px solid #ce93d8;">icode</th>
+            <th style="padding:8px 10px; border:1px solid #ce93d8;">name</th>
+            <th style="padding:8px 10px; border:1px solid #ce93d8;">strength</th>
+            <th style="padding:8px 10px; border:1px solid #ce93d8;">units</th>
+        </tr></thead><tbody>`;
+    preview.forEach((row, idx) => {
+        const bg = idx % 2 === 0 ? '#f9f4ff' : 'white';
+        html += `<tr style="background:${bg};">
+            <td style="padding:7px 10px; border:1px solid #e1d4f5; text-align:center;">${idx+1}</td>
+            <td style="padding:7px 10px; border:1px solid #e1d4f5; white-space:nowrap; font-weight:600;">${e(row.icode)}</td>
+            <td style="padding:7px 10px; border:1px solid #e1d4f5;">${e(row.name)}</td>
+            <td style="padding:7px 10px; border:1px solid #e1d4f5; white-space:nowrap;">${e(row.strength)}</td>
+            <td style="padding:7px 10px; border:1px solid #e1d4f5; white-space:nowrap;">${e(row.units)}</td>
+        </tr>`;
+    });
+    if (data.length > 10) {
+        html += `<tr><td colspan="5" style="padding:8px; text-align:center; color:#9e9e9e; font-size:13px;">... และอีก ${(data.length - 10).toLocaleString()} รายการ</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('cancer-preview').innerHTML = html;
+}
+
+async function doImportCancer() {
+    if (!cancerImportData.length) { alert('⚠️ กรุณาเลือกไฟล์ Excel ก่อน'); return; }
+    if (!confirm(`ต้องการนำเข้ายามะเร็ง ${cancerImportData.length.toLocaleString()} รายการ เข้าตาราง drugitems_cancer หรือไม่?\n(ถ้า icode ซ้ำจะอัปเดตข้อมูลเดิม)`)) return;
+
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) return;
+
+    const btn = document.getElementById('btn-do-cancer-import');
+    btn.textContent = '⏳ กำลังนำเข้า...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${window.location.origin}/api/import-drugitems-cancer`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                host: cfg.host, port: cfg.port, database: cfg.database,
+                user: cfg.user, password: cfg.password, type: cfg.type,
+                rows: cancerImportData
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert(`✅ นำเข้าสำเร็จ\nเพิ่มใหม่: ${result.inserted} รายการ${result.updated > 0 ? `\nอัปเดต: ${result.updated} รายการ` : ''}`);
+            closeCancerImportModal();
+        } else {
+            alert('❌ เกิดข้อผิดพลาด: ' + result.error);
+        }
+    } catch(err) {
+        alert('❌ ' + err.message);
+    } finally {
+        btn.textContent = '💾 นำเข้าข้อมูล';
+        btn.disabled = false;
+    }
+}
+
+document.getElementById('cancer-import-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeCancerImportModal();
+});
+
+document.getElementById('er-oper-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeErOperModal();
+});
+
+// ==================== ตรวจสอบหัตถการ er_oper_code ====================
+async function openErOperModal() {
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('er-oper-content').innerHTML = '<div style="text-align:center;padding:40px;color:#9e9e9e;">⏳ กำลังโหลดข้อมูล...</div>';
+    document.getElementById('er-oper-modal').style.display = 'flex';
+    try {
+        const res = await fetch(`${window.location.origin}/api/get-c566-er-oper`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: cfg.host, port: cfg.port, database: cfg.database, user: cfg.user, password: cfg.password, type: cfg.type })
+        });
+        const result = await res.json();
+        if (!result.success) { document.getElementById('er-oper-content').innerHTML = `<div style="color:#c62828;padding:20px;">❌ ${result.error}</div>`; return; }
+        const data = result.data || [];
+        const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        if (!data.length) { document.getElementById('er-oper-content').innerHTML = '<div style="text-align:center;padding:40px;color:#9e9e9e;">ไม่พบข้อมูล</div>'; return; }
+
+        const icd9Names = { '9224': 'Chemical Therapy (IV) — Z510', '9925': 'Chemical Therapy (Oral) — Z511' };
+        const groups = {};
+        data.forEach(row => {
+            const key = row.icd9cm ?? '';
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(row);
+        });
+
+        let html = `<div style="margin-bottom:10px;font-size:14px;color:#546e7a;">พบ <b>${data.length}</b> รายการ</div>`;
+        for (const [icd9, rows] of Object.entries(groups)) {
+            html += `<div style="margin-bottom:18px;">
+                <div style="font-weight:700;font-size:15px;color:#006064;margin-bottom:8px;padding:8px 12px;background:#e0f7fa;border-radius:8px;">
+                    icd9cm: <span style="font-family:monospace;font-size:16px;">${e(icd9)}</span>
+                    ${icd9Names[icd9] ? `<span style="font-weight:400;color:#00838f;margin-left:8px;">— ${icd9Names[icd9]}</span>` : ''}
+                    <span style="float:right;font-weight:400;font-size:13px;color:#546e7a;">${rows.length} รายการ</span>
+                </div>
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                    <thead><tr style="background:linear-gradient(135deg,#00838f,#006064);color:white;">
+                        <th style="padding:9px 12px;text-align:left;white-space:nowrap;">icode</th>
+                        <th style="padding:9px 12px;text-align:left;">name</th>
+                        <th style="padding:9px 12px;text-align:center;white-space:nowrap;">icd9cm</th>
+                        <th style="padding:9px 12px;text-align:right;white-space:nowrap;">price</th>
+                    </tr></thead><tbody>`;
+            rows.forEach((row, idx) => {
+                const bg = idx % 2 === 0 ? '#f0fdfd' : 'white';
+                html += `<tr style="background:${bg};" onmouseover="this.style.background='#b2ebf2'" onmouseout="this.style.background='${bg}'">
+                    <td style="padding:8px 12px;border-bottom:1px solid #e0f7fa;font-family:monospace;font-weight:700;color:#006064;">${e(row.icode)}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #e0f7fa;">${e(row.name)}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #e0f7fa;text-align:center;font-family:monospace;">${e(row.icd9cm)}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #e0f7fa;text-align:right;">${row.price != null ? Number(row.price).toLocaleString() : ''}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+        }
+        document.getElementById('er-oper-content').innerHTML = html;
+    } catch(err) {
+        document.getElementById('er-oper-content').innerHTML = `<div style="color:#c62828;padding:20px;">❌ ${err.message}</div>`;
+    }
+}
+
+function closeErOperModal() {
+    document.getElementById('er-oper-modal').style.display = 'none';
+}
+
+// ==================== ส่งออก Excel C566 ====================
+function exportC566Excel() {
+    const data = window._c566Data || [];
+    if (!data.length) { alert('⚠️ ไม่มีข้อมูลสำหรับส่งออก'); return; }
+
+    const dateFrom = window._c566DateFrom || '';
+    const dateTo   = window._c566DateTo   || '';
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // กำหนดความกว้างคอลัมน์
+    const cols = Object.keys(data[0]);
+    ws['!cols'] = cols.map(col => {
+        const maxLen = Math.max(
+            col.length,
+            ...data.slice(0, 100).map(r => String(r[col] ?? '').length)
+        );
+        return { wch: Math.min(Math.max(maxLen + 2, 10), 60) };
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, 'C566');
+    XLSX.writeFile(wb, `C566_${dateFrom}_${dateTo}.xlsx`);
+}
+
+// ==================== ดูข้อมูล drugitems_cancer ====================
+let cancerViewData = [];
+let cancerViewEditingIcode = null;
+
+async function openCancerViewModal() {
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('cancer-view-content').innerHTML = '<div style="text-align:center;padding:40px;color:#9e9e9e;">⏳ กำลังโหลดข้อมูล...</div>';
+    document.getElementById('cancer-view-count').textContent = '';
+    document.getElementById('cancer-view-modal').style.display = 'flex';
+    cancerViewEditingIcode = null;
+    try {
+        const res = await fetch(`${window.location.origin}/api/get-drugitems-cancer`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: cfg.host, port: cfg.port, database: cfg.database, user: cfg.user, password: cfg.password, type: cfg.type })
+        });
+        const result = await res.json();
+        if (result.success) {
+            cancerViewData = result.data || [];
+            renderCancerViewTable();
+        } else {
+            document.getElementById('cancer-view-content').innerHTML = `<div style="color:#c62828;padding:20px;">❌ ${result.error}</div>`;
+        }
+    } catch(err) {
+        document.getElementById('cancer-view-content').innerHTML = `<div style="color:#c62828;padding:20px;">❌ ${err.message}</div>`;
+    }
+}
+
+function closeCancerViewModal() {
+    document.getElementById('cancer-view-modal').style.display = 'none';
+}
+
+function renderCancerViewTable() {
+    const total = cancerViewData.length;
+    document.getElementById('cancer-view-count').textContent = `รายการทั้งหมด ${total.toLocaleString()} รายการ`;
+    const e = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    let addFormHtml = '';
+    if (cancerViewEditingIcode === '__new__') {
+        addFormHtml = `
+        <div style="background:#e3f2fd;border-radius:10px;padding:14px 16px;margin-bottom:14px;border:2px dashed #64b5f6;">
+            <div style="font-weight:700;color:#0d47a1;margin-bottom:10px;font-size:15px;">➕ เพิ่มรายการใหม่</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:13px;color:#1565c0;font-weight:600;">icode *</label>
+                    <input id="cv-new-icode" placeholder="icode" maxlength="7" style="padding:8px 10px;border:2px solid #64b5f6;border-radius:6px;font-size:15px;width:100px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px;">
+                    <label style="font-size:13px;color:#1565c0;font-weight:600;">name</label>
+                    <input id="cv-new-name" placeholder="ชื่อยา" style="padding:8px 10px;border:2px solid #64b5f6;border-radius:6px;font-size:15px;width:100%;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:13px;color:#1565c0;font-weight:600;">strength</label>
+                    <input id="cv-new-strength" placeholder="ความแรง" style="padding:8px 10px;border:2px solid #64b5f6;border-radius:6px;font-size:15px;width:130px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:13px;color:#1565c0;font-weight:600;">units</label>
+                    <input id="cv-new-units" placeholder="หน่วย" style="padding:8px 10px;border:2px solid #64b5f6;border-radius:6px;font-size:15px;width:90px;">
+                </div>
+                <div style="display:flex;gap:8px;padding-bottom:2px;">
+                    <button onclick="saveCancerNew()" style="padding:9px 20px;background:linear-gradient(135deg,#2e7d32,#43a047);color:white;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">💾 บันทึก</button>
+                    <button onclick="cancelCancerViewEdit()" style="padding:9px 16px;background:#9e9e9e;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">ยกเลิก</button>
+                </div>
+            </div>
+        </div>`;
+    } else {
+        addFormHtml = `<button onclick="cancerViewEditingIcode='__new__';renderCancerViewTable()" style="padding:10px 22px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:14px;">➕ เพิ่มรายการใหม่</button>`;
+    }
+
+    let tableRows = '';
+    cancerViewData.forEach((row, idx) => {
+        const rowNum = idx + 1;
+        if (cancerViewEditingIcode === row.icode) {
+            tableRows += `<tr style="background:#fffde7;">
+                <td style="padding:8px;border-bottom:1px solid #e3f2fd;text-align:center;color:#9e9e9e;font-size:13px;">${rowNum}</td>
+                <td style="padding:8px;border-bottom:1px solid #e3f2fd;"><input id="cv-edit-icode" value="${e(row.icode)}" readonly style="padding:6px 8px;border:2px solid #f9a825;border-radius:5px;font-size:14px;width:80px;background:#fff9e6;font-weight:700;font-family:monospace;"></td>
+                <td style="padding:8px;border-bottom:1px solid #e3f2fd;"><input id="cv-edit-name" value="${e(row.name ?? '')}" style="padding:6px 8px;border:2px solid #64b5f6;border-radius:5px;font-size:14px;width:100%;min-width:160px;"></td>
+                <td style="padding:8px;border-bottom:1px solid #e3f2fd;"><input id="cv-edit-strength" value="${e(row.strength ?? '')}" style="padding:6px 8px;border:2px solid #64b5f6;border-radius:5px;font-size:14px;width:120px;"></td>
+                <td style="padding:8px;border-bottom:1px solid #e3f2fd;"><input id="cv-edit-units" value="${e(row.units ?? '')}" style="padding:6px 8px;border:2px solid #64b5f6;border-radius:5px;font-size:14px;width:80px;"></td>
+                <td style="padding:8px;border-bottom:1px solid #e3f2fd;white-space:nowrap;">
+                    <button onclick="saveCancerEdit('${e(row.icode)}')" style="padding:6px 14px;background:linear-gradient(135deg,#2e7d32,#43a047);color:white;border:none;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;margin-right:6px;">💾 บันทึก</button>
+                    <button onclick="cancelCancerViewEdit()" style="padding:6px 12px;background:#9e9e9e;color:white;border:none;border-radius:5px;font-size:13px;cursor:pointer;">ยกเลิก</button>
+                </td>
+            </tr>`;
+        } else {
+            tableRows += `<tr onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background=''">
+                <td style="padding:8px 10px;border-bottom:1px solid #e3f2fd;text-align:center;color:#9e9e9e;font-size:13px;">${rowNum}</td>
+                <td style="padding:8px 10px;border-bottom:1px solid #e3f2fd;font-weight:700;color:#0d47a1;font-family:monospace;">${e(row.icode)}</td>
+                <td style="padding:8px 10px;border-bottom:1px solid #e3f2fd;">${e(row.name ?? '')}</td>
+                <td style="padding:8px 10px;border-bottom:1px solid #e3f2fd;">${e(row.strength ?? '')}</td>
+                <td style="padding:8px 10px;border-bottom:1px solid #e3f2fd;">${e(row.units ?? '')}</td>
+                <td style="padding:8px 10px;border-bottom:1px solid #e3f2fd;white-space:nowrap;">
+                    <button onclick="editCancerViewRow('${e(row.icode)}')" style="padding:5px 12px;background:#1565c0;color:white;border:none;border-radius:5px;font-size:13px;cursor:pointer;margin-right:4px;">✏️ แก้ไข</button>
+                    <button onclick="deleteCancerViewRow('${e(row.icode)}')" style="padding:5px 10px;background:#c62828;color:white;border:none;border-radius:5px;font-size:13px;cursor:pointer;" title="ลบ">🗑️</button>
+                </td>
+            </tr>`;
+        }
+    });
+
+    const tableHtml = total === 0
+        ? '<div style="text-align:center;padding:40px;color:#9e9e9e;">ไม่มีข้อมูลในตาราง</div>'
+        : `<div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <thead>
+                    <tr style="background:linear-gradient(135deg,#1565c0,#0d47a1);color:white;">
+                        <th style="padding:10px 12px;text-align:center;white-space:nowrap;">ลำดับ</th>
+                        <th style="padding:10px 12px;text-align:left;white-space:nowrap;">icode</th>
+                        <th style="padding:10px 12px;text-align:left;">name</th>
+                        <th style="padding:10px 12px;text-align:left;white-space:nowrap;">strength</th>
+                        <th style="padding:10px 12px;text-align:left;white-space:nowrap;">units</th>
+                        <th style="padding:10px 12px;text-align:left;white-space:nowrap;">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+          </div>`;
+
+    document.getElementById('cancer-view-content').innerHTML = addFormHtml + tableHtml;
+}
+
+function editCancerViewRow(icode) {
+    cancerViewEditingIcode = icode;
+    renderCancerViewTable();
+    setTimeout(() => { const el = document.getElementById('cv-edit-name'); if (el) el.focus(); }, 50);
+}
+
+function cancelCancerViewEdit() {
+    cancerViewEditingIcode = null;
+    renderCancerViewTable();
+}
+
+async function saveCancerEdit(icode) {
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) return;
+    const name = document.getElementById('cv-edit-name')?.value ?? '';
+    const strength = document.getElementById('cv-edit-strength')?.value ?? '';
+    const units = document.getElementById('cv-edit-units')?.value ?? '';
+    try {
+        const res = await fetch(`${window.location.origin}/api/upsert-drugitems-cancer-row`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: cfg.host, port: cfg.port, database: cfg.database, user: cfg.user, password: cfg.password, type: cfg.type, icode, name, strength, units })
+        });
+        const result = await res.json();
+        if (result.success) {
+            const idx = cancerViewData.findIndex(r => r.icode === icode);
+            if (idx >= 0) cancerViewData[idx] = { icode, name, strength, units };
+            cancerViewEditingIcode = null;
+            renderCancerViewTable();
+        } else {
+            alert('❌ บันทึกไม่สำเร็จ: ' + result.error);
+        }
+    } catch(err) { alert('❌ ' + err.message); }
+}
+
+async function saveCancerNew() {
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) return;
+    const icode = (document.getElementById('cv-new-icode')?.value ?? '').trim();
+    const name = document.getElementById('cv-new-name')?.value ?? '';
+    const strength = document.getElementById('cv-new-strength')?.value ?? '';
+    const units = document.getElementById('cv-new-units')?.value ?? '';
+    if (!icode) { alert('⚠️ กรุณากรอก icode'); document.getElementById('cv-new-icode')?.focus(); return; }
+    if (cancerViewData.some(r => r.icode === icode)) {
+        if (!confirm(`icode "${icode}" มีอยู่แล้ว ต้องการอัปเดตข้อมูลหรือไม่?`)) return;
+    }
+    try {
+        const res = await fetch(`${window.location.origin}/api/upsert-drugitems-cancer-row`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: cfg.host, port: cfg.port, database: cfg.database, user: cfg.user, password: cfg.password, type: cfg.type, icode, name, strength, units })
+        });
+        const result = await res.json();
+        if (result.success) {
+            const idx = cancerViewData.findIndex(r => r.icode === icode);
+            if (idx >= 0) { cancerViewData[idx] = { icode, name, strength, units }; }
+            else { cancerViewData.push({ icode, name, strength, units }); cancerViewData.sort((a, b) => String(a.icode).localeCompare(String(b.icode))); }
+            cancerViewEditingIcode = null;
+            renderCancerViewTable();
+        } else {
+            alert('❌ บันทึกไม่สำเร็จ: ' + result.error);
+        }
+    } catch(err) { alert('❌ ' + err.message); }
+}
+
+async function deleteCancerViewRow(icode) {
+    if (!confirm(`ลบรายการ icode "${icode}" หรือไม่?`)) return;
+    const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+    if (!cfg) return;
+    try {
+        const res = await fetch(`${window.location.origin}/api/delete-drugitems-cancer-row`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: cfg.host, port: cfg.port, database: cfg.database, user: cfg.user, password: cfg.password, type: cfg.type, icode })
+        });
+        const result = await res.json();
+        if (result.success) {
+            cancerViewData = cancerViewData.filter(r => r.icode !== icode);
+            cancerViewEditingIcode = null;
+            renderCancerViewTable();
+        } else {
+            alert('❌ ลบไม่สำเร็จ: ' + result.error);
+        }
+    } catch(err) { alert('❌ ' + err.message); }
+}
+
+document.getElementById('cancer-view-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeCancerViewModal();
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="zoom_control.js"></script>
+</body>
+</html>

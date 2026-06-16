@@ -1,0 +1,45 @@
+IPD
+http://localhost:8080/fund_fdh
+เมื่อกดเมนู IPD
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT ipt.hn AS "HN" ,
+ipt.an as "AN",ipt.regdate,
+CASE WHEN (ipt.regdate IS NULL ) THEN 'N' ELSE 'Y' END AS "DATEADM",
+ipt.regtime,
+CASE WHEN (ipt.regtime  IS NULL ) THEN 'N' ELSE 'Y' END AS "TIMEADM",
+ipt.dchdate,
+CASE WHEN (ipt.dchdate  IS NULL ) THEN 'N' ELSE 'Y' END AS "DATEDSC",
+ipt.dchtime ,
+CASE WHEN (ipt.dchtime  IS NULL ) THEN 'N' ELSE 'Y' END AS "TIMEDSC",
+dt.name as dchstts,
+CASE WHEN (ipt.dchstts  IS NULL ) THEN 'N' ELSE 'Y' END AS "DISCHS",
+dp.name as dchtype,
+CASE WHEN (ipt.dchtype  IS NULL ) THEN 'N' ELSE 'Y' END AS "DISCHT",
+w.name as first_ward,
+CASE WHEN (ipt.first_ward  IS NULL ) THEN 'N' ELSE 'Y' END AS "WARDDSC",
+s.name as spclty,
+CASE WHEN (ipt.spclty IS NULL ) THEN 'N' ELSE 'Y' END AS "DEPT",
+ipt.bw,
+CASE WHEN (ipt.bw  IS NULL ) THEN 'N' ELSE 'Y' END AS "ADM_W",
+visit_pttype.request_funds,
+CASE WHEN (visit_pttype.request_funds IS NULL OR visit_pttype.request_funds = '' OR visit_pttype.request_funds = 'N' ) THEN 'N' ELSE 'Y' END AS "UUC" ,
+ip.ipt_type_name,
+CASE WHEN (ipt.ipt_type IS NULL ) THEN 'N' ELSE 'Y' END AS "SVCTYPE"
+FROM ipt 
+LEFT JOIN ovst on ovst.an = ipt.an
+LEFT JOIN visit_pttype on visit_pttype.vn = ovst.vn
+LEFT JOIN dchstts dt on dt.dchstts=ipt.dchstts
+LEFT JOIN dchtype dp on dp.dchtype=ipt.dchtype
+LEFT JOIN ward w on w.ward=ipt.first_ward
+LEFT JOIN spclty s on s.spclty=ipt.spclty
+LEFT JOIN ipt_type ip on ip.ipt_type=ipt.ipt_type
+ WHERE ipt.dchdate between '2025-12-01'  and '2025-12-10'
+and ipt.pttype in(select pttype from pttype where isuse='Y' and hipdata_code in('UCS','WEL'))
+
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

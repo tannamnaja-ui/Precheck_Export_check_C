@@ -1,0 +1,37 @@
+ORF
+http://localhost:8080/fund_fdh
+เมื่อกดเมนู ORF
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT
+        v.hn   ,
+        v.vstdate as dateopd , 
+        ro.refer_hospcode ,
+        ro.refer_type,
+        (case when ro.referout_type_id is not null then 'Y' else 'N' end)as check_referout_type, 
+         sp.name as clinic,
+        (case when sp.provis_code is not null or sp.provis_code = '' then 'Y' else 'N' end)as check_clinic,
+        rn.vn AS referin,
+        ro.vn AS referout,  
+        (CASE WHEN  rn.vn IS NOT NULL OR  ro.vn IS NOT NULL THEN 'Y'ELSE 'N'END) AS check_vn
+FROM
+        ovst  v
+        LEFT OUTER JOIN ovstdiag o1 ON o1.hn = v.hn
+        LEFT OUTER JOIN spclty sp on sp.spclty = v.spclty 
+        LEFT OUTER JOIN referout ro on ro.vn = v.vn 
+        LEFT OUTER JOIN referin rn ON rn.vn = v.vn
+ WHERE v.vstdate between '2025-12-01'  and '2025-12-10'
+and v.pttype in(select pttype from pttype where isuse='Y' and hipdata_code in('UCS','WEL'))
+and (ro.vn=v.vn or rn.vn=v.vn)
+ORDER BY
+        v.hn,
+        v.vstdate,
+        ro.refer_hospcode,
+        ro.refer_type 
+
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

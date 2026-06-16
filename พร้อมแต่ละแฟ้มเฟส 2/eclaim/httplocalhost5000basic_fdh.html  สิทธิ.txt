@@ -1,0 +1,22 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู สิทธิการรักษา pttype ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select p.pttype,p.name as pttype_name,p.pcode,hipdata_code,nhso_code as inscl,
+grouper_version as drg_group,
+(case when grouper_version='6' then 'Y' else 'N' end) as drg_group_check 
+,print_presc_ned,
+(case when print_presc_ned='Y' then 'Y' else 'N' end) as print_presc_ned_check,
+p.export_eclaim,
+(case when p.export_eclaim='Y' then 'Y' else 'N' end) as export_eclaim_check,
+p.default_request_funds,
+(case when p.default_request_funds='Y' then 'Y' else 'N' end) as default_request_funds_check,
+p.finance_round_money,
+(case when p.finance_round_money='Y' then 'N' else 'Y' end) as finance_round_money_check,
+p.inc_round_money,
+(case when p.inc_round_money='Y' then 'N' else 'Y' end) as inc_round_money_check,
+p.round_money,
+(case when p.round_money='Y' then 'N' else 'Y' end) as round_money_check
+from pttype p
+where p.isuse='Y' 
+and p.hipdata_code in('UCS','WEL')
+and paidst='02'
+order by p.pttype                                        
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

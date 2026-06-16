@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - ระบบตรวจสอบข้อมูลส่งออก</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1565c0 0%, #1976d2 40%, #42a5f5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 48px;
+            width: 100%;
+            max-width: 660px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .logo-icon { font-size: 81px; margin-bottom: 12px; }
+        .logo-title {
+            font-size: 31px;
+            font-weight: 700;
+            color: #1565c0;
+            line-height: 1.3;
+        }
+        .logo-sub {
+            font-size: 21px;
+            color: #90a4ae;
+            margin-top: 6px;
+        }
+
+        h2 {
+            font-size: 26px;
+            color: #1565c0;
+            margin-bottom: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 21px;
+            font-weight: 600;
+            color: #546e7a;
+            margin-bottom: 7px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px 18px;
+            border: 2px solid #e3f2fd;
+            border-radius: 10px;
+            font-size: 22px;
+            color: #263238;
+            transition: all 0.2s;
+            outline: none;
+            background: #fafafa;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #42a5f5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(66,165,245,0.12);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 17px;
+            border: none;
+            border-radius: 10px;
+            font-size: 23px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            margin-top: 6px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(21,101,192,0.35);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(21,101,192,0.45); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #546e7a;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover { background: #e0e0e0; }
+
+        .btn-success {
+            background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(46,125,50,0.3);
+        }
+        .btn-success:hover { transform: translateY(-2px); }
+
+        .btn-outline {
+            background: white;
+            color: #1565c0;
+            border: 2px solid #1565c0;
+            margin-top: 10px;
+        }
+        .btn-outline:hover { background: #e3f2fd; }
+
+        .btn-sm {
+            width: auto;
+            padding: 12px 24px;
+            font-size: 21px;
+            margin-top: 0;
+        }
+
+        .divider {
+            border: none;
+            border-top: 2px solid #e3f2fd;
+            margin: 24px 0;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 10px;
+            font-size: 21px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .alert-error { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+        .alert-info { background: #e3f2fd; color: #1565c0; border-left: 4px solid #42a5f5; }
+
+        .conn-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 21px;
+            color: #546e7a;
+            background: #f5f9ff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+        }
+        .conn-status .dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #bdbdbd;
+            flex-shrink: 0;
+        }
+        .conn-status .dot.ok { background: #4caf50; }
+        .conn-status .dot.none { background: #ff9800; }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 21px;
+            color: #546e7a;
+            cursor: pointer;
+            margin-bottom: 20px;
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+        }
+        .back-btn:hover { color: #1565c0; }
+
+        .loading { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+<div class="card">
+
+    <!-- ====== VIEW: LOGIN ====== -->
+    <div class="view active" id="view-login">
+        <div class="logo-area">
+            <div class="logo-icon">🏥</div>
+            <div class="logo-title">ระบบตรวจสอบข้อมูลส่งออก</div>
+            <div class="logo-sub">Pre-Check Export System</div>
+        </div>
+
+        <div class="alert alert-error" id="login-error"></div>
+
+        <!-- Connection status badge -->
+        <div class="conn-status" id="conn-status">
+            <div class="dot none" id="conn-dot"></div>
+            <span id="conn-text">กำลังตรวจสอบการเชื่อมต่อ...</span>
+        </div>
+
+        <div class="form-group">
+            <label for="login-user">ชื่อผู้ใช้</label>
+            <input type="text" id="login-user" placeholder="กรอกชื่อผู้ใช้" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label for="login-pass">รหัสผ่าน</label>
+            <input type="password" id="login-pass" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
+        </div>
+
+        <button class="btn btn-primary" onclick="doLogin()" id="btn-login">🔐 เข้าสู่ระบบ</button>
+        <button class="btn btn-secondary" onclick="showView('settings')">⚙️ ตั้งค่าการเชื่อมต่อ</button>
+    </div>
+
+    <!-- ====== VIEW: SETTINGS ====== -->
+    <div class="view" id="view-settings">
+        <button class="back-btn" onclick="showView('login')">← กลับหน้าเข้าสู่ระบบ</button>
+        <h2>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล</h2>
+
+        <div class="alert alert-error"  id="set-error"></div>
+        <div class="alert alert-success" id="set-success"></div>
+
+        <div class="form-group">
+            <label>ประเภทฐานข้อมูล</label>
+            <select id="set-type">
+                <option value="mysql">MySQL / MariaDB</option>
+                <option value="postgresql">PostgreSQL</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>IP Server</label>
+                <input type="text" id="set-host" placeholder="เช่น 192.168.1.1">
+            </div>
+            <div class="form-group">
+                <label>Port</label>
+                <input type="number" id="set-port" placeholder="3306">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Database</label>
+            <input type="text" id="set-db" placeholder="ชื่อฐานข้อมูล">
+        </div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="set-user" placeholder="username ฐานข้อมูล">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="set-pass" placeholder="password ฐานข้อมูล">
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:8px;">
+            <button class="btn btn-outline btn-sm" onclick="testConn()">🔌 ทดสอบการเชื่อมต่อ</button>
+        </div>
+
+        <hr class="divider">
+        <button class="btn btn-success" onclick="saveConn()">💾 บันทึกข้อมูลเชื่อมต่อ</button>
+
+        <!-- ตารางที่จำเป็น -->
+        <hr class="divider">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-size:14px; font-weight:700; color:#1565c0;">🗄️ ตารางที่จำเป็นต้องมีในระบบ</span>
+            <button type="button" onclick="loginCheckTables()"
+                style="padding:7px 14px; background:linear-gradient(135deg,#42a5f5,#2196f3); color:white; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600;">
+                🔍 ตรวจสอบ
+            </button>
+        </div>
+        <div id="login-tables-list" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto;">
+            <div style="font-size:13px; color:#9e9e9e; text-align:center; padding:10px;">
+                บันทึกการเชื่อมต่อแล้วกด "ตรวจสอบ"
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const API = window.location.origin;
+
+// ==================== Auto-fix stale apiUrl ====================
+(() => {
+    try {
+        const s = localStorage.getItem('dbConnection');
+        if (s) {
+            const c = JSON.parse(s);
+            if (c.apiUrl && c.apiUrl !== API) {
+                c.apiUrl = API;
+                localStorage.setItem('dbConnection', JSON.stringify(c));
+            }
+        }
+    } catch(e) {}
+})();
+
+// ==================== View switching ====================
+function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    if (name === 'settings') loadSettingsForm();
+    if (name === 'login') updateConnStatus();
+}
+
+// ==================== Connection status ====================
+async function updateConnStatus() {
+    const saved = localStorage.getItem('dbConnection');
+    const dot  = document.getElementById('conn-dot');
+    const text = document.getElementById('conn-text');
+    if (!saved) {
+        dot.className = 'dot none';
+        text.textContent = 'ยังไม่ได้ตั้งค่าการเชื่อมต่อ — กรุณากด "ตั้งค่าการเชื่อมต่อ"';
+        return;
+    }
+    dot.className = 'dot ok';
+    text.textContent = 'กำลังโหลดชื่อโรงพยาบาล...';
+    try {
+        const c = JSON.parse(saved);
+        const res = await fetch(`${API}/api/get-hospital-name`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: c.host, port: c.port, database: c.database, user: c.user, password: c.password, type: c.type })
+        });
+        const data = await res.json();
+        if (data.success && (data.hospitalname || data.hospitalName)) {
+            text.textContent = data.hospitalname || data.hospitalName;
+        } else {
+            text.textContent = `${c.host}:${c.port}/${c.database}`;
+        }
+    } catch(e) {
+        const c = JSON.parse(saved);
+        text.textContent = `${c.host}:${c.port}/${c.database}`;
+    }
+}
+
+// ==================== Settings form ====================
+function loadSettingsForm() {
+    const saved = localStorage.getItem('dbConnection');
+    const defaultPort = { mysql: '3306', postgresql: '5432' };
+    if (saved) {
+        const c = JSON.parse(saved);
+        document.getElementById('set-type').value = c.type || 'mysql';
+        document.getElementById('set-host').value = c.host || '';
+        document.getElementById('set-port').value = c.port || defaultPort[c.type] || '3306';
+        document.getElementById('set-db').value   = c.database || '';
+        document.getElementById('set-user').value = c.user || '';
+        document.getElementById('set-pass').value = c.password || '';
+    }
+    document.getElementById('set-type').addEventListener('change', function() {
+        const p = document.getElementById('set-port');
+        if (!p.value || p.value === '3306' || p.value === '5432')
+            p.value = defaultPort[this.value];
+    });
+}
+
+function getSettingsValues() {
+    return {
+        apiUrl:   API,
+        type:     document.getElementById('set-type').value,
+        host:     document.getElementById('set-host').value.trim(),
+        port:     document.getElementById('set-port').value.trim(),
+        database: document.getElementById('set-db').value.trim(),
+        user:     document.getElementById('set-user').value.trim(),
+        password: document.getElementById('set-pass').value,
+    };
+}
+
+function showSetMsg(type, msg) {
+    ['set-error','set-success'].forEach(id => {
+        const el = document.getElementById(id);
+        el.style.display = 'none'; el.textContent = '';
+    });
+    const el = document.getElementById(type === 'error' ? 'set-error' : 'set-success');
+    el.textContent = msg; el.style.display = 'block';
+}
+
+async function testConn() {
+    const cfg = getSettingsValues();
+    if (!cfg.host || !cfg.port || !cfg.database || !cfg.user) {
+        showSetMsg('error', '⚠️ กรุณากรอกข้อมูลให้ครบ'); return;
+    }
+    showSetMsg('success', '🔌 กำลังทดสอบ...');
+    try {
+        const res  = await fetch(`${API}/api/test-connection`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cfg)
+        });
+        const data = await res.json();
+        if (data.success) showSetMsg('success', '✅ ' + data.message);
+        else              showSetMsg('error',   '❌ ' + data.error);
+    } catch(e) { showSetMsg('error', '❌ เชื่อมต่อ API ไม่ได้: ' + e.message); }
+}
+
+function saveConn() {
+    const cfg = getSettingsValues();
+    if (!cfg.host || !cfg.port || !cfg.database || !cfg.user) {
+        showSetMsg('error', '⚠️ กรุณากรอกข้อมูลให้ครบก่อนบันทึก'); return;
+    }
+    localStorage.setItem('dbConnection', JSON.stringify(cfg));
+    showSetMsg('success', '✅ บันทึกแล้ว กำลังกลับหน้าเข้าสู่ระบบ...');
+    setTimeout(() => showView('login'), 1000);
+}
+
+// ==================== Login ====================
+function showLoginError(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+}
+
+async function doLogin() {
+    const username = document.getElementById('login-user').value.trim();
+    const password = document.getElementById('login-pass').value;
+
+    showLoginError('');
+    if (!username || !password) { showLoginError('⚠️ กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'); return; }
+
+    const saved = localStorage.getItem('dbConnection');
+    if (!saved) { showLoginError('⚠️ ยังไม่ได้ตั้งค่าการเชื่อมต่อ กรุณากด "ตั้งค่าการเชื่อมต่อ" ก่อน'); return; }
+
+    const cfg = JSON.parse(saved);
+    const btn = document.getElementById('btn-login');
+    btn.textContent = '⏳ กำลังตรวจสอบ...';
+    btn.classList.add('loading');
+
+    try {
+        const res = await fetch(`${API}/api/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                host: cfg.host, port: cfg.port, database: cfg.database,
+                user: cfg.user, password: cfg.password, type: cfg.type,
+                loginUser: username, loginPass: password
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            localStorage.setItem('loginSession', JSON.stringify({
+                username: data.username,
+                name: data.name || username,
+                loginTime: Date.now()
+            }));
+            window.location.href = 'index_first.html';
+        } else {
+            showLoginError('❌ ' + (data.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'));
+        }
+    } catch(e) {
+        showLoginError('❌ เชื่อมต่อ API ไม่ได้: ' + e.message);
+    } finally {
+        btn.textContent = '🔐 เข้าสู่ระบบ';
+        btn.classList.remove('loading');
+    }
+}
+
+// Enter key to login
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('view-login').classList.contains('active')) doLogin();
+});
+
+// ==================== Required Tables (login page) ====================
+const LOGIN_TABLE_LABELS = {
+    position_check:                    'ตาราง position_check',
+    lab_items_no_lab_catalog:           'ฟิล lab_items.no_lab_catalog (CHAR 1)',
+    lab_items_sub_group_no_lab_catalog: 'ฟิล lab_items_sub_group.no_lab_catalog (CHAR 1)',
+    sks_icd10tm_check:                  'ตาราง sks_icd10tm_check',
+    drugitems_cancer:                   'ตาราง drugitems_cancer'
+};
+
+async function loginCheckTables() {
+    const cfg = getSettingsValues();
+    if (!cfg.host || !cfg.port || !cfg.database || !cfg.user) {
+        document.getElementById('login-tables-list').innerHTML =
+            '<div style="font-size:13px;color:#f44336;padding:10px;">⚠️ กรุณากรอกข้อมูลการเชื่อมต่อให้ครบก่อน</div>';
+        return;
+    }
+    const list = document.getElementById('login-tables-list');
+    list.innerHTML = '<div style="font-size:13px;color:#546e7a;padding:10px;text-align:center;">⏳ กำลังตรวจสอบ...</div>';
+    try {
+        const res = await fetch(`${API}/api/check-required-tables`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cfg)
+        });
+        const result = await res.json();
+        if (!result.success) {
+            list.innerHTML = `<div style="font-size:13px;color:#f44336;padding:10px;">❌ ${result.error}</div>`;
+            return;
+        }
+        loginRenderTables(result.data, cfg);
+    } catch(e) {
+        list.innerHTML = `<div style="font-size:13px;color:#f44336;padding:10px;">❌ ${e.message}</div>`;
+    }
+}
+
+function loginRenderTables(items, cfg) {
+    const list = document.getElementById('login-tables-list');
+    list.innerHTML = items.map(item => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:${item.exists?'#e8f5e9':'#fff3e0'};border-radius:8px;border-left:4px solid ${item.exists?'#4caf50':'#ff9800'};">
+            <div>
+                <div style="font-size:13px;font-weight:600;color:${item.exists?'#2e7d32':'#e65100'};">
+                    ${item.exists?'✅':'⚠️'} ${item.label}
+                </div>
+                <div style="font-size:12px;color:${item.exists?'#4caf50':'#ff9800'};margin-top:2px;">
+                    ${item.exists?'มีในฐานข้อมูลแล้ว':'ยังไม่มีในฐานข้อมูล'}
+                </div>
+            </div>
+            <button type="button"
+                onclick="${item.exists?'':  `loginCreateTable('${item.key}')`}"
+                ${item.exists?'disabled':''}
+                style="padding:7px 16px;border:none;border-radius:7px;font-size:13px;font-weight:700;
+                    cursor:${item.exists?'default':'pointer'};
+                    background:${item.exists?'#bdbdbd':'linear-gradient(135deg,#ff9800,#f57c00)'};
+                    color:white;white-space:nowrap;">
+                ${item.exists?'มีแล้ว':'➕ เพิ่มตาราง'}
+            </button>
+        </div>
+    `).join('');
+}
+
+async function loginCreateTable(key) {
+    const cfg = getSettingsValues();
+    if (!confirm(`ต้องการเพิ่ม ${LOGIN_TABLE_LABELS[key]||key} ในฐานข้อมูลหรือไม่?`)) return;
+    try {
+        const res = await fetch(`${API}/api/create-required-table`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...cfg, key })
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert(`✅ เพิ่ม ${LOGIN_TABLE_LABELS[key]||key} สำเร็จ`);
+            loginCheckTables();
+        } else {
+            alert(`❌ เกิดข้อผิดพลาด: ${result.error}`);
+        }
+    } catch(e) { alert(`❌ ${e.message}`); }
+}
+
+// Auto-check when entering settings view
+const _origShowView = showView;
+window.showView = function(name) {
+    _origShowView(name);
+    if (name === 'settings') {
+        const saved = localStorage.getItem('dbConnection');
+        if (saved) setTimeout(loginCheckTables, 400);
+    }
+};
+
+// Init
+updateConnStatus();
+</script>
+<script src="zoom_control.js"></script>
+</body>
+</html>

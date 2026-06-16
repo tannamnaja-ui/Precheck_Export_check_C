@@ -1,0 +1,77 @@
+
+
+
+
+http://localhost:8080/fund_ssop.html 
+เมื่อกดเมนู Billtran
+บิลทั่วไป
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล 
+select      
+vp.auth_code as authcode,
+(case when vp.auth_code is not null then 'Y' else 'N' end)as check_authcode,
+vp.hospmain as hmain,
+(case when vp.hospmain is not null then 'Y' else 'N' end)as check_hmain,
+vp.pttypeno as memberno,
+(case when vp.pttypeno is not null then 'Y' else 'N' end)as check_memberno,
+rd.debt_id as invno,
+(case when rd.debt_id is not null then 'Y' else 'N' end)as check_invno,
+op.hospitalcode as hcode,
+(case when op.hospitalcode is not null then 'Y' else 'N' end)as check_hcode,
+rc.status as billno,
+(case when rc.status = 'OK' then 'Y' 
+      when rc.status = 'ABORT' then 'N' 
+      when rc.status is null or (rc.status) = ' ' then 'Null'
+      else null end) as check_billno,
+p.cid as pid,
+vp.pttypeno AS PayPlan,  
+rc.bill_amount AS Paid,
+rd.amount,
+rd.amount as ClaimAmt,
+p.hn, 
+null as VerCode,
+null as dttran,
+'1' as Tflag,
+ov.vn,
+ov.vstdate,
+concat(p.pname,' ',p.lname) as name,
+null as OtherPayplan,
+null as OtherPay
+
+from ovst ov
+left join ovst_sss_billtran ob on ob.vn = ov.vn
+left join vn_stat vn on vn.vn = ov.vn
+left join visit_pttype vp on vp.vn = ov.vn
+left join patient p on p.hn = ov.hn
+left join rcpt_print rc on rc.vn = ov.vn
+left join rcpt_debt rd on rd.vn = ov.vn
+left join opdconfig op on op.hospitalcode = op.hospitalcode
+    
+where ov.vstdate between '2025-12-01'  and '2025-12-15'
+and vp.pttype in(select pttype from pttype where isuse='Y' and hipdata_code='SSS' )
+group by 
+vp.auth_code, 
+vp.hospmain, 
+vp.pttypeno, 
+rc.status, 
+rc.bill_amount, 
+ov.vn,
+ov.vstdate,
+rd.debt_id, 
+rd.amount, 
+p.hn,
+p.cid, 
+op.hospitalcode,
+p.pname,
+p.lname
+
+แล้วแสดงข้อมูลทุกฟิลที่ กรุณาเลือกช่วงวันที่แล้วคลิก "🔍 ค้นหา" เพื่อแสดงข้อมูล ให้แทนที่ตรงนี้ไปเลย
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='SSS') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+
+
+
+
+http://localhost:8080/fund_ssop.html Billtran ถ้า ✓  เป็น N ให้ช่องข้างหน้าของตัวนั้นเป็นสีแดงทั้งช่อง

@@ -1,0 +1,12 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู หัตถการ OR operation_item ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select e.operation_item_id,e.name,n.price,n.name as nonname,
+(case when e.icode<>'' and e.icode=n.icode  then 'Y' else 'N' end)as price_check,
+e.icd9,
+(case when e.icd9=m.code then 'Y' else 'N' end)as icd9cm_check
+from operation_item  e 
+left outer join nondrugitems n on n.icode=e.icode
+left outer join icd9cm1 m on m.code=e.icd9
+where e.active_status='Y'
+and n.income='11'
+order by e.name
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

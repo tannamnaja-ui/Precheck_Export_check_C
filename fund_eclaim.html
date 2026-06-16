@@ -1,0 +1,3139 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Claim</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .full-width-container {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+            padding: 20px;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            min-height: calc(100vh - 140px);
+        }
+
+        /* Left Sidebar - 20% */
+        .left-sidebar {
+            width: 20%;
+            min-width: 200px;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+            overflow-y: auto;
+        }
+
+        .sidebar-title {
+            color: #1565c0;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        .file-menu-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f5f9ff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .file-menu-item:hover {
+            background: #e3f2fd;
+            border-left-color: #42a5f5;
+            transform: translateX(5px);
+        }
+
+        .file-menu-item.active {
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            border-left-color: #1976d2;
+        }
+
+        .file-menu-item-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .file-menu-item-code {
+            font-size: 15px;
+            opacity: 0.8;
+        }
+
+        /* Right Content - 80% */
+        .right-content {
+            width: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 25px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+        }
+
+        .top-bar h1 {
+            color: #1565c0;
+            font-size: 28px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .btn-home {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-home:hover {
+            background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+            margin-bottom: 20px;
+        }
+
+        .filter-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #546e7a;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .filter-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e3f2fd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-group input:focus {
+            outline: none;
+            border-color: #42a5f5;
+            box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
+        }
+
+        .btn-search {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-search:hover {
+            background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+            transform: translateY(-2px);
+        }
+
+        /* Dashboard Statistics */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(66, 165, 245, 0.25);
+        }
+
+        .stat-card.total {
+            border-left: 4px solid #42a5f5;
+        }
+
+        .stat-card.passed {
+            border-left: 4px solid #4caf50;
+        }
+
+        .stat-card.needfix {
+            border-left: 4px solid #ff9800;
+        }
+
+        .stat-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #546e7a;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1565c0;
+        }
+
+        .stat-value.green {
+            color: #4caf50;
+        }
+
+        .stat-value.orange {
+            color: #ff9800;
+        }
+
+        /* Content Area */
+        .content-area {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
+            border: 1px solid #e3f2fd;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #546e7a;
+        }
+
+        .welcome-message h2 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+</head>
+<body>
+    <div class="full-width-container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h1>💳 E-Claim</h1>
+            <button class="btn-home" onclick="window.location.href='index_fund.html'">← กลับหน้ากองทุน</button>
+        </div>
+
+        <!-- Main Layout: Sidebar + Content -->
+        <div class="main-layout">
+            <!-- Left Sidebar (20%) -->
+            <div class="left-sidebar">
+                <div class="sidebar-title">📁 แฟ้มกองทุน</div>
+                <div class="file-menu-item active" data-file="all">
+                    <div class="file-menu-item-title">รายการที่ต้องแก้ไขทั้งหมด</div>
+                    <div class="file-menu-item-code">All Files</div>
+                </div>
+                <div class="file-menu-item" data-file="ins">
+                    <div class="file-menu-item-title">INS</div>
+                    <div class="file-menu-item-code">สิทธิการรักษา</div>
+                </div>
+                <div class="file-menu-item" data-file="pat">
+                    <div class="file-menu-item-title">PAT</div>
+                    <div class="file-menu-item-code">ข้อมูลผู้ป่วย</div>
+                </div>
+                <div class="file-menu-item" data-file="opd">
+                    <div class="file-menu-item-title">OPD</div>
+                    <div class="file-menu-item-code">ผู้ป่วยนอก</div>
+                </div>
+                <div class="file-menu-item" data-file="orf">
+                    <div class="file-menu-item-title">ORF</div>
+                    <div class="file-menu-item-code">ส่งต่อผู้ป่วยนอก</div>
+                </div>
+                <div class="file-menu-item" data-file="odx">
+                    <div class="file-menu-item-title">ODX</div>
+                    <div class="file-menu-item-code">วินิจฉัยผู้ป่วยนอก</div>
+                </div>
+                <div class="file-menu-item" data-file="oop">
+                    <div class="file-menu-item-title">OOP</div>
+                    <div class="file-menu-item-code">หัตถการผู้ป่วยนอก</div>
+                </div>
+                <div class="file-menu-item" data-file="irf">
+                    <div class="file-menu-item-title">IRF</div>
+                    <div class="file-menu-item-code">ส่งต่อผู้ป่วยใน</div>
+                </div>
+                <div class="file-menu-item" data-file="ipd">
+                    <div class="file-menu-item-title">IPD</div>
+                    <div class="file-menu-item-code">ผู้ป่วยใน</div>
+                </div>
+                <div class="file-menu-item" data-file="iop">
+                    <div class="file-menu-item-title">IOP</div>
+                    <div class="file-menu-item-code">หัตถการผู้ป่วยใน</div>
+                </div>
+                <div class="file-menu-item" data-file="cht">
+                    <div class="file-menu-item-title">CHT</div>
+                    <div class="file-menu-item-code">ค่าใช้จ่ายรวม</div>
+                </div>
+                <div class="file-menu-item" data-file="cha">
+                    <div class="file-menu-item-title">CHA</div>
+                    <div class="file-menu-item-code">รายการค่าใช้จ่าย</div>
+                </div>
+                <div class="file-menu-item" data-file="idx">
+                    <div class="file-menu-item-title">IDX</div>
+                    <div class="file-menu-item-code">วินิจฉัยผู้ป่วยใน</div>
+                </div>
+                <div class="file-menu-item" data-file="aer">
+                    <div class="file-menu-item-title">AER</div>
+                    <div class="file-menu-item-code">อุบัติเหตุฉุกเฉิน</div>
+                </div>
+                <div class="file-menu-item" data-file="adp">
+                    <div class="file-menu-item-title">ADP</div>
+                    <div class="file-menu-item-code">บริการเพิ่มเติม</div>
+                </div>
+                <div class="file-menu-item" data-file="lvd">
+                    <div class="file-menu-item-title">LVD</div>
+                    <div class="file-menu-item-code">ข้อมูลการคลอด</div>
+                </div>
+                <div class="file-menu-item" data-file="dru">
+                    <div class="file-menu-item-title">DRU</div>
+                    <div class="file-menu-item-code">ยาและเวชภัณฑ์</div>
+                </div>
+                <div class="file-menu-item" data-file="labfu">
+                    <div class="file-menu-item-title">LABFU</div>
+                    <div class="file-menu-item-code">ผลแล็บติดตาม</div>
+                </div>
+                <div class="file-menu-item" data-file="phdb">
+                    <div class="file-menu-item-title">PHDB</div>
+                    <div class="file-menu-item-code">ข้อมูลสาธารณสุข</div>
+                </div>
+            </div>
+
+            <!-- Right Content (80%) -->
+            <div class="right-content">
+                <!-- Filter Panel -->
+        <div class="filter-panel">
+            <div class="filter-content">
+                <div class="filter-group">
+                    <label for="dateFrom">วันที่เริ่มต้น:</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="filter-group">
+                    <label for="dateTo">วันที่สิ้นสุด:</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <div class="filter-group">
+                    <label for="pttype-dropdown">สิทธิการรักษา:</label>
+                    <div style="position: relative;">
+                        <button type="button" id="pttype-dropdown" style="width: 100%; padding: 10px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 14px; background: white; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <span id="pttype-selected-text">เลือกสิทธิการรักษา</span>
+                            <span>▼</span>
+                        </button>
+                        <div id="pttype-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #e3f2fd; border-radius: 8px; margin-top: 5px; z-index: 1000; box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);">
+                            <!-- Checkboxes will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-buttons" style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
+                    <button class="btn-search" onclick="searchData()">🔍 ค้นหา</button>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #c62828; font-weight: 600; white-space: nowrap;">
+                        <input type="checkbox" id="show-errors-only" onchange="rerenderCurrentMenu()" style="width: 16px; height: 16px; cursor: pointer; accent-color: #c62828;">
+                        แสดงเฉพาะที่ต้องแก้ไข
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Statistics (3 boxes) -->
+        <div class="dashboard-stats" id="dashboard-stats">
+            <div class="stat-card total">
+                <div class="stat-icon">👥</div>
+                <div class="stat-label">จำนวนผู้รับบริการทั้งหมด</div>
+                <div class="stat-value" id="stat-total">-</div>
+            </div>
+
+            <div class="stat-card passed">
+                <div class="stat-icon">✅</div>
+                <div class="stat-label">ผ่านการตรวจสอบ</div>
+                <div class="stat-value green" id="stat-passed">-</div>
+            </div>
+
+            <div class="stat-card needfix">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-label">ต้องแก้ไขก่อนส่ง</div>
+                <div class="stat-value orange" id="stat-needfix">-</div>
+            </div>
+        </div>
+
+                <!-- Content Area -->
+                <div class="content-area" id="content-area">
+                    <div class="welcome-message">
+                        <h2>เลือกช่วงวันที่</h2>
+                        <p>กรุณาเลือกช่วงวันที่แล้วคลิก "🔍 ค้นหา" เพื่อแสดงข้อมูล</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dynamic API base URL - reads apiUrl saved in localStorage by connection form
+        window.API_BASE = (() => {
+            try {
+                const c = JSON.parse(localStorage.getItem('dbConnection'));
+                return (c && c.apiUrl) ? c.apiUrl.replace(/\/$/, '') : 'http://localhost:3002';
+            } catch(e) { return 'http://localhost:3002'; }
+        })();
+    </script>
+    <script src="script_fund_detail.js"></script>
+    <script>
+        // Set fund type and current file view
+        window.fundType = 'eclaim';
+        window.currentFileView = 'all';
+        window.hipdataCode = 'ECLAIM';
+
+        const API_BASE = window.API_BASE;
+
+        // Load pttype checkboxes on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadPttypeCheckboxes();
+            setupDropdown();
+            setupFileMenu();
+        });
+
+        // Setup dropdown toggle
+        function setupDropdown() {
+            const dropdownButton = document.getElementById('pttype-dropdown');
+            const dropdownMenu = document.getElementById('pttype-dropdown-menu');
+
+            // Toggle dropdown on button click
+            dropdownButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.style.display = dropdownMenu.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdownButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+        }
+
+        // Update selected text based on checked checkboxes
+        function updateSelectedText() {
+            const checkboxes = document.querySelectorAll('#pttype-dropdown-menu input[type="checkbox"]:checked');
+            const selectedText = document.getElementById('pttype-selected-text');
+
+            if (checkboxes.length === 0) {
+                selectedText.textContent = 'เลือกสิทธิการรักษา';
+            } else if (checkboxes.length === 1) {
+                selectedText.textContent = checkboxes[0].nextElementSibling.textContent;
+            } else {
+                selectedText.textContent = `เลือกแล้ว ${checkboxes.length} รายการ`;
+            }
+        }
+
+        // Function to load pttype checkboxes from database
+        async function loadPttypeCheckboxes() {
+            try {
+                const config = getDatabaseConfig();
+                if (!config) {
+                    console.error('No database configuration found');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/get-pttype-list`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        host: config.host,
+                        port: config.port,
+                        database: config.database,
+                        user: config.user,
+                        password: config.password,
+                        type: config.type,
+                        hipdata_codes: ['UCS','WEL','LGO','OFC','STP','']
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const container = document.getElementById('pttype-dropdown-menu');
+                    container.innerHTML = '';
+
+                    result.data.forEach(pttype => {
+                        const checkboxWrapper = document.createElement('div');
+                        checkboxWrapper.style.cssText = 'padding: 10px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s;';
+                        checkboxWrapper.addEventListener('mouseenter', function() {
+                            this.style.background = '#f5f9ff';
+                        });
+                        checkboxWrapper.addEventListener('mouseleave', function() {
+                            this.style.background = 'white';
+                        });
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `pttype-${pttype.pttype}`;
+                        checkbox.value = pttype.pttype;
+                        checkbox.name = 'pttype';
+                        checkbox.style.cssText = 'cursor: pointer; width: 16px; height: 16px;';
+                        checkbox.addEventListener('change', updateSelectedText);
+
+                        const label = document.createElement('label');
+                        label.htmlFor = `pttype-${pttype.pttype}`;
+                        label.textContent = pttype.name;
+                        label.style.cssText = 'cursor: pointer; font-size: 14px; color: #546e7a; flex: 1;';
+
+                        checkboxWrapper.appendChild(checkbox);
+                        checkboxWrapper.appendChild(label);
+
+                        // Allow clicking on wrapper to toggle checkbox
+                        checkboxWrapper.addEventListener('click', function(e) {
+                            if (e.target !== checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                                updateSelectedText();
+                            }
+                        });
+
+                        container.appendChild(checkboxWrapper);
+                    });
+                } else {
+                    console.error('Failed to load pttype list:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading pttype checkboxes:', error);
+            }
+        }
+
+        // Setup file menu click handlers
+        function showBilltranHeaders() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📊 Billtran - บิลทั่วไป (0 รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPage(this.value)">
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HMAIN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">AUTHCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">MEMBERNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BILLNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PAID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">AMOUNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="21" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+
+        function showBillitemsHeaders() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📊 BillItems - รายการในบิล (0 รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageBI(this.value)">
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DEBT_ID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INCOME</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ICODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อค่าใช้จ่าย</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">QTY</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UNITPRICE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SUM_PRICE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SKS_COVERAGE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENABLE_SKS_OPD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="24" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+
+        function showOpdxHeaders() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">🩺 OPDx - การวินิจฉัย (0 รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOX(this.value)">
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">class</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SvID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">sl</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">codeset</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Code</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Desc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="15" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+
+        function setupFileMenu() {
+            const fileMenuItems = document.querySelectorAll('.file-menu-item');
+            fileMenuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all items
+                    fileMenuItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to clicked item
+                    this.classList.add('active');
+
+                    // Set current file view
+                    window.currentFileView = this.getAttribute('data-file');
+
+                    // Auto-search when clicking menu
+                    const dateFrom = document.getElementById('dateFrom').value;
+                    const dateTo = document.getElementById('dateTo').value;
+                    const ft = this.getAttribute('data-file');
+
+                    if (dateFrom && dateTo) {
+                        searchData();
+                    } else if (ft === 'billtran') {
+                        showBilltranHeaders();
+                    } else if (ft === 'billitems') {
+                        showBillitemsHeaders();
+                    } else if (ft === 'opdx') {
+                        showOpdxHeaders();
+                    } else if (ft !== 'all') {
+                        showFdhMenuPlaceholder(ft);
+                    }
+                });
+            });
+        }
+
+        // Override searchData function to handle different file types
+        const originalSearchData = window.searchData;
+        window.searchData = async function() {
+            const fileType = window.currentFileView || 'all';
+
+            if (fileType === 'billtran') {
+                await searchBilltran();
+            } else if (fileType === 'billitems') {
+                await searchBillitems();
+            } else if (fileType === 'opservice') {
+                await searchOpservice();
+            } else if (fileType === 'dispenseditem') {
+                await searchDispenseditem();
+            } else if (fileType === 'dispensing') {
+                await searchDispensing();
+            } else if (fileType === 'opdx') {
+                await searchOpdx();
+            } else if (fileType === 'all') {
+                await searchFdhAllErrors();
+            } else if (fileType === 'ins') {
+                await searchFdhIns();
+            } else if (fileType === 'pat') {
+                await searchFdhPat();
+            } else if (fileType === 'opd') {
+                await searchFdhOpd();
+            } else if (fileType === 'orf') {
+                await searchFdhOrf();
+            } else if (fileType === 'odx') {
+                await searchFdhOdx();
+            } else if (fileType === 'oop') {
+                await searchFdhOop();
+            } else if (fileType === 'irf') {
+                await searchFdhIrf();
+            } else if (fileType === 'ipd') {
+                await searchFdhIpd();
+            } else if (fileType === 'iop') {
+                await searchFdhIop();
+            } else if (fileType === 'cht') {
+                await searchFdhCht();
+            } else if (fileType === 'cha') {
+                await searchFdhCha();
+            } else if (fileType === 'idx') {
+                await searchFdhIdx();
+            } else if (fileType === 'lvd') {
+                await searchFdhLvd();
+            } else if (fileType === 'dru') {
+                await searchFdhDru();
+            } else if (fileType === 'labfu') {
+                await searchFdhLabfu();
+            } else if (fileType === 'phdb') {
+                await searchFdhPhdb();
+            } else if (['aer','adp'].includes(fileType)) {
+                await searchFdhMenu(fileType);
+            } else {
+                document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>🚧 กำลังพัฒนา</h2><p>${fileType.toUpperCase()} จะพร้อมใช้งานเร็วๆ นี้</p></div>`;
+            }
+        };
+
+        // Search Billtran data
+        async function searchBilltran() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            if (!dateFrom || !dateTo) {
+                alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด');
+                return;
+            }
+
+            const fundType = window.fundType || 'ssop';
+            const hipdataCode = window.hipdataCode || 'SSS';
+            const selectedPttypes = getSelectedPttypes();
+
+            console.log(`🔍 Searching Billtran for ${fundType} from ${dateFrom} to ${dateTo}`);
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div class="welcome-message">
+                    <h2>กำลังโหลดข้อมูล Billtran...</h2>
+                    <p>กรุณารอสักครู่</p>
+                </div>
+            `;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) {
+                    alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/get-billtran`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        host: config.host,
+                        port: config.port,
+                        database: config.database,
+                        user: config.user,
+                        password: config.password,
+                        type: config.type,
+                        dateFrom: dateFrom,
+                        dateTo: dateTo,
+                        selectedPttypes: selectedPttypes,
+                        hipdata_code: hipdataCode
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const checkFields = ['check_hcode','check_hmain','check_authcode','check_memberno','check_invno','check_billno'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    displayBilltranTable(result.data);
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                console.error('Error fetching Billtran:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // Pagination state
+        let currentPage = 1;
+        let rowsPerPage = 20;
+        let allBilltranData = [];
+
+        // Display Billtran table
+        function displayBilltranTable(data) {
+            if (data.length === 0) {
+                showBilltranHeaders();
+                return;
+            }
+            allBilltranData = data;
+            currentPage = 1;
+            renderBilltranTable();
+        }
+
+        // Change rows per page
+        function changeRowsPerPage(value) {
+            rowsPerPage = parseInt(value);
+            currentPage = 1;
+            renderBilltranTable();
+        }
+
+        // Change page
+        function goToPage(page) {
+            const totalPages = Math.ceil(allBilltranData.length / rowsPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderBilltranTable();
+            // Scroll to top
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Render table with pagination
+        function renderBilltranTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRedCell = (row) => [row.check_hcode, row.check_hmain, row.check_authcode, row.check_memberno, row.check_invno, row.check_billno].some(v => v === 'N');
+            const filteredData = showErrorsOnly ? allBilltranData.filter(hasRedCell) : allBilltranData;
+            const effectiveRowsPerPage = showErrorsOnly ? (filteredData.length || 1) : rowsPerPage;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPage - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            let tableHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h3 style="color: #1565c0; margin: 0;">📊 Billtran - บิลทั่วไป (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBilltranData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color: #546e7a; font-size: 14px; font-weight: 600;">แสดง:</label>
+                        <select id="rows-per-page" style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 14px; cursor: pointer;" onchange="changeRowsPerPage(this.value)">
+                            <option value="20" ${rowsPerPage === 20 ? 'selected' : ''}>20</option>
+                            <option value="50" ${rowsPerPage === 50 ? 'selected' : ''}>50</option>
+                            <option value="100" ${rowsPerPage === 100 ? 'selected' : ''}>100</option>
+                            <option value="200" ${rowsPerPage === 200 ? 'selected' : ''}>200</option>
+                            <option value="500" ${rowsPerPage === 500 ? 'selected' : ''}>500</option>
+                            <option value="1000" ${rowsPerPage === 1000 ? 'selected' : ''}>1000</option>
+                        </select>
+                        <span style="color: #546e7a; font-size: 14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%); color: white;">
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">ลำดับ</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">VN</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">HN</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">วันที่</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">PID</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">HCODE</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">HMAIN</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">AUTHCODE</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">MEMBERNO</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">INVNO</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">BILLNO</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">PAID</th>
+                                <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">AMOUNT</th>
+                                <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">CLAIMAMT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const bgColor = index % 2 === 0 ? '#f5f9ff' : 'white';
+                const actualIndex = startIndex + index + 1;
+
+                // Helper function to get cell background color
+                const getCellBg = (checkValue) => {
+                    return checkValue === 'N' ? '#f44336' : bgColor;
+                };
+                const getCellColor = (checkValue) => {
+                    return checkValue === 'N' ? 'color: white;' : '';
+                };
+
+                tableHTML += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">${actualIndex}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd;">${row.vn || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd;">${row.hn || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd;">${row.name || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd;">${row.vstdate || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd;">${row.pid || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_hcode)}; ${getCellColor(row.check_hcode)}">${row.hcode || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_hcode === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_hcode || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_hmain)}; ${getCellColor(row.check_hmain)}">${row.hmain || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_hmain === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_hmain || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_authcode)}; ${getCellColor(row.check_authcode)}">${row.authcode || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_authcode === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_authcode || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_memberno)}; ${getCellColor(row.check_memberno)}">${row.memberno || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_memberno === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_memberno || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_invno)}; ${getCellColor(row.check_invno)}">${row.invno || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_invno === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_invno || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${row.check_billno === 'N' ? '#f44336' : (row.check_billno === 'Null' ? '#fff3e0' : bgColor)}; ${row.check_billno === 'N' ? 'color: white;' : ''}">${row.billno || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_billno === 'Y' ? '#4caf50' : (row.check_billno === 'Null' ? '#ff9800' : '#f44336')}; font-weight: bold;">${row.check_billno || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.paid ? parseFloat(row.paid).toFixed(2) : '0.00'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.amount ? parseFloat(row.amount).toFixed(2) : '0.00'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.claimamt ? parseFloat(row.claimamt).toFixed(2) : '0.00'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 15px;">
+                    <div style="color: #546e7a; font-size: 14px;">
+                        แสดง ${startIndex + 1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ
+                    </div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            `;
+
+            // Generate pagination buttons
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            // Previous button
+            tableHTML += `
+                <button onclick="goToPage(${currentPage - 1})"
+                    style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${currentPage === 1 ? '#f5f5f5' : 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)'}; color: ${currentPage === 1 ? '#ccc' : 'white'}; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'}; font-weight: 600; transition: all 0.3s;"
+                    ${currentPage === 1 ? 'disabled' : ''}>
+                    ← ก่อนหน้า
+                </button>
+            `;
+
+            // First page
+            if (startPage > 1) {
+                tableHTML += `
+                    <button onclick="goToPage(1)"
+                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: white; color: #1565c0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        1
+                    </button>
+                `;
+                if (startPage > 2) {
+                    tableHTML += `<span style="padding: 8px; color: #546e7a;">...</span>`;
+                }
+            }
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentPage;
+                tableHTML += `
+                    <button onclick="goToPage(${i})"
+                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${isActive ? 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)' : 'white'}; color: ${isActive ? 'white' : '#1565c0'}; cursor: pointer; font-weight: 600; transition: all 0.3s; ${isActive ? 'box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);' : ''}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            // Last page
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    tableHTML += `<span style="padding: 8px; color: #546e7a;">...</span>`;
+                }
+                tableHTML += `
+                    <button onclick="goToPage(${totalPages})"
+                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: white; color: #1565c0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        ${totalPages}
+                    </button>
+                `;
+            }
+
+            // Next button
+            tableHTML += `
+                <button onclick="goToPage(${currentPage + 1})"
+                    style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${currentPage === totalPages ? '#f5f5f5' : 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)'}; color: ${currentPage === totalPages ? '#ccc' : 'white'}; cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'}; font-weight: 600; transition: all 0.3s;"
+                    ${currentPage === totalPages ? 'disabled' : ''}>
+                    ถัดไป →
+                </button>
+            `;
+
+            tableHTML += `
+                    </div>
+                </div>
+            `;
+
+            contentArea.innerHTML = tableHTML;
+        }
+        // ==================== DispensedItem ====================
+
+        let currentPageDT = 1;
+        let rowsPerPageDT = 20;
+        let allDispenseditemData = [];
+
+        async function searchDispenseditem() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล DispensedItem...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-dispenseditem`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: getSelectedPttypes(),
+                        hipdata_code: window.hipdataCode || 'SSS'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_opi_dispense_id','check_icode','check_qty','check_drugusaged',
+                        'check_sum_price','check_icode1','check_sks_drug_code','check_units',
+                        'check_shortlist','check_drugusage','check_unitprice','check_sks_reimb_price'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allDispenseditemData = result.data;
+                    currentPageDT = 1;
+                    renderDispenseditemTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        function changeRowsPerPageDT(value) { rowsPerPageDT = parseInt(value); currentPageDT = 1; renderDispenseditemTable(); }
+
+        function goToPageDT(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const checkFields = ['check_opi_dispense_id','check_icode','check_qty','check_drugusaged',
+                'check_sum_price','check_icode1','check_sks_drug_code','check_units',
+                'check_shortlist','check_drugusage','check_unitprice','check_sks_reimb_price'];
+            const filtered = showErrorsOnly ? allDispenseditemData.filter(r => checkFields.some(k => r[k] === 'N')) : allDispenseditemData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageDT);
+            if (page < 1 || page > totalPages) return;
+            currentPageDT = page;
+            renderDispenseditemTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderDispenseditemTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const checkFields = ['check_opi_dispense_id','check_icode','check_qty','check_drugusaged',
+                'check_sum_price','check_icode1','check_sks_drug_code','check_units',
+                'check_shortlist','check_drugusage','check_unitprice','check_sks_reimb_price'];
+            const filteredData = showErrorsOnly ? allDispenseditemData.filter(r => checkFields.some(k => r[k] === 'N')) : allDispenseditemData;
+            const effectiveRowsPerPage = showErrorsOnly ? (filteredData.length || 1) : rowsPerPageDT;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageDT - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (v) => {
+                const color = v === 'Y' ? '#4caf50' : (v === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${v || '-'}</span></td>`;
+            };
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">💊 DispensedItem - รายการยาที่จ่าย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispenseditemData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageDT(this.value)">
+                            <option value="20" ${rowsPerPageDT===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageDT===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageDT===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageDT===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageDT===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageDT===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">OPI_DISPENSE_ID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ICODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">QTY</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DRUGUSAGE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VSTDATE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SUM_PRICE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SKS_PRODUCT_CATEGORY</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ICODE1</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SKS_DRUG_CODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UNITS</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SHORTLIST</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DRUGUSAGE1</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UNITPRICE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SKS_REIMB_PRICE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">REIMBAMT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PRDSE CODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCOUT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCAT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">MULTIDISP</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SUPPLYFOR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                const fmt = (v) => v != null ? parseFloat(v).toFixed(2) : '-';
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        ${cell(row.opi_dispense_id, row.check_opi_dispense_id)}
+                        ${checkCell(row.check_opi_dispense_id)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vn || '-'}</td>
+                        ${cell(row.icode, row.check_icode)}
+                        ${checkCell(row.check_icode)}
+                        ${cell(row.qty, row.check_qty)}
+                        ${checkCell(row.check_qty)}
+                        ${cell(row.drugusage, row.check_drugusaged)}
+                        ${checkCell(row.check_drugusaged)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vstdate || '-'}</td>
+                        ${cell(row.sum_price != null ? fmt(row.sum_price) : null, row.check_sum_price)}
+                        ${checkCell(row.check_sum_price)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.sks_product_category_id || '-'}</td>
+                        ${cell(row.icode1, row.check_icode1)}
+                        ${checkCell(row.check_icode1)}
+                        ${cell(row.sks_drug_code, row.check_sks_drug_code)}
+                        ${checkCell(row.check_sks_drug_code)}
+                        ${cell(row.units, row.check_units)}
+                        ${checkCell(row.check_units)}
+                        ${cell(row.shortlist, row.check_shortlist)}
+                        ${checkCell(row.check_shortlist)}
+                        ${cell(row.drugusage1, row.check_drugusage)}
+                        ${checkCell(row.check_drugusage)}
+                        ${cell(row.unitprice1 != null ? fmt(row.unitprice1) : null, row.check_unitprice)}
+                        ${checkCell(row.check_unitprice)}
+                        ${cell(row.sks_reimb_price != null ? fmt(row.sks_reimb_price) : null, row.check_sks_reimb_price)}
+                        ${checkCell(row.check_sks_reimb_price)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:right;">${row.reimbamt != null ? fmt(row.reimbamt) : '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.prdsecode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimcout || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimcat || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.multidisp || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.supplyfor || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageDT - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            tableHTML += `<button onclick="goToPageDT(${currentPageDT-1})" style="${btnStyle(false)} ${currentPageDT===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDT===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageDT(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageDT(${i})" style="${btnStyle(i===currentPageDT)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageDT(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageDT(${currentPageDT+1})" style="${btnStyle(false)} ${currentPageDT===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDT===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // ==================== Dispensing ====================
+
+        let currentPageDI = 1;
+        let rowsPerPageDI = 20;
+        let allDispensingData = [];
+
+        async function searchDispensing() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล Dispensing...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-dispensing`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: getSelectedPttypes(),
+                        hipdata_code: window.hipdataCode || 'SSS'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_debt_id','check_income','check_typein','check_typeout','check_svpid','check_stdcode'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allDispensingData = result.data;
+                    currentPageDI = 1;
+                    renderDispensingTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        function changeRowsPerPageDI(value) { rowsPerPageDI = parseInt(value); currentPageDI = 1; renderDispensingTable(); }
+
+        function goToPageDI(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_debt_id','check_income','check_typein','check_typeout','check_svpid','check_stdcode'].some(k => row[k] === 'N');
+            const filtered = showErrorsOnly ? allDispensingData.filter(hasRed) : allDispensingData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageDI);
+            if (page < 1 || page > totalPages) return;
+            currentPageDI = page;
+            renderDispensingTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderDispensingTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_debt_id','check_income','check_typein','check_typeout','check_svpid','check_stdcode'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allDispensingData.filter(hasRed) : allDispensingData;
+            const effectiveRowsPerPage = showErrorsOnly ? (filteredData.length || 1) : rowsPerPageDI;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageDI - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : (checkValue === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue || '-'}</span></td>`;
+            };
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">💊 Dispensing - จ่ายยา (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispensingData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageDI(this.value)">
+                            <option value="20" ${rowsPerPageDI===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageDI===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageDI===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageDI===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageDI===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageDI===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLASS</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPEIN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPEOUT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">NEXTDATE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLINIC</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVPID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENDDT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">LCCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CODESET</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CAREACCOUNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPESERV</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVCHARGE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">COMPLETION</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVTXCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCAT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.svid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vstdate || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.name || '-'}</td>
+                        ${cell(row.invno, row.check_debt_id)}
+                        ${checkCell(row.check_debt_id)}
+                        ${cell(row.class, row.check_income)}
+                        ${checkCell(row.check_income)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hcode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.pid || '-'}</td>
+                        ${cell(row.typein, row.check_typein)}
+                        ${checkCell(row.check_typein)}
+                        ${cell(row.typeout, row.check_typeout)}
+                        ${checkCell(row.check_typeout)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.nextdate || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.clinic || '-'}</td>
+                        ${cell(row.svpid, row.check_svpid)}
+                        ${checkCell(row.check_svpid)}
+                        ${cell(row.enddt, row.check_enddt)}
+                        ${checkCell(row.check_enddt)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.lccode || '-'}</td>
+                        ${cell(row.codeset, row.check_codeset)}
+                        ${checkCell(row.check_codeset)}
+                        ${cell(row.stdcode, row.check_stdcode)}
+                        ${checkCell(row.check_stdcode)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.careaccount || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.typeserv || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svcharge || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.completion || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svtxcode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimcat || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vnref || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageDI - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            tableHTML += `<button onclick="goToPageDI(${currentPageDI-1})" style="${btnStyle(false)} ${currentPageDI===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDI===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageDI(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageDI(${i})" style="${btnStyle(i===currentPageDI)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageDI(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageDI(${currentPageDI+1})" style="${btnStyle(false)} ${currentPageDI===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDI===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // ==================== OPService ====================
+
+        let currentPageOS = 1;
+        let rowsPerPageOS = 20;
+        let allOpserviceData = [];
+
+        async function searchOpservice() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            const hipdataCode = window.hipdataCode || 'SSS';
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล OPService...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-opservice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes, hipdata_code: hipdataCode
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_debt_id','check_income','check_typein','check_typeout','check_svpid','check_stdcode'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allOpserviceData = result.data;
+                    currentPageOS = 1;
+                    renderOpserviceTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        function changeRowsPerPageOS(value) {
+            rowsPerPageOS = parseInt(value);
+            currentPageOS = 1;
+            renderOpserviceTable();
+        }
+
+        function goToPageOS(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_debt_id','check_income','check_typein','check_typeout','check_svpid','check_stdcode'].some(k => row[k] === 'N');
+            const filtered = showErrorsOnly ? allOpserviceData.filter(hasRed) : allOpserviceData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageOS);
+            if (page < 1 || page > totalPages) return;
+            currentPageOS = page;
+            renderOpserviceTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderOpserviceTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_debt_id','check_income','check_typein','check_typeout','check_svpid','check_stdcode'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allOpserviceData.filter(hasRed) : allOpserviceData;
+            const effectiveRowsPerPage = showErrorsOnly ? (filteredData.length || 1) : rowsPerPageOS;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageOS - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : (checkValue === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue || '-'}</span></td>`;
+            };
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">🏥 OPService - บริการผู้ป่วยนอก (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpserviceData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOS(this.value)">
+                            <option value="20" ${rowsPerPageOS===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageOS===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageOS===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageOS===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageOS===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageOS===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLASS</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPEIN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPEOUT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">NEXTDATE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLINIC</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVPID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENDDT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">LCCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CODESET</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CAREACCOUNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPESERV</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVCHARGE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">COMPLETION</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVTXCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCAT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.svid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vstdate || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.name || '-'}</td>
+                        ${cell(row.invno, row.check_debt_id)}
+                        ${checkCell(row.check_debt_id)}
+                        ${cell(row.class, row.check_income)}
+                        ${checkCell(row.check_income)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hcode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.pid || '-'}</td>
+                        ${cell(row.typein, row.check_typein)}
+                        ${checkCell(row.check_typein)}
+                        ${cell(row.typeout, row.check_typeout)}
+                        ${checkCell(row.check_typeout)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.nextdate || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.clinic || '-'}</td>
+                        ${cell(row.svpid, row.check_svpid)}
+                        ${checkCell(row.check_svpid)}
+                        ${cell(row.enddt, row.check_enddt)}
+                        ${checkCell(row.check_enddt)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.lccode || '-'}</td>
+                        ${cell(row.codeset, row.check_codeset)}
+                        ${checkCell(row.check_codeset)}
+                        ${cell(row.stdcode, row.check_stdcode)}
+                        ${checkCell(row.check_stdcode)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.careaccount || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.typeserv || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svcharge || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.completion || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svtxcode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimcat || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vnref || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageOS - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            tableHTML += `<button onclick="goToPageOS(${currentPageOS-1})" style="${btnStyle(false)} ${currentPageOS===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOS===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageOS(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageOS(${i})" style="${btnStyle(i===currentPageOS)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageOS(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageOS(${currentPageOS+1})" style="${btnStyle(false)} ${currentPageOS===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOS===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // Pagination state for BillItems
+        let currentPageBI = 1;
+        let rowsPerPageBI = 20;
+        let allBillitemsData = [];
+
+        async function searchBillitems() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            if (!dateFrom || !dateTo) {
+                alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด');
+                return;
+            }
+
+            const hipdataCode = window.hipdataCode || 'SSS';
+            const selectedPttypes = getSelectedPttypes();
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล BillItems...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-billitems`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes, hipdata_code: hipdataCode
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_debt_id','check_income','check_stdcode','check_qty','check_unitprice','check_sum_price','check_sks_coverage_price','check_claimamt'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    displayBillitemsTable(result.data);
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        function displayBillitemsTable(data) {
+            if (data.length === 0) {
+                showBillitemsHeaders();
+                return;
+            }
+            allBillitemsData = data;
+            currentPageBI = 1;
+            renderBillitemsTable();
+        }
+
+        function changeRowsPerPageBI(value) {
+            rowsPerPageBI = parseInt(value);
+            currentPageBI = 1;
+            renderBillitemsTable();
+        }
+
+        function goToPageBI(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRedCellBI = (row) => ['check_debt_id','check_income','check_stdcode','check_qty','check_unitprice','check_sum_price','check_sks_coverage_price','check_claimamt'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allBillitemsData.filter(hasRedCellBI) : allBillitemsData;
+            const totalPages = Math.ceil(filteredData.length / rowsPerPageBI);
+            if (page < 1 || page > totalPages) return;
+            currentPageBI = page;
+            renderBillitemsTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderBillitemsTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRedCellBI = (row) => ['check_debt_id','check_income','check_stdcode','check_qty','check_unitprice','check_sum_price','check_sks_coverage_price','check_claimamt'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allBillitemsData.filter(hasRedCellBI) : allBillitemsData;
+            const effectiveRowsPerPage = showErrorsOnly ? (filteredData.length || 1) : rowsPerPageBI;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageBI - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : '#f44336';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue ?? '-'}</span></td>`;
+            };
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📋 BillItems - รายการในบิล (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBillitemsData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageBI(this.value)">
+                            <option value="20" ${rowsPerPageBI===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageBI===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageBI===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageBI===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageBI===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageBI===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DEBT_ID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INCOME</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ICODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อค่าใช้จ่าย</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">QTY</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UNITPRICE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SUM_PRICE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SKS_COVERAGE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENABLE_SKS_OPD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.name_patient || '-'}</td>
+                        ${cell(row.debt_id, row.check_debt_id)}
+                        ${checkCell(row.check_debt_id)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vstdate || '-'}</td>
+                        ${cell(row.income, row.check_income)}
+                        ${checkCell(row.check_income)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.icode || '-'}</td>
+                        ${cell(row.stdcode, row.check_stdcode)}
+                        ${checkCell(row.check_stdcode)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.item_name || '-'}</td>
+                        ${cell(row.qty, row.check_qty)}
+                        ${checkCell(row.check_qty)}
+                        ${cell(row.unitprice != null ? parseFloat(row.unitprice).toFixed(2) : null, row.check_unitprice)}
+                        ${checkCell(row.check_unitprice)}
+                        ${cell(row.sum_price != null ? parseFloat(row.sum_price).toFixed(2) : null, row.check_sum_price)}
+                        ${checkCell(row.check_sum_price)}
+                        ${cell(row.sks_coverage_price != null ? parseFloat(row.sks_coverage_price).toFixed(2) : null, row.check_sks_coverage_price)}
+                        ${checkCell(row.check_sks_coverage_price)}
+                        ${cell(row.claimamt != null ? parseFloat(row.claimamt).toFixed(2) : null, row.check_claimamt)}
+                        ${checkCell(row.check_claimamt)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.service_ref_id || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${row.enable_sks_opd || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageBI - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            tableHTML += `<button onclick="goToPageBI(${currentPageBI-1})" style="${btnStyle(false)} ${currentPageBI===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageBI(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageBI(${i})" style="${btnStyle(i===currentPageBI)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageBI(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageBI(${currentPageBI+1})" style="${btnStyle(false)} ${currentPageBI===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // ==================== OPDx ====================
+
+        let currentPageOX = 1;
+        let rowsPerPageOX = 20;
+        let allOpdxData = [];
+
+        async function searchOpdx() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล OPDx...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-opdx`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: getSelectedPttypes(),
+                        hipdata_code: window.hipdataCode || 'SSS'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_class', 'check_sl', 'check_code'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allOpdxData = result.data;
+                    currentPageOX = 1;
+                    renderOpdxTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        function changeRowsPerPageOX(value) { rowsPerPageOX = parseInt(value); currentPageOX = 1; renderOpdxTable(); }
+
+        function goToPageOX(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_class', 'check_sl', 'check_code'].some(k => row[k] === 'N');
+            const filtered = showErrorsOnly ? allOpdxData.filter(hasRed) : allOpdxData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageOX);
+            if (page < 1 || page > totalPages) return;
+            currentPageOX = page;
+            renderOpdxTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderOpdxTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_class', 'check_sl', 'check_code'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allOpdxData.filter(hasRed) : allOpdxData;
+            const effectiveRowsPerPage = showErrorsOnly ? (filteredData.length || 1) : rowsPerPageOX;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageOX - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : (checkValue === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue || '-'}</span></td>`;
+            };
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">🩺 OPDx - การวินิจฉัย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpdxData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOX(this.value)">
+                            <option value="20" ${rowsPerPageOX===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageOX===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageOX===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageOX===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageOX===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageOX===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">class</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SvID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">sl</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">codeset</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Code</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Desc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (pageData.length === 0) {
+                tableHTML += `<tr><td colspan="15" style="padding:20px; text-align:center; color:#546e7a;">ไม่พบข้อมูล</td></tr>`;
+            }
+
+            pageData.forEach((row, idx) => {
+                const actualIndex = startIndex + idx + 1;
+                const bgColor = actualIndex % 2 === 0 ? '#f5f9ff' : 'white';
+                tableHTML += `
+                    <tr style="background:${bgColor};">
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.HN || row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.VN || row.vn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vsdate || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.Name || row.name || '-'}</td>
+                        ${cell(row.class, row.check_class)}
+                        ${checkCell(row.check_class)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.SvID || row.svid || '-'}</td>
+                        ${cell(row.sl, row.check_sl)}
+                        ${checkCell(row.check_sl)}
+                        ${cell(row.codeset, row.check_codeset)}
+                        ${checkCell(row.check_codeset)}
+                        ${cell(row.Code || row.code, row.check_code)}
+                        ${checkCell(row.check_code)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.Desc || row.desc || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageOX - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            tableHTML += `<button onclick="goToPageOX(${currentPageOX-1})" style="${btnStyle(false)} ${currentPageOX===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOX===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageOX(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageOX(${i})" style="${btnStyle(i===currentPageOX)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageOX(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageOX(${currentPageOX+1})" style="${btnStyle(false)} ${currentPageOX===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOX===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // ==================== FDH INS ====================
+
+        async function searchFdhIns() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด INS...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-fdh-ins`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    console.log('INS rows:', result.data.length);
+                    if (result.data.length > 0) console.log('INS cols:', Object.keys(result.data[0]));
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['ins'] = result.data;
+                    fdhPage['ins'] = 1;
+                    fdhRowsPerPage['ins'] = fdhRowsPerPage['ins'] || 100;
+                    renderFdhTable('ins');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH PAT ====================
+
+        async function searchFdhPat() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด PAT...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-pat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['pat'] = result.data;
+                    fdhPage['pat'] = 1;
+                    fdhRowsPerPage['pat'] = fdhRowsPerPage['pat'] || 100;
+                    renderFdhTable('pat');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH OPD ====================
+
+        async function searchFdhOpd() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด OPD...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-opd`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['opd'] = result.data;
+                    fdhPage['opd'] = 1;
+                    fdhRowsPerPage['opd'] = fdhRowsPerPage['opd'] || 100;
+                    renderFdhTable('opd');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH ORF ====================
+
+        async function searchFdhOrf() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด ORF...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-orf`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['orf'] = result.data;
+                    fdhPage['orf'] = 1;
+                    fdhRowsPerPage['orf'] = fdhRowsPerPage['orf'] || 100;
+                    renderFdhTable('orf');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH ODX ====================
+
+        async function searchFdhOdx() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด ODX...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-odx`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['odx'] = result.data;
+                    fdhPage['odx'] = 1;
+                    fdhRowsPerPage['odx'] = fdhRowsPerPage['odx'] || 100;
+                    renderFdhTable('odx');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH OOP ====================
+
+        async function searchFdhOop() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด OOP...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-oop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['oop'] = result.data;
+                    fdhPage['oop'] = 1;
+                    fdhRowsPerPage['oop'] = fdhRowsPerPage['oop'] || 100;
+                    renderFdhTable('oop');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH IRF ====================
+
+        async function searchFdhIrf() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด IRF...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-irf`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['irf'] = result.data;
+                    fdhPage['irf'] = 1;
+                    fdhRowsPerPage['irf'] = fdhRowsPerPage['irf'] || 100;
+                    renderFdhTable('irf');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH IPD ====================
+
+        async function searchFdhIpd() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด IPD...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-ipd`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['ipd'] = result.data;
+                    fdhPage['ipd'] = 1;
+                    fdhRowsPerPage['ipd'] = fdhRowsPerPage['ipd'] || 100;
+                    renderFdhTable('ipd');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH IOP ====================
+
+        async function searchFdhIop() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด IOP...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-iop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['iop'] = result.data;
+                    fdhPage['iop'] = 1;
+                    fdhRowsPerPage['iop'] = fdhRowsPerPage['iop'] || 100;
+                    renderFdhTable('iop');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH CHT ====================
+
+        async function searchFdhCht() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด CHT...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-cht`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['cht'] = result.data;
+                    fdhPage['cht'] = 1;
+                    fdhRowsPerPage['cht'] = fdhRowsPerPage['cht'] || 100;
+                    renderFdhTable('cht');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH CHA ====================
+
+        async function searchFdhCha() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด CHA...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-cha`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['cha'] = result.data;
+                    fdhPage['cha'] = 1;
+                    fdhRowsPerPage['cha'] = fdhRowsPerPage['cha'] || 100;
+                    renderFdhTable('cha');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== รายการที่ต้องแก้ไขทั้งหมด ====================
+
+        const FDH_ALL_KEYS = ['ins','pat','opd','orf','odx','oop','irf','ipd','iop','cht','cha','idx','aer','adp','lvd','dru','labfu','phdb'];
+
+        async function searchFdhAllErrors() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const config = getDatabaseConfig();
+            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>⏳ กำลังดึงข้อมูลทุกแฟ้ม...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            const endpointMap = {
+                ins:'get-fdh-ins', pat:'get-fdh-pat', opd:'get-fdh-opd',
+                orf:'get-fdh-orf', odx:'get-fdh-odx', oop:'get-fdh-oop',
+                irf:'get-fdh-irf', ipd:'get-fdh-ipd', iop:'get-fdh-iop',
+                cht:'get-fdh-cht', cha:'get-fdh-cha', idx:'get-fdh-idx',
+                lvd:'get-fdh-lvd', dru:'get-fdh-dru', labfu:'get-fdh-labfu', phdb:'get-fdh-phdb'
+            };
+
+            const body = {
+                host: config.host, port: config.port, database: config.database,
+                user: config.user, password: config.password, type: config.type,
+                dateFrom, dateTo, selectedPttypes, hipdata_code: window.hipdataCode
+            };
+
+            await Promise.all(Object.entries(endpointMap).map(async ([ft, ep]) => {
+                try {
+                    const resp = await fetch(`${API_BASE}/api/${ep}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const result = await resp.json();
+                    if (result.success && result.data) fdhData[ft] = result.data;
+                } catch (e) { console.error(`Error fetching ${ft}:`, e); }
+            }));
+
+            const allErrors = [];
+            for (const ft of FDH_ALL_KEYS) {
+                if (fdhData[ft] && fdhData[ft].length > 0) {
+                    fdhData[ft].forEach(row => {
+                        const hasError = Object.keys(row).some(k => k.startsWith('check_') && row[k] === 'N');
+                        if (hasError) allErrors.push({ ...row, _file: ft.toUpperCase() });
+                    });
+                }
+            }
+
+            if (allErrors.length === 0) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>✅ ไม่มีรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกแฟ้มผ่านการตรวจสอบ</p></div>`;
+                updateStatistics(0, 0, 0);
+                return;
+            }
+
+            // Sort by HN then file
+            allErrors.sort((a, b) => {
+                const hnA = String(a.hn || a.HN || '');
+                const hnB = String(b.hn || b.HN || '');
+                if (hnA !== hnB) return hnA.localeCompare(hnB);
+                return String(a._file).localeCompare(String(b._file));
+            });
+
+            updateStatistics(allErrors.length, 0, allErrors.length);
+            fdhData['all'] = allErrors;
+            fdhPage['all'] = 1;
+            fdhRowsPerPage['all'] = fdhRowsPerPage['all'] || 100;
+            renderFdhAllTable();
+        }
+
+        function renderFdhAllTable() {
+            const data = fdhData['all'] || [];
+            if (data.length === 0) {
+                document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>ไม่มีรายการที่ต้องแก้ไข</h2></div>`;
+                return;
+            }
+            const rpp = fdhRowsPerPage['all'] || 100;
+            const pg  = fdhPage['all'] || 1;
+            const totalPages = Math.ceil(data.length / rpp);
+            const startIndex = (pg - 1) * rpp;
+            const pageData   = data.slice(startIndex, startIndex + rpp);
+            const endIndex   = Math.min(startIndex + rpp, data.length);
+
+            // Helper: get display name from row
+            const getName = (row) => row.ptname || row.name ||
+                ((row.fname || row.pname) ? ((row.pname||'') + (row.fname||'') + ' ' + (row.lname||'')) : '') || '-';
+            // Helper: get HN
+            const getHN = (row) => row.hn || row.HN || row.patient_hn || '-';
+            // Helper: get VN
+            const getVN = (row) => row.vn || row.VN || '-';
+            // Helper: get AN
+            const getAN = (row) => row.an || row.AN || '-';
+            // Helper: list problem fields (without check_ prefix)
+            const getProblems = (row) => Object.keys(row)
+                .filter(k => k.startsWith('check_') && row[k] === 'N')
+                .map(k => k.replace('check_', ''))
+                .join(', ');
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#c62828; margin:0;">🔴 รายการที่ต้องแก้ไขทั้งหมด (${data.length.toLocaleString()} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="fdhRowsPerPage['all']=parseInt(this.value); fdhPage['all']=1; renderFdhAllTable()">
+                            <option value="100" ${rpp===100?'selected':''}>100</option>
+                            <option value="200" ${rpp===200?'selected':''}>200</option>
+                            <option value="500" ${rpp===500?'selected':''}>500</option>
+                            <option value="1000" ${rpp===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:linear-gradient(135deg,#c62828,#b71c1c); color:white;">
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">#</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">แฟ้ม</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">HN</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">VN</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">AN</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a;">ชื่อ-สกุล</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a;">ฟิลด์ที่มีปัญหา</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a; text-align:center;">จำนวนปัญหา</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            pageData.forEach((row, idx) => {
+                const problems = getProblems(row);
+                const problemCount = problems.split(',').filter(s => s.trim()).length;
+                const bgColor = (startIndex + idx) % 2 === 0 ? '#fff8f8' : '#ffebee';
+                tableHTML += `
+                    <tr style="background:${bgColor};">
+                        <td style="padding:8px; border:1px solid #ffcdd2; text-align:center; color:#546e7a;">${startIndex + idx + 1}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; text-align:center; font-weight:700; color:#c62828;">
+                            <span style="background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">${row._file || '-'}</span>
+                        </td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap;">${getHN(row)}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap; font-size:12px;">${getVN(row)}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap; font-size:12px;">${getAN(row)}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2;">${getName(row)}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; color:#c62828; font-weight:600;">${problems || '-'}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; text-align:center;">
+                            <span style="background:#f44336; color:white; border-radius:12px; padding:2px 10px; font-weight:700;">${problemCount}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>`;
+
+            // Pagination
+            if (totalPages > 1) {
+                tableHTML += `<div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:20px; flex-wrap:wrap;">`;
+                tableHTML += `<button onclick="fdhPage['all']=1; renderFdhAllTable()" ${pg===1?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">«</button>`;
+                tableHTML += `<button onclick="fdhPage['all']=${pg-1}; renderFdhAllTable()" ${pg===1?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">‹</button>`;
+                const startP = Math.max(1, pg - 2), endP = Math.min(totalPages, pg + 2);
+                for (let p = startP; p <= endP; p++) {
+                    tableHTML += `<button onclick="fdhPage['all']=${p}; renderFdhAllTable()" style="padding:6px 12px; border:${p===pg?'2px solid #c62828':'1px solid #ddd'}; border-radius:6px; cursor:pointer; ${p===pg?'background:#ffebee; font-weight:700; color:#c62828;':''}">${p}</button>`;
+                }
+                tableHTML += `<button onclick="fdhPage['all']=${pg+1}; renderFdhAllTable()" ${pg===totalPages?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">›</button>`;
+                tableHTML += `<button onclick="fdhPage['all']=${totalPages}; renderFdhAllTable()" ${pg===totalPages?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">»</button>`;
+                tableHTML += `<span style="color:#546e7a; font-size:14px; margin-left:8px;">หน้า ${pg}/${totalPages} | แสดง ${startIndex+1}-${endIndex} จาก ${data.length.toLocaleString()} รายการ</span>`;
+                tableHTML += `</div>`;
+            } else {
+                tableHTML += `<div style="text-align:center; color:#546e7a; font-size:14px; margin-top:12px;">แสดง ${startIndex+1}-${endIndex} จาก ${data.length.toLocaleString()} รายการ</div>`;
+            }
+
+            document.getElementById('content-area').innerHTML = tableHTML;
+        }
+
+        // ==================== FDH IDX ====================
+
+        async function searchFdhIdx() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด IDX...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-idx`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['idx'] = result.data;
+                    fdhPage['idx'] = 1;
+                    fdhRowsPerPage['idx'] = fdhRowsPerPage['idx'] || 100;
+                    renderFdhTable('idx');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH LVD ====================
+
+        async function searchFdhLvd() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด LVD...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-lvd`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['lvd'] = result.data;
+                    fdhPage['lvd'] = 1;
+                    fdhRowsPerPage['lvd'] = fdhRowsPerPage['lvd'] || 100;
+                    renderFdhTable('lvd');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH DRU ====================
+
+        async function searchFdhDru() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด DRU...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-dru`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['dru'] = result.data;
+                    fdhPage['dru'] = 1;
+                    fdhRowsPerPage['dru'] = fdhRowsPerPage['dru'] || 100;
+                    renderFdhTable('dru');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH LABFU ====================
+
+        async function searchFdhLabfu() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด LABFU...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-labfu`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['labfu'] = result.data;
+                    fdhPage['labfu'] = 1;
+                    fdhRowsPerPage['labfu'] = fdhRowsPerPage['labfu'] || 100;
+                    renderFdhTable('labfu');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH PHDB ====================
+
+        async function searchFdhPhdb() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด PHDB...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-phdb`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes,
+                        hipdata_code: window.hipdataCode
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['phdb'] = result.data;
+                    fdhPage['phdb'] = 1;
+                    fdhRowsPerPage['phdb'] = fdhRowsPerPage['phdb'] || 100;
+                    renderFdhTable('phdb');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH Menu Placeholders ====================
+
+        const fdhMenuLabels = {
+            ins:'สิทธิการรักษา', pat:'ข้อมูลผู้ป่วย', opd:'ผู้ป่วยนอก',
+            orf:'ส่งต่อผู้ป่วยนอก', odx:'วินิจฉัยผู้ป่วยนอก', oop:'หัตถการผู้ป่วยนอก',
+            irf:'ส่งต่อผู้ป่วยใน', ipd:'ผู้ป่วยใน', iop:'หัตถการผู้ป่วยใน',
+            cht:'ค่าใช้จ่ายรวม', cha:'รายการค่าใช้จ่าย', idx:'วินิจฉัยผู้ป่วยใน',
+            aer:'อุบัติเหตุฉุกเฉิน', adp:'บริการเพิ่มเติม', lvd:'ข้อมูลการคลอด',
+            dru:'ยาและเวชภัณฑ์', labfu:'ผลแล็บติดตาม', phdb:'ข้อมูลสาธารณสุข'
+        };
+
+        // Data store for FDH menus (keyed by menu name)
+        const fdhData = {};
+        const fdhPage = {};
+        const fdhRowsPerPage = {};
+
+        function showFdhMenuPlaceholder(ft) {
+            const label = fdhMenuLabels[ft] || ft.toUpperCase();
+            document.getElementById('content-area').innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📋 ${ft.toUpperCase()} - ${label} (0 รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="fdhRowsPerPage['${ft}']=parseInt(this.value); fdhPage['${ft}']=1; renderFdhTable('${ft}')">
+                            <option value="100">100</option><option value="200">200</option>
+                            <option value="500">500</option><option value="1000">1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="padding:40px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</div>`;
+        }
+
+        async function searchFdhMenu(ft) {
+            document.getElementById('content-area').innerHTML =
+                `<div class="welcome-message"><h2>กำลังโหลด ${ft.toUpperCase()}...</h2><p>กรุณารอสักครู่</p></div>`;
+            // Placeholder — SQL จะถูกเพิ่มใน API และ function นี้ภายหลัง
+            updateStatistics(0, 0, 0);
+            fdhData[ft] = [];
+            fdhPage[ft] = 1;
+            fdhRowsPerPage[ft] = fdhRowsPerPage[ft] || 100;
+            showFdhMenuPlaceholder(ft);
+        }
+
+        function renderFdhTable(ft) {
+            // Generic render for FDH menus — will be replaced per-menu when SQL is added
+            const data = fdhData[ft] || [];
+            const rpp = fdhRowsPerPage[ft] || 100;
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => Object.keys(row).some(k => k.startsWith('check_') && row[k] === 'N');
+            const filtered = showErrorsOnly ? data.filter(hasRed) : data;
+            const effRpp = showErrorsOnly ? (filtered.length || 1) : rpp;
+            const totalPages = Math.ceil(filtered.length / effRpp);
+            const pg = fdhPage[ft] || 1;
+            const startIndex = (pg - 1) * effRpp;
+            const endIndex = Math.min(startIndex + effRpp, filtered.length);
+            const pageData = filtered.slice(startIndex, endIndex);
+            const label = fdhMenuLabels[ft] || ft.toUpperCase();
+
+            const cell = (v, chk) => {
+                const bg = chk === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${v ?? '-'}</td>`;
+            };
+            const checkCell = (chk) => {
+                const color = chk === 'Y' ? '#4caf50' : (chk === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${chk || '-'}</span></td>`;
+            };
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            if (filtered.length === 0) { showFdhMenuPlaceholder(ft); return; }
+
+            const cols = Object.keys(pageData[0] || {});
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📋 ${ft.toUpperCase()} - ${label} (${filtered.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + data.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="fdhRowsPerPage['${ft}']=parseInt(this.value); fdhPage['${ft}']=1; renderFdhTable('${ft}')">
+                            <option value="100" ${rpp===100?'selected':''}>100</option>
+                            <option value="200" ${rpp===200?'selected':''}>200</option>
+                            <option value="500" ${rpp===500?'selected':''}>500</option>
+                            <option value="1000" ${rpp===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                            <th style="padding:10px 8px; border:1px solid #e3f2fd;">ลำดับ</th>`;
+            cols.forEach(c => {
+                const label = c.startsWith('check_') ? '✓' : c.toUpperCase();
+                const align = c.startsWith('check_') ? 'text-align:center;' : '';
+                html += `<th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap; ${align}">${label}</th>`;
+            });
+            html += `</tr></thead><tbody>`;
+
+            pageData.forEach((row, idx) => {
+                const bg = (startIndex + idx) % 2 === 0 ? '#f5f9ff' : 'white';
+                html += `<tr style="background:${bg};"><td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${startIndex + idx + 1}</td>`;
+                cols.forEach((c, ci) => {
+                    if (c.startsWith('check_')) html += checkCell(row[c]);
+                    else {
+                        const nextCol = cols[ci + 1];
+                        const chkVal = nextCol && nextCol.startsWith('check_') ? row[nextCol] : null;
+                        html += cell(row[c], chkVal);
+                    }
+                });
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filtered.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">`;
+
+            const maxBtn = 7;
+            let sp = Math.max(1, pg - Math.floor(maxBtn/2));
+            let ep = Math.min(totalPages, sp + maxBtn - 1);
+            if (ep - sp < maxBtn - 1) sp = Math.max(1, ep - maxBtn + 1);
+            html += `<button onclick="goToPageFdh('${ft}',${pg-1})" style="${btnStyle(false)} ${pg===1?'opacity:0.4;cursor:not-allowed;':''}" ${pg===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (sp > 1) { html += `<button onclick="goToPageFdh('${ft}',1)" style="${btnStyle(false)}">1</button>`; if (sp > 2) html += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = sp; i <= ep; i++) html += `<button onclick="goToPageFdh('${ft}',${i})" style="${btnStyle(i===pg)}">${i}</button>`;
+            if (ep < totalPages) { if (ep < totalPages-1) html += `<span style="padding:8px; color:#546e7a;">...</span>`; html += `<button onclick="goToPageFdh('${ft}',${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            html += `<button onclick="goToPageFdh('${ft}',${pg+1})" style="${btnStyle(false)} ${pg===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${pg===totalPages?'disabled':''}>ถัดไป →</button>`;
+            html += `</div></div>`;
+            document.getElementById('content-area').innerHTML = html;
+        }
+
+        function goToPageFdh(ft, page) {
+            const data = fdhData[ft] || [];
+            const rpp = fdhRowsPerPage[ft] || 100;
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => Object.keys(row).some(k => k.startsWith('check_') && row[k] === 'N');
+            const filtered = showErrorsOnly ? data.filter(hasRed) : data;
+            const effRpp = showErrorsOnly ? (filtered.length || 1) : rpp;
+            const totalPages = Math.ceil(filtered.length / effRpp);
+            if (page < 1 || page > totalPages) return;
+            fdhPage[ft] = page;
+            renderFdhTable(ft);
+            document.getElementById('content-area').scrollIntoView({ behavior:'smooth', block:'start' });
+        }
+
+        // ==================== Rerender Current Menu ====================
+
+        function rerenderCurrentMenu() {
+            // Reset to page 1 when toggling error filter
+            currentPage = 1;
+            currentPageDT = 1;
+            currentPageDI = 1;
+            currentPageOS = 1;
+            currentPageBI = 1;
+            currentPageOX = 1;
+            Object.keys(fdhPage).forEach(k => { fdhPage[k] = 1; });
+
+            const fileType = window.currentFileView || 'all';
+            if (fileType === 'billtran')           renderBilltranTable();
+            else if (fileType === 'billitems')     renderBillitemsTable();
+            else if (fileType === 'opservice')     renderOpserviceTable();
+            else if (fileType === 'dispenseditem') renderDispenseditemTable();
+            else if (fileType === 'dispensing')    renderDispensingTable();
+            else if (fileType === 'opdx')          renderOpdxTable();
+            else if (fileType === 'all')           renderFdhAllTable();
+            else if (fdhData[fileType])            renderFdhTable(fileType);
+        }
+
+        // ==================== Export Excel ====================
+
+        function exportCurrentToExcel() {
+            const fileType = window.currentFileView || 'all';
+            const map = {
+                billtran:     { data: allBilltranData,      name: 'Billtran' },
+                billitems:    { data: allBillitemsData,     name: 'BillItems' },
+                opservice:    { data: allOpserviceData,     name: 'OPService' },
+                dispenseditem:{ data: allDispenseditemData, name: 'DispensedItem' },
+                dispensing:   { data: allDispensingData,    name: 'Dispensing' },
+                opdx:         { data: allOpdxData,          name: 'OPDx' }
+            };
+            const entry = map[fileType];
+            if (entry) {
+                exportToExcel(entry.data, entry.name);
+            } else if (fileType === 'all' && fdhData['all']) {
+                exportToExcel(fdhData['all'], 'รายการที่ต้องแก้ไขทั้งหมด');
+            } else if (fdhData[fileType] !== undefined) {
+                exportToExcel(fdhData[fileType], fileType.toUpperCase());
+            } else {
+                alert('กรุณาเลือกแฟ้มที่ต้องการ export');
+            }
+        }
+
+        function exportToExcel(data, filename) {
+            if (!data || data.length === 0) {
+                alert('ไม่มีข้อมูลที่จะ export\nกรุณาค้นหาข้อมูลก่อน');
+                return;
+            }
+
+            const columns = Object.keys(data[0]);
+            const wb = XLSX.utils.book_new();
+
+            // Header row
+            const aoa = [columns];
+
+            // Data rows
+            data.forEach(row => {
+                aoa.push(columns.map(col => {
+                    const v = row[col];
+                    return v === null || v === undefined ? '' : v;
+                }));
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+            // Style: header row bold + light blue bg
+            columns.forEach((col, c) => {
+                const addr = XLSX.utils.encode_cell({ r: 0, c });
+                if (!ws[addr]) ws[addr] = { v: col };
+                ws[addr].s = {
+                    fill: { patternType: 'solid', fgColor: { rgb: '1565C0' } },
+                    font: { bold: true, color: { rgb: 'FFFFFF' } },
+                    alignment: { horizontal: 'center' }
+                };
+            });
+
+            // Style: red cell where check_ column = 'N'
+            data.forEach((row, r) => {
+                columns.forEach((col, c) => {
+                    if (col.startsWith('check_') && row[col] === 'N') {
+                        // Color the check cell itself
+                        const checkAddr = XLSX.utils.encode_cell({ r: r + 1, c });
+                        if (!ws[checkAddr]) ws[checkAddr] = { v: 'N' };
+                        ws[checkAddr].s = {
+                            fill: { patternType: 'solid', fgColor: { rgb: 'F44336' } },
+                            font: { bold: true, color: { rgb: 'FFFFFF' } },
+                            alignment: { horizontal: 'center' }
+                        };
+                        // Color the data column before this check column
+                        if (c > 0) {
+                            const dataAddr = XLSX.utils.encode_cell({ r: r + 1, c: c - 1 });
+                            if (!ws[dataAddr]) ws[dataAddr] = { v: '' };
+                            ws[dataAddr].s = {
+                                fill: { patternType: 'solid', fgColor: { rgb: 'F44336' } },
+                                font: { color: { rgb: 'FFFFFF' } }
+                            };
+                        }
+                    }
+                });
+            });
+
+            // Auto column width
+            const colWidths = columns.map((col, c) => {
+                let max = col.length;
+                data.forEach(row => {
+                    const v = String(row[col] ?? '');
+                    if (v.length > max) max = v.length;
+                });
+                return { wch: Math.min(max + 2, 50) };
+            });
+            ws['!cols'] = colWidths;
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+            XLSX.utils.book_append_sheet(wb, ws, filename.slice(0, 31));
+            XLSX.writeFile(wb, `${filename}_${dateStr}.xlsx`);
+        }
+    </script>
+<script src="zoom_control.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู หมวดค่ารักษาพยาบาล ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select i.income,i.name as income_name,
+i2.group_name as income_group2,
+(case when i.group2 is null then 'N' else 'Y' end) as income_group2_check,
+dg.drg_group_name,irs.name as sss_name,
+isg.name as sks_opd,ic.income_csmbs_name as sks_ipd,ink.name as nk2_group,
+dc.drg_chrgitem_name as eclaim,irg.rvsp_name 
+from income i
+left outer join income_report2 i2 on i2.group_id=i.group2
+left outer join drg_group dg on dg.drg_group=i.drg_group
+left outer join income_report_sss irs on irs.code=i.income_sss_group_code
+left outer join income_std_group isg on isg.std_group=i.std_group
+left outer join income_csmbs ic on ic.income_csmbs_code=i.income_csmbs_code
+left outer join income_nk2 ink on ink.nk2_group=i.nk2_group
+left outer join drg_chrgitem dc on dc.drg_chrgitem_id=i.drg_chrgitem_id
+left outer join income_rvsp_group irg on irg.rvsp_group=i.rvsp_group 
+order by i.income                                           
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

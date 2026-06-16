@@ -1,0 +1,24 @@
+pname
+occupation
+marrystatus
+nationality(เชื้อชาติ)
+religion (ศาสนา)
+สิทธิการรักษา
+บุคลากร
+ผู้วินิจฉัยแพทย์ไทย
+ข้อมูลแผนก
+ประเภทการวินิจฉัย diagtype
+หัตถการ OPD er_oper_code
+หัตถการ IPD ipt_oper_code
+หัตถการ OR operation_item
+หัตถการแพทย์แผนไทย 
+หัตถการทันตกรรม dttm
+หัตถการกายภาพ physic_items
+วิธีจำหน่าย dchtype
+สถานภาพจำหน่าย dchstts
+ข้อมูลประเภทอุบัติเหตุ
+ข้อมูลกรณีอุบัติเหตุ
+ข้อมูลข้อบ่งชี้กรณีฉุกเฉิน
+หมวดค่ารักษาพยาบาล
+ค่าใช้จ่าย nondrugite
+เวชภัณฑ์ยา drugitems

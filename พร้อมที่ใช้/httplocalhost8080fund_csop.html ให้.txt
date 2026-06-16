@@ -1,0 +1,21 @@
+http://localhost:8080/fund_csop.html ให้เพิ่มเมนูฝั่งซ้าย ดังนี้
+Billtran
+BillItems
+OPService
+Dispensing
+OPDx
+ขอให้ตัวใหญ่เต็ม sidebar
+
+http://localhost:8080/fund_csop.html
+สิทธิการรักษา:  ให้เป็น dropdow  ให้เลือกเป็น checkbox
+
+
+http://localhost:8080/fund_csop.html
+กล่อง จำนวนผู้รับบริการทั้งหมด
+ให้แสดงตามวันที่ ที่เลือก และสิทธิที่เลือก ใช้คิวรี่นี้
+select count(vn) as cc from ovst    where vstdate between '2025-12-01'  and '2025-12-10'
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC')
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ

@@ -1,0 +1,62 @@
+CHT
+http://localhost:8080/fund_fdh
+เมื่อกดเมนู CHT
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+select v.hn,
+''as an,
+v.vstdate,
+vs.income as total,
+vs.income,
+(case when vs.income is not null then 'Y' else 'N' end )as check_total,
+vs.paid_money as paid,
+(case when p1.paidst in('01','03') then '10' else p1.pcode end)as pttype,
+p.cid as person_id,
+(case when p1.paidst in('01','03') then 'ชำระเงิน' else 'ใช้สิทธิ' end)as check_pttype,
+(case when v.an<>'' then v.an else v.vn end)as seq,
+'' as opd_memo,
+'' as invoice_no,
+'' as invoice_lt
+
+from ovst v  
+inner join patient p on p.hn=v.hn
+inner join vn_stat vs on vs.vn=v.vn
+left join visit_pttype vp on vp.vn=v.vn and vp.pttype_number='1'
+left join pttype p1 on p1.pttype=vp.pttype
+ WHERE v.vstdate between '2026-03-14'  and '2026-03-30'
+and v.pttype in(select pttype from pttype where isuse='Y' and hipdata_code in('UCS','WEL'))
+
+union all 
+select i.hn,
+(case when i.ipt_admit_type_id='5' then concat('ODS',i.an) else i.an end)as an,
+i.regdate as vstdate,
+a.income as total,a.income,
+(case when a.income is not null then 'Y' else 'N' end )as check_total,
+a.paid_money as paid,
+(case when p1.paidst in('01','03') then '10' else p1.pcode end)as pttype,
+p.cid as person_id,
+(case when p1.paidst in('01','03') then  'ชำระเงิน' else 'ใช้สิทธิ'  end)as check_pttype,
+(case when i.an<>'' then i.an else i.vn end)as seq,
+'' as opd_memo,
+'' as invoice_no,
+'' as invoice_lt
+
+from ipt i  
+inner join patient p on p.hn=i.hn
+inner join an_stat a on a.an=i.an
+left join ipt_pttype ip on ip.an=i.an and ip.pttype_number='1'
+left join pttype p1 on p1.pttype=ip.pttype
+WHERE i.dchdate between '2026-03-14'  and '2026-03-30'
+and i.pttype in(select pttype from pttype where isuse='Y' and hipdata_code in('UCS','WEL'));
+
+
+
+
+'2026-03-14'  and '2026-03-30' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code IN ('UCS', 'WEL')) คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด
+
+
+

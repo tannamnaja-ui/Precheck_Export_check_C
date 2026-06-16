@@ -1,0 +1,2652 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อมูลพื้นฐาน กองทุน CSOP</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * { box-sizing: border-box; }
+
+        .full-width-container {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+            padding: 20px;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            min-height: calc(100vh - 140px);
+        }
+
+        /* Left Sidebar 20% */
+        .left-sidebar {
+            width: 20%;
+            min-width: 200px;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(66,165,245,0.15);
+            border: 1px solid #e3f2fd;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-title {
+            color: #1565c0;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        .file-menu-item {
+            padding: 11px 14px;
+            margin-bottom: 6px;
+            background: #f5f9ff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            font-size: 16.8px;
+            font-weight: 600;
+            color: #1565c0;
+        }
+
+        .file-menu-item:hover {
+            background: #e3f2fd;
+            border-left-color: #42a5f5;
+            transform: translateX(4px);
+        }
+
+        .file-menu-item.active {
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            border-left-color: #1976d2;
+        }
+
+        .file-menu-item-sub {
+            font-size: 14.4px;
+            opacity: 0.75;
+            margin-top: 2px;
+        }
+
+        /* Right Content 80% */
+        .right-content {
+            width: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 20px 28px;
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(66,165,245,0.15);
+            border: 1px solid #e3f2fd;
+        }
+
+        .top-bar h1 {
+            color: #1565c0;
+            font-size: 22px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .btn-home {
+            padding: 10px 22px;
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(33,150,243,0.3);
+        }
+
+        .btn-home:hover {
+            background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+            transform: translateY(-2px);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(66,165,245,0.15);
+            border: 1px solid #e3f2fd;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-load {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(33,150,243,0.3);
+            white-space: nowrap;
+        }
+
+        .btn-load:hover {
+            background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+            transform: translateY(-2px);
+        }
+
+        .show-errors-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #c62828;
+            font-weight: 700;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .show-errors-label input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+            accent-color: #c62828;
+        }
+
+        /* Dashboard stats */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(66,165,245,0.15);
+            border: 1px solid #e3f2fd;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(66,165,245,0.25); }
+        .stat-card.total  { border-left: 4px solid #42a5f5; }
+        .stat-card.passed { border-left: 4px solid #4caf50; }
+        .stat-card.needfix{ border-left: 4px solid #ff9800; }
+
+        .stat-icon  { font-size: 32px; margin-bottom: 8px; }
+        .stat-label { font-size: 13px; color: #546e7a; margin-bottom: 6px; font-weight: 500; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #1565c0; }
+        .stat-value.green  { color: #4caf50; }
+        .stat-value.orange { color: #ff9800; }
+
+        /* Content Area */
+        .content-area {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+            border-radius: 15px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(66,165,245,0.15);
+            border: 1px solid #e3f2fd;
+            flex: 1;
+        }
+
+        .welcome-message { text-align: center; color: #546e7a; padding: 40px 20px; }
+        .welcome-message h2 { color: #1565c0; margin-bottom: 10px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+</head>
+<body>
+<div class="full-width-container">
+
+    <!-- Top Bar -->
+    <div class="top-bar" style="margin-bottom:16px;">
+        <h1>📋 ข้อมูลพื้นฐาน กองทุน AIPN ประกันสังคมผู้ป่วยใน</h1>
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; color:#c62828; font-weight:700; white-space:nowrap; user-select:none;">
+                <input type="checkbox" id="show-errors-only" onchange="onShowErrorsChange()" style="width:17px; height:17px; cursor:pointer; accent-color:#c62828;">
+                <span id="show-errors-label-text">แสดงเฉพาะรายการที่ต้องแก้ไข</span>
+            </label>
+            <button class="btn-home" onclick="window.location.href='index_basic.html'">← กลับหน้าข้อมูลพื้นฐาน</button>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+
+        <!-- Left Sidebar 20% -->
+        <div class="left-sidebar">
+            <div class="sidebar-title">📁 รายการตรวจสอบ</div>
+
+            <div class="file-menu-item active" data-menu="doctor">
+                บุคลากรทางการแพทย์
+                <div class="file-menu-item-sub">Doctor / Personnel</div>
+            </div>
+            <div class="file-menu-item" data-menu="pttype">
+                สิทธิการรักษา
+                <div class="file-menu-item-sub">Patient Type</div>
+            </div>
+            <div class="file-menu-item" data-menu="income_cat">
+                หมวดค่ารักษาพยาบาล
+                <div class="file-menu-item-sub">Income Category</div>
+            </div>
+            <div class="file-menu-item" data-menu="nondrug">
+                ค่ารักษาพยาบาล
+                <div class="file-menu-item-sub">Non-Drug Items</div>
+            </div>
+            <div class="file-menu-item" data-menu="lab">
+                ข้อมูล Lab
+                <div class="file-menu-item-sub">Lab Items</div>
+            </div>
+            <div class="file-menu-item" data-menu="bloodbank">
+                BloodBank
+                <div class="file-menu-item-sub">Blood Bank</div>
+            </div>
+            <div class="file-menu-item" data-menu="xray">
+                ข้อมูล X-Ray
+                <div class="file-menu-item-sub">X-Ray Items</div>
+            </div>
+            <div class="file-menu-item" data-menu="drug">
+                รายการยา
+                <div class="file-menu-item-sub">Drug Items</div>
+            </div>
+
+        </div>
+
+        <!-- Right Content 80% -->
+        <div class="right-content">
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <button id="btn-pos-check" onclick="openPositionModal()" style="padding:10px 18px; background:linear-gradient(135deg,#7b1fa2,#6a1b9a); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap; display:none;">⚙️ position ที่ต้องตรวจสอบ</button>
+                <button onclick="exportCurrentToExcel()" style="padding:10px 18px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+            </div>
+
+<!-- Modal: ตั้งค่า position ที่ต้องตรวจสอบ -->
+<div id="pos-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; width:520px; max-width:95vw; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <!-- Header -->
+        <div style="padding:20px 24px; border-bottom:2px solid #e3f2fd; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <div style="font-size:18px; font-weight:700; color:#1565c0;">⚙️ ตั้งค่า position ที่ต้องตรวจสอบ</div>
+                <div style="font-size:13px; color:#546e7a; margin-top:4px;">เลือกตำแหน่งที่ต้องมีเลขใบอนุญาตวิชาชีพ</div>
+            </div>
+            <button onclick="closePositionModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:#9e9e9e; line-height:1;">✕</button>
+        </div>
+        <!-- Search + Select All -->
+        <div style="padding:12px 24px; border-bottom:1px solid #f0f0f0; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input id="pos-search" type="text" placeholder="🔍 ค้นหาตำแหน่ง..." oninput="filterPositionList()"
+                style="flex:1; min-width:150px; padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; outline:none;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:#546e7a; cursor:pointer; white-space:nowrap;">
+                <input type="checkbox" id="pos-select-all" onchange="toggleSelectAll()" style="width:15px; height:15px; cursor:pointer;">
+                เลือกทั้งหมด
+            </label>
+        </div>
+        <!-- List -->
+        <div id="pos-list" style="flex:1; overflow-y:auto; padding:8px 24px;"></div>
+        <!-- Footer -->
+        <div style="padding:16px 24px; border-top:2px solid #e3f2fd; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <span id="pos-selected-count" style="font-size:13px; color:#546e7a; font-weight:600;"></span>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closePositionModal()" style="padding:10px 20px; background:#f5f5f5; color:#546e7a; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">ยกเลิก</button>
+                <button onclick="savePositionCheck()" style="padding:10px 24px; background:linear-gradient(135deg,#1976d2,#1565c0); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700;">💾 บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <!-- Dashboard Statistics -->
+            <div class="dashboard-stats">
+                <div class="stat-card total">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-label">รายการทั้งหมด</div>
+                    <div class="stat-value" id="stat-total">-</div>
+                </div>
+                <div class="stat-card passed">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-label">ข้อมูลครบถ้วน</div>
+                    <div class="stat-value green" id="stat-passed">-</div>
+                </div>
+                <div class="stat-card needfix">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-label">ต้องแก้ไข</div>
+                    <div class="stat-value orange" id="stat-needfix">-</div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area" id="content-area">
+                <div class="welcome-message">
+                    <h2>เลือกรายการทางซ้าย</h2>
+                    <p>เลือกรายการที่ต้องการตรวจสอบ แล้วคลิก "🔍 โหลดข้อมูล"</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== Config ====================
+// Fix stale apiUrl in localStorage (migrated from port 3000 → current origin)
+(() => {
+    try {
+        const saved = localStorage.getItem('dbConnection');
+        if (saved) {
+            const cfg = JSON.parse(saved);
+            if (cfg.apiUrl && cfg.apiUrl !== window.location.origin) {
+                cfg.apiUrl = window.location.origin;
+                localStorage.setItem('dbConnection', JSON.stringify(cfg));
+            }
+        }
+    } catch(e) {}
+})();
+
+window.API_BASE = window.location.origin;
+
+function getDatabaseConfig() {
+    const saved = localStorage.getItem('dbConnection');
+    if (!saved) return null;
+    return JSON.parse(saved);
+}
+
+window.currentMenu = 'doctor';
+let currentData = [];
+let currentCheckFields = [];
+
+// ==================== Menu definitions ====================
+const MENUS = {
+    doctor: {
+        label: '👨‍⚕️ บุคลากรทางการแพทย์',
+        endpoint: '/api/get-basic-doctor',
+        checkFields: ['licenseno_check', 'licenseno_check2', 'cid_check', 'pname_check'],
+    },
+    pttype: {
+        label: '🪪 สิทธิการรักษา',
+        endpoint: '/api/get-basic-pttype',
+        checkFields: ['check_name', 'check_hipdata_code', 'check_hipdata_pttype'],
+        columns: [
+            { key: 'pttype',              label: 'รหัสสิทธิ' },
+            { key: 'name',                label: 'ชื่อสิทธิ' },
+            { key: 'check_name',          label: '✓', isCheck: true },
+            { key: 'hipdata_code',        label: 'Hipdata Code' },
+            { key: 'check_hipdata_code',  label: '✓', isCheck: true },
+            { key: 'hipdata_pttype',      label: 'Hipdata Pttype' },
+            { key: 'check_hipdata_pttype',label: '✓', isCheck: true },
+            { key: 'isuse',               label: 'ใช้งาน' },
+        ]
+    },
+    income_cat: {
+        label: '🗂️ หมวดค่ารักษาพยาบาล',
+        endpoint: '/api/get-basic-income-category',
+        checkFields: ['check_name', 'check_income_code'],
+        columns: [
+            { key: 'income',            label: 'รหัสหมวด' },
+            { key: 'check_income_code', label: '✓', isCheck: true },
+            { key: 'name',              label: 'ชื่อหมวด' },
+            { key: 'check_name',        label: '✓', isCheck: true },
+        ]
+    },
+    nondrug: {
+        label: '🧾 ค่ารักษาพยาบาล (Non-Drug)',
+        endpoint: '/api/get-basic-nondrug',
+        checkFields: ['check_income', 'check_billcode', 'check_sks_coverage_price'],
+        columns: [
+            { key: 'icode',                   label: 'icode' },
+            { key: 'name',                    label: 'ชื่อรายการ' },
+            { key: 'income',                  label: 'หมวด' },
+            { key: 'check_income',            label: '✓', isCheck: true },
+            { key: 'billcode',                label: 'Billcode' },
+            { key: 'check_billcode',          label: '✓', isCheck: true },
+            { key: 'sks_coverage_price',      label: 'SKS Price' },
+            { key: 'check_sks_coverage_price',label: '✓', isCheck: true },
+            { key: 'enable_sks_opd',          label: 'Enable SKS OPD' },
+        ]
+    },
+    lab: {
+        label: '🔬 ข้อมูล Lab',
+        endpoint: '/api/get-basic-lab',
+        checkFields: ['check_lab_items_code', 'check_tmlt_code'],
+        columns: [
+            { key: 'icode',              label: 'icode' },
+            { key: 'name',               label: 'ชื่อ Lab' },
+            { key: 'lab_items_code',     label: 'Lab Code' },
+            { key: 'check_lab_items_code', label: '✓', isCheck: true },
+            { key: 'tmlt_code',          label: 'TMLT Code' },
+            { key: 'check_tmlt_code',    label: '✓', isCheck: true },
+        ]
+    },
+    bloodbank: {
+        label: '🩸 BloodBank',
+        endpoint: '/api/get-basic-bloodbank',
+        checkFields: ['check_billcode', 'check_name'],
+        columns: [
+            { key: 'icode',        label: 'icode' },
+            { key: 'name',         label: 'ชื่อรายการ' },
+            { key: 'check_name',   label: '✓', isCheck: true },
+            { key: 'billcode',     label: 'Billcode' },
+            { key: 'check_billcode', label: '✓', isCheck: true },
+        ]
+    },
+    xray: {
+        label: '🩻 ข้อมูล X-Ray',
+        endpoint: '/api/get-basic-xray',
+        checkFields: ['check_billcode', 'check_name'],
+        columns: [
+            { key: 'icode',        label: 'icode' },
+            { key: 'name',         label: 'ชื่อรายการ' },
+            { key: 'check_name',   label: '✓', isCheck: true },
+            { key: 'billcode',     label: 'Billcode' },
+            { key: 'check_billcode', label: '✓', isCheck: true },
+        ]
+    },
+    drug: {
+        label: '💊 รายการยา',
+        endpoint: '/api/get-basic-drug-reimb',
+        checkFields: ['check_sks_drug_code', 'check_units', 'check_sks_reimb_price'],
+        columns: [
+            { key: 'icode',               label: 'icode' },
+            { key: 'name',                label: 'ชื่อยา' },
+            { key: 'sks_drug_code',       label: 'SKS Drug Code' },
+            { key: 'check_sks_drug_code', label: '✓', isCheck: true },
+            { key: 'units',               label: 'หน่วย' },
+            { key: 'check_units',         label: '✓', isCheck: true },
+            { key: 'sks_reimb_price',     label: 'SKS Reimb Price' },
+            { key: 'check_sks_reimb_price', label: '✓', isCheck: true },
+        ]
+    },
+    icd10tm: {
+        label: '📖 sks_icd10tm',
+        endpoint: '/api/get-basic-icd10tm',
+        checkFields: ['check_tmcode'],
+        columns: [
+            { key: 'icd10',       label: 'ICD10' },
+            { key: 'name',        label: 'ชื่อโรค' },
+            { key: 'tmcode',      label: 'TM Code' },
+            { key: 'check_tmcode', label: '✓', isCheck: true },
+        ]
+    },
+    opd_oper: {
+        label: '🏥 หัตถการผู้ป่วยนอก',
+        endpoint: '/api/get-basic-opd-procedure',
+        checkFields: ['check_er_oper_code', 'check_name'],
+        columns: [
+            { key: 'er_oper_code',       label: 'รหัสหัตถการ' },
+            { key: 'check_er_oper_code', label: '✓', isCheck: true },
+            { key: 'name',               label: 'ชื่อหัตถการ' },
+            { key: 'check_name',         label: '✓', isCheck: true },
+        ]
+    },
+    or_oper: {
+        label: '🔪 รายการผ่าตัด',
+        endpoint: '/api/get-basic-or-operation',
+        checkFields: ['check_oper_code', 'check_name'],
+        columns: [
+            { key: 'oper_code',       label: 'รหัสผ่าตัด' },
+            { key: 'check_oper_code', label: '✓', isCheck: true },
+            { key: 'name',            label: 'ชื่อรายการผ่าตัด' },
+            { key: 'check_name',      label: '✓', isCheck: true },
+        ]
+    }
+};
+
+// ==================== Sidebar setup ====================
+document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('dbConnection')) {
+        alert('⚠️ ยังไม่ได้เชื่อมต่อฐานข้อมูล\nกรุณากลับหน้าหลักเพื่อเชื่อมต่อก่อน');
+        window.location.href = 'index.html';
+        return;
+    }
+
+    document.querySelectorAll('.file-menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (!item.getAttribute('data-menu')) return;
+            document.querySelectorAll('.file-menu-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            window.currentMenu = item.getAttribute('data-menu');
+            currentData = [];
+            ndIncomeFilter = '';
+            updateStats(0, 0, 0);
+            document.getElementById('show-errors-only').checked = false;
+            // อัปเดต label checkbox ให้ตรงกับเมนูที่เลือก
+            const menuNames = {
+                doctor:'บุคลากรทางการแพทย์', pttype:'สิทธิการรักษา',
+                income_cat:'หมวดค่ารักษาพยาบาล', nondrug:'ค่ารักษาพยาบาล',
+                lab:'ข้อมูล Lab', bloodbank:'BloodBank', xray:'ข้อมูล X-Ray',
+                drug:'รายการยา', icd10tm:'sks_icd10tm',
+                opd_oper:'หัตถการผู้ป่วยนอก', or_oper:'รายการผ่าตัด'
+            };
+            const lbl = document.getElementById('show-errors-label-text');
+            if (lbl) lbl.textContent = `แสดงเฉพาะรายการที่ต้องแก้ไขของ ${menuNames[window.currentMenu]||window.currentMenu}`;
+            // แสดง/ซ่อนปุ่ม position
+            const posBtn = document.getElementById('btn-pos-check');
+            if (posBtn) posBtn.style.display = window.currentMenu === 'doctor' ? 'inline-block' : 'none';
+            loadCurrentMenu();
+        });
+    });
+});
+
+// ==================== Load data ====================
+async function loadCurrentMenu() {
+    if (window.currentMenu === 'doctor') { await loadDoctorMenu(); return; }
+    if (window.currentMenu === 'pttype')     { await loadPttypeMenu();     return; }
+    if (window.currentMenu === 'income_cat') { await loadIncomeCatMenu();  return; }
+    if (window.currentMenu === 'nondrug')    { await loadNondrugMenu();    return; }
+    if (window.currentMenu === 'lab')        { await loadLabMenu();         return; }
+    if (window.currentMenu === 'bloodbank')  { await loadBloodbankMenu();   return; }
+    if (window.currentMenu === 'xray')       { await loadXrayMenu();         return; }
+    if (window.currentMenu === 'drug')       { await loadDrugMenu();         return; }
+    if (window.currentMenu === 'icd10tm')    { await loadIcd10tmMenu();      return; }
+
+    const menu = MENUS[window.currentMenu];
+    if (!menu) return;
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+    document.getElementById('content-area').innerHTML = `
+        <div class="welcome-message"><h2>⏳ กำลังโหลด ${menu.label}...</h2><p>กรุณารอสักครู่</p></div>`;
+    try {
+        const res = await fetch(`${window.API_BASE}${menu.endpoint}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: config.host, port: config.port, database: config.database, user: config.user, password: config.password, type: config.type })
+        });
+        const result = await res.json();
+        if (result.success && result.data) {
+            currentData = result.data;
+            currentCheckFields = menu.checkFields;
+            const needfix = result.data.filter(r => menu.checkFields.some(k => r[k] === 'N')).length;
+            updateStats(result.data.length, result.data.length - needfix, needfix);
+            rerenderTable();
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${result.error||''}</p></div>`;
+        }
+    } catch(e) {
+        alert('เกิดข้อผิดพลาด: ' + e.message);
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+// ==================== Render table (generic) ====================
+function rerenderTable() {
+    if (window.currentMenu === 'doctor') { renderDoctorTable(); return; }
+    if (window.currentMenu === 'pttype')     { renderPttypeTable();     return; }
+    if (window.currentMenu === 'income_cat') { renderIncomeCatTable(); return; }
+    if (window.currentMenu === 'nondrug')    { renderNondrugTable();   return; }
+    if (window.currentMenu === 'lab')        { renderLabTable();        return; }
+    if (window.currentMenu === 'bloodbank')  { renderBloodbankTable();  return; }
+    if (window.currentMenu === 'xray')       { renderXrayTable();        return; }
+    if (window.currentMenu === 'drug')       { renderDrugTable();        return; }
+    if (window.currentMenu === 'icd10tm')    { renderIcd10tmTable();     return; }
+
+    const menu = MENUS[window.currentMenu];
+    if (!menu || !currentData.length) return;
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r => currentCheckFields.some(k => r[k] === 'N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!filtered.length) { contentArea.innerHTML = `<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const cols = menu.columns;
+    let html = `<div style="margin-bottom:16px;"><h3 style="color:#1565c0;margin:0;">${menu.label} (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3></div>
+        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+        <th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:center;">ลำดับ</th>`;
+    cols.forEach(col => { html += `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${col.isCheck?'center':'left'};">${col.label}</th>`; });
+    html += `</tr></thead><tbody>`;
+    filtered.forEach((row, idx) => {
+        const bg = idx%2===0?'#f5f9ff':'white';
+        html += `<tr style="background:${bg};"><td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>`;
+        for (let i=0;i<cols.length;i++) {
+            const col=cols[i]; const val=row[col.key];
+            if (col.isCheck) {
+                const color=val==='Y'?'#4caf50':val==='N'?'#f44336':'#546e7a';
+                html+=`<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"><span style="color:${color};font-weight:bold;">${val??'-'}</span></td>`;
+            } else {
+                const nextCol=cols[i+1]; const checkVal=(nextCol&&nextCol.isCheck)?row[nextCol.key]:null;
+                const cellBg=checkVal==='N'?'background:#f44336;color:white;':'';
+                html+=`<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${cellBg}">${val??'-'}</td>`;
+            }
+        }
+        html+=`</tr>`;
+    });
+    html+=`</tbody></table></div>`;
+    contentArea.innerHTML=html;
+}
+
+// ====================================================================================
+// ==================== DOCTOR MENU: dedicated rendering & inline edit ================
+// ====================================================================================
+
+let doctorPositions = [];
+let currentEditCode = null;
+let drPage = 1;
+const DR_ROWS = 20;
+const DR_CHECK = ['licenseno_check','licenseno_check2','cid_check','pname_check'];
+
+async function loadDoctorMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูลบุคลากร...</h2><p>กรุณารอสักครู่</p></div>`;
+    currentEditCode = null;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const [drRes, posRes] = await Promise.all([
+            fetch(`${window.API_BASE}/api/get-basic-doctor`,   { method:'POST', headers:{'Content-Type':'application/json'}, body }),
+            fetch(`${window.API_BASE}/api/get-doctor-positions`,{ method:'POST', headers:{'Content-Type':'application/json'}, body })
+        ]);
+        const [drResult, posResult] = await Promise.all([drRes.json(), posRes.json()]);
+        if (posResult.success) doctorPositions = posResult.data || [];
+        if (drResult.success && drResult.data) {
+            currentData = drResult.data;
+            currentCheckFields = DR_CHECK;
+            const needfix = drResult.data.filter(r => DR_CHECK.some(k => r[k]==='N')).length;
+            updateStats(drResult.data.length, drResult.data.length-needfix, needfix);
+            renderDoctorTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${drResult.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderDoctorTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r => DR_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    // Pagination: ถ้า showErrorsOnly → แสดงทั้งหมด, ปกติ → หน้าละ 100
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length / DR_ROWS) : 1;
+    if (usePaging && drPage > totalPages) drPage = totalPages;
+    const pageData = usePaging ? filtered.slice((drPage-1)*DR_ROWS, drPage*DR_ROWS) : filtered;
+    const startIdx = usePaging ? (drPage-1)*DR_ROWS : 0;
+
+    const th = (label, center) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${center?'center':'left'};">${label}</th>`;
+
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">👨‍⚕️ บุคลากรทางการแพทย์ (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging ? `<span style="font-size:13px;color:#546e7a;">หน้า ${drPage} / ${totalPages} (แสดง ${startIdx+1}–${Math.min(startIdx+DR_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>` : ''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}
+            ${th('✏️',true)}
+            ${th('รหัส',true)}
+            ${th('position_id',true)}
+            ${th('ตำแหน่ง',false)}
+            ${th('รหัสวิชาชีพ',false)}
+            ${th('✓',true)}
+            ${th('✓',true)}
+            ${th('ชื่อ(รวม)',false)}
+            ${th('เลขบัตร',false)}
+            ${th('✓',true)}
+            ${th('คำนำหน้า',false)}
+            ${th('✓',true)}
+            ${th('ชื่อ',false)}
+            ${th('นามสกุล',false)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row, idx) => {
+        html += renderDoctorRow(row, startIdx + idx, row.code === currentEditCode);
+    });
+
+    html += `</tbody></table></div>`;
+
+    // Pagination controls
+    if (usePaging && totalPages > 1) {
+        const btn = (page, label, active) => `
+            <button onclick="drGoPage(${page})" style="padding:7px 13px;border:2px solid #e3f2fd;border-radius:6px;
+                background:${active?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};
+                color:${active?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${label}</button>`;
+
+        const maxBtn = 7;
+        let s = Math.max(1, drPage - Math.floor(maxBtn/2));
+        let e2 = Math.min(totalPages, s + maxBtn - 1);
+        if (e2 - s < maxBtn - 1) s = Math.max(1, e2 - maxBtn + 1);
+
+        let pages = '';
+        if (s > 1) { pages += btn(1,'1',false); if(s>2) pages += `<span style="padding:7px 4px;color:#9e9e9e;">…</span>`; }
+        for (let i=s; i<=e2; i++) pages += btn(i, i, i===drPage);
+        if (e2 < totalPages) { if(e2<totalPages-1) pages += `<span style="padding:7px 4px;color:#9e9e9e;">…</span>`; pages += btn(totalPages,totalPages,false); }
+
+        html += `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+DR_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+                ${btn(drPage-1,'← ก่อนหน้า', false).replace('cursor:pointer','cursor:'+( drPage===1?'not-allowed':'pointer')).replace('color:#1565c0', drPage===1?'color:#ccc':'color:#1565c0')}
+                ${pages}
+                ${btn(drPage+1,'ถัดไป →', false).replace('cursor:pointer','cursor:'+(drPage===totalPages?'not-allowed':'pointer')).replace('color:#1565c0',drPage===totalPages?'color:#ccc':'color:#1565c0')}
+            </div>
+        </div>`;
+    }
+
+    contentArea.innerHTML = html;
+}
+
+function drGoPage(page) {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r => DR_CHECK.some(k=>r[k]==='N')) : currentData;
+    const totalPages = Math.ceil(filtered.length / DR_ROWS);
+    if (page < 1 || page > totalPages) return;
+    drPage = page;
+    currentEditCode = null;
+    renderDoctorTable();
+    document.getElementById('content-area').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function renderDoctorRow(row, idx, editMode) {
+    const bg = idx%2===0?'#f5f9ff':'white';
+    const rowBg = editMode ? '#fff9c4' : bg;
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const licRed = row.licenseno_check==='N' || row.licenseno_check2==='N';
+    const cidRed = row.cid_check==='N';
+    const pnRed  = row.pname_check==='N';
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const td  = (val, style='') => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${style}">${e(val)}</td>`;
+    const tdc = (val) => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(val)};font-weight:bold;">${e(val)||'-'}</span></td>`;
+    const gray = (val) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;background:#eeeeee;color:#9e9e9e;">${e(val)}</td>`;
+    const inp  = (field, val) => `<td style="padding:4px;border:1px solid #e3f2fd;"><input data-field="${field}" value="${e(val)}" style="width:100%;min-width:80px;padding:4px 6px;border:1px solid #42a5f5;border-radius:4px;font-size:13px;"></td>`;
+    const btnStyle = (bg,col) => `padding:4px 8px;background:${bg};color:${col};border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;`;
+
+    if (editMode) {
+        const posOpts = doctorPositions.map(p=>`<option value="${e(p.id)}" ${String(p.id)===String(row.position_id)?'selected':''}>${e(p.name)}</option>`).join('');
+        return `<tr id="dr-row-${e(row.code)}" data-code="${e(row.code)}" style="background:${rowBg};">
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+            <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;">
+                <div style="display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;">
+                    <button onclick="saveDoctor('${e(row.code)}')" style="${btnStyle('linear-gradient(135deg,#43a047,#2e7d32)','white')}">💾 บันทึก</button>
+                    <button onclick="cancelEdit()" style="${btnStyle('#e0e0e0','#546e7a')}">✕</button>
+                </div>
+            </td>
+            ${gray(row.code)}
+            ${gray(row.position_id)}
+            <td style="padding:4px;border:1px solid #e3f2fd;"><select data-field="position_id" style="width:100%;min-width:100px;padding:4px;border:1px solid #42a5f5;border-radius:4px;font-size:13px;">${posOpts}</select></td>
+            ${inp('licenseno', row.licenseno)}
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+            ${inp('d_name', row.d_name)}
+            ${inp('cid', row.cid)}
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+            ${inp('pname', row.pname)}
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+            ${inp('fname', row.fname)}
+            ${inp('lname', row.lname)}
+        </tr>`;
+    }
+
+    return `<tr id="dr-row-${e(row.code)}" data-code="${e(row.code)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;min-width:80px;">
+            <button onclick="editDoctor('${e(row.code)}')" style="${btnStyle('#e3f2fd','#1565c0')} white-space:nowrap;">✏️ แก้ไข</button>
+        </td>
+        ${gray(row.code)}
+        ${gray(row.position_id)}
+        ${td(row.p_name)}
+        ${td(row.licenseno, licRed?'background:#f44336;color:white;':'')}
+        ${tdc(row.licenseno_check)}
+        ${tdc(row.licenseno_check2)}
+        ${td(row.d_name)}
+        ${td(row.cid, cidRed?'background:#f44336;color:white;':'')}
+        ${tdc(row.cid_check)}
+        ${td(row.pname, pnRed?'background:#f44336;color:white;':'')}
+        ${tdc(row.pname_check)}
+        ${td(row.fname)}
+        ${td(row.lname)}
+    </tr>`;
+}
+
+function editDoctor(code) {
+    currentEditCode = code;
+    renderDoctorTable();
+}
+
+function cancelEdit() {
+    currentEditCode = null;
+    renderDoctorTable();
+}
+
+// ==================== Position Check Modal ====================
+let allPositions = [];      // doctor_position ทั้งหมด
+let checkedPositions = [];  // position_check ที่มีอยู่แล้ว
+
+async function openPositionModal() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+    const modal = document.getElementById('pos-modal');
+    const list  = document.getElementById('pos-list');
+    modal.style.display = 'flex';
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:#546e7a;">⏳ กำลังโหลด...</div>';
+    document.getElementById('pos-search').value = '';
+
+    const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+
+    try {
+        const [posRes, checkRes] = await Promise.all([
+            fetch(`${window.API_BASE}/api/get-doctor-positions`, { method:'POST', headers:{'Content-Type':'application/json'}, body }),
+            fetch(`${window.API_BASE}/api/get-position-check`,   { method:'POST', headers:{'Content-Type':'application/json'}, body })
+        ]);
+        const [posData, checkData] = await Promise.all([posRes.json(), checkRes.json()]);
+
+        allPositions    = posData.success  ? (posData.data  || []) : [];
+        checkedPositions= checkData.success? (checkData.data|| []) : [];
+
+        renderPositionList(allPositions);
+    } catch(e) {
+        list.innerHTML = `<div style="padding:20px;color:#f44336;">❌ ${e.message}</div>`;
+    }
+}
+
+function renderPositionList(positions) {
+    const list = document.getElementById('pos-list');
+    const checkedIds = new Set(checkedPositions.map(c => String(c.position_id)));
+
+    if (!positions.length) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:#9e9e9e;">ไม่พบข้อมูลตำแหน่ง</div>';
+        updatePosCount();
+        return;
+    }
+
+    list.innerHTML = positions.map(p => {
+        const isChecked = checkedIds.has(String(p.id));
+        return `<label style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f5f5f5; cursor:pointer; font-size:14px; color:#263238;">
+            <input type="checkbox" class="pos-cb" value="${p.id}" data-name="${(p.name||'').replace(/"/g,'&quot;')}"
+                ${isChecked ? 'checked' : ''}
+                onchange="updatePosCount()"
+                style="width:16px; height:16px; cursor:pointer; accent-color:#7b1fa2; flex-shrink:0;">
+            <span>${p.name || '-'}</span>
+        </label>`;
+    }).join('');
+
+    updatePosCount();
+    syncSelectAll();
+}
+
+function filterPositionList() {
+    const q = document.getElementById('pos-search').value.toLowerCase();
+    const filtered = allPositions.filter(p => (p.name || '').toLowerCase().includes(q));
+    renderPositionList(filtered);
+}
+
+function updatePosCount() {
+    const checked = document.querySelectorAll('.pos-cb:checked').length;
+    const total   = document.querySelectorAll('.pos-cb').length;
+    document.getElementById('pos-selected-count').textContent = `เลือกแล้ว ${checked} / ${total} รายการ`;
+    syncSelectAll();
+}
+
+function syncSelectAll() {
+    const all = document.querySelectorAll('.pos-cb');
+    const chk = document.querySelectorAll('.pos-cb:checked');
+    const sa  = document.getElementById('pos-select-all');
+    sa.checked = all.length > 0 && chk.length === all.length;
+    sa.indeterminate = chk.length > 0 && chk.length < all.length;
+}
+
+function toggleSelectAll() {
+    const val = document.getElementById('pos-select-all').checked;
+    document.querySelectorAll('.pos-cb').forEach(cb => cb.checked = val);
+    updatePosCount();
+}
+
+function closePositionModal() {
+    document.getElementById('pos-modal').style.display = 'none';
+}
+
+async function savePositionCheck() {
+    const config = getDatabaseConfig();
+    if (!config) return;
+    const body = { host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type };
+
+    const saveBtn = document.querySelector('#pos-modal button[onclick="savePositionCheck()"]');
+    saveBtn.textContent = '⏳ กำลังบันทึก...';
+    saveBtn.disabled = true;
+
+    try {
+        // รายการที่ถูกติ๊กในหน้าจอ
+        const nowSelectedIds = new Set([...document.querySelectorAll('.pos-cb:checked')].map(cb => String(cb.value)));
+        // รายการที่มีอยู่ใน position_check แล้ว
+        const existingMap = new Map(checkedPositions.map(c => [String(c.position_id), c]));
+
+        // INSERT: ติ๊กอยู่ แต่ยังไม่มีใน position_check
+        for (const cb of document.querySelectorAll('.pos-cb:checked')) {
+            if (!existingMap.has(String(cb.value))) {
+                const res = await fetch(`${window.API_BASE}/api/insert-position-check`, {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ ...body, position_id: cb.value, position_name: cb.getAttribute('data-name') })
+                });
+                const r = await res.json();
+                if (!r.success) throw new Error('INSERT ล้มเหลว: ' + (r.error || ''));
+            }
+        }
+
+        // DELETE: มีใน position_check แต่ไม่ได้ติ๊กรอบนี้
+        for (const [posId, row] of existingMap) {
+            if (!nowSelectedIds.has(posId)) {
+                const res = await fetch(`${window.API_BASE}/api/delete-position-check`, {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ ...body, position_check_id: row.position_check_id })
+                });
+                const r = await res.json();
+                if (!r.success) throw new Error('DELETE ล้มเหลว: ' + (r.error || ''));
+            }
+        }
+
+        closePositionModal();
+        await loadDoctorMenu();
+    } catch(e) {
+        alert('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    } finally {
+        saveBtn.textContent = '💾 บันทึก';
+        saveBtn.disabled = false;
+    }
+}
+
+async function createSksIcd10tmCheckTable() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ยังไม่ได้เชื่อมต่อฐานข้อมูล'); return; }
+    if (!confirm('ต้องการสร้างตาราง sks_icd10tm_check ในฐานข้อมูลหรือไม่?\n\nจะสร้างเฉพาะเมื่อตารางยังไม่มีอยู่ (IF NOT EXISTS)')) return;
+    try {
+        const res = await fetch(`${window.API_BASE}/api/create-sks-icd10tm-check-table`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type })
+        });
+        const result = await res.json();
+        if (result.success) alert('✅ ' + result.message);
+        else alert('❌ เกิดข้อผิดพลาด: ' + result.error);
+    } catch(e) {
+        alert('❌ เชื่อมต่อ API ไม่ได้: ' + e.message);
+    }
+}
+
+async function createPositionCheckTable() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ยังไม่ได้เชื่อมต่อฐานข้อมูล'); return; }
+
+    if (!confirm('ต้องการสร้างตาราง position_check ในฐานข้อมูลหรือไม่?\n\nจะสร้างเฉพาะเมื่อตารางยังไม่มีอยู่ (IF NOT EXISTS)')) return;
+
+    try {
+        const res = await fetch(`${window.API_BASE}/api/create-position-check-table`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type })
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert('✅ ' + result.message);
+        } else {
+            alert('❌ เกิดข้อผิดพลาด: ' + result.error);
+        }
+    } catch(e) {
+        alert('❌ เชื่อมต่อ API ไม่ได้: ' + e.message);
+    }
+}
+
+async function saveDoctor(code) {
+    const tr = document.querySelector(`tr[data-code="${code}"]`);
+    if (!tr) return;
+    const config = getDatabaseConfig();
+    if (!config) return;
+
+    const original = currentData.find(r => String(r.code) === String(code));
+    if (!original) return;
+
+    const inputs = tr.querySelectorAll('input[data-field], select[data-field]');
+    const changes = [];
+    inputs.forEach(el => {
+        const field = el.getAttribute('data-field');
+        const newVal = el.value;
+        const origVal = field === 'position_id' ? String(original.position_id??'') : String(original[field === 'd_name' ? 'd_name' : field]??'');
+        if (newVal !== origVal) changes.push({ field, value: newVal });
+    });
+
+    if (!changes.length) { cancelEdit(); return; }
+
+    const body = { host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type, code };
+    let hasError = false;
+    for (const ch of changes) {
+        try {
+            const res = await fetch(`${window.API_BASE}/api/update-doctor-field`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ ...body, field: ch.field, value: ch.value })
+            });
+            const result = await res.json();
+            if (!result.success) { alert('บันทึกไม่สำเร็จ: ' + (result.error||'')); hasError=true; break; }
+        } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
+    }
+
+    if (!hasError) {
+        currentEditCode = null;
+        await loadDoctorMenu();
+    }
+}
+
+// ==================== Stats ====================
+function updateStats(total, passed, needfix) {
+    document.getElementById('stat-total').textContent  = total.toLocaleString();
+    document.getElementById('stat-passed').textContent = passed.toLocaleString();
+    document.getElementById('stat-needfix').textContent= needfix.toLocaleString();
+}
+
+// ==================== Export Excel (เรียกจากปุ่ม — routing ไปที่ all-menus section) ====================
+
+// ====================================================================================
+// ==================== INCOME_CAT MENU ==============================================
+// ====================================================================================
+const IC_CHECK = ['income_group2_check'];
+
+let icPage = 1;
+const IC_ROWS = 20;
+let icEditCode = null;
+let icDropdowns = { report2:[], drgGroup:[], sss:[], stdGroup:[], csmbs:[], nk2:[], chrgitem:[], rvsp:[] };
+
+async function loadIncomeCatMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดหมวดค่ารักษาพยาบาล...</h2><p>กรุณารอสักครู่</p></div>`;
+    icEditCode = null;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const post = (ep) => fetch(`${window.API_BASE}${ep}`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const [mainR,r2R,dgR,sssR,sgR,csR,nkR,dcR,rvR] = await Promise.all([
+            post('/api/get-basic-income-category'),
+            post('/api/get-income-report2-list'),
+            post('/api/get-drg-group-list'),
+            post('/api/get-income-sss-list'),
+            post('/api/get-income-std-group-list'),
+            post('/api/get-income-csmbs-list'),
+            post('/api/get-income-nk2-list'),
+            post('/api/get-drg-chrgitem-list'),
+            post('/api/get-income-rvsp-group-list')
+        ]);
+        const [main,r2,dg,sss,sg,cs,nk,dc,rv] = await Promise.all([mainR.json(),r2R.json(),dgR.json(),sssR.json(),sgR.json(),csR.json(),nkR.json(),dcR.json(),rvR.json()]);
+        icDropdowns.report2   = r2.success  ? (r2.data  || []) : [];
+        icDropdowns.drgGroup  = dg.success  ? (dg.data  || []) : [];
+        icDropdowns.sss       = sss.success ? (sss.data || []) : [];
+        icDropdowns.stdGroup  = sg.success  ? (sg.data  || []) : [];
+        icDropdowns.csmbs     = cs.success  ? (cs.data  || []) : [];
+        icDropdowns.nk2       = nk.success  ? (nk.data  || []) : [];
+        icDropdowns.chrgitem  = dc.success  ? (dc.data  || []) : [];
+        icDropdowns.rvsp      = rv.success  ? (rv.data  || []) : [];
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = IC_CHECK;
+            const needfix = main.data.filter(r => IC_CHECK.some(k => r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            icPage = 1;
+            renderIncomeCatTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderIncomeCatTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r => IC_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length/IC_ROWS) : 1;
+    if (usePaging && icPage > totalPages) icPage = totalPages;
+    const pageData = usePaging ? filtered.slice((icPage-1)*IC_ROWS, icPage*IC_ROWS) : filtered;
+    const startIdx = usePaging ? (icPage-1)*IC_ROWS : 0;
+
+    const th = (label,center) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${center?'center':'left'};">${label}</th>`;
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">🗂️ หมวดค่ารักษาพยาบาล (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${icPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+IC_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}${th('✏️',true)}
+            ${th('income',true)}
+            ${th('ชื่อหมวด',false)}
+            ${th('หมวดกำหนดเอง 2',false)}${th('✓',true)}
+            ${th('หมวด DRGs',false)}
+            ${th('หมวดประกันสังคม',false)}
+            ${th('หมวด สกส',false)}
+            ${th('หมวด สกส ผู้ป่วยใน',false)}
+            ${th('หมวด นค.2',false)}
+            ${th('หมวด E-Claim',false)}
+            ${th('หมวดบริษัทกลาง',false)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row, idx) => {
+        html += renderIncomeCatRow(row, startIdx+idx, row.income === icEditCode);
+    });
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (page,label,active) => `<button onclick="icGoPage(${page})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${active?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${active?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${label}</button>`;
+        let pages='',maxB=7,s=Math.max(1,icPage-Math.floor(maxB/2)),e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1)s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++)pages+=pgBtn(i,i,i===icPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+IC_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">${pgBtn(icPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(icPage+1,'ถัดไป →',false)}</div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function icGoPage(page) {
+    const filtered = document.getElementById('show-errors-only').checked ? currentData.filter(r=>IC_CHECK.some(k=>r[k]==='N')) : currentData;
+    const tp = Math.ceil(filtered.length/IC_ROWS);
+    if(page<1||page>tp) return;
+    icPage=page; icEditCode=null;
+    renderIncomeCatTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderIncomeCatRow(row, idx, editMode) {
+    const bg = idx%2===0?'#f5f9ff':'white';
+    const rowBg = editMode?'#fff9c4':bg;
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const gray = v => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;background:#eeeeee;color:#9e9e9e;text-align:center;">${e(v)}</td>`;
+    const td   = (v, red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+    const tdc  = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(v)};font-weight:bold;">${e(v)||'-'}</span></td>`;
+    const inp  = (field,v) => `<td style="padding:4px;border:1px solid #e3f2fd;"><input data-field="${field}" value="${e(v)}" style="width:100%;min-width:70px;padding:4px 6px;border:1px solid #42a5f5;border-radius:4px;font-size:12px;"></td>`;
+    const sel  = (field,cur,opts,idKey,nameKey) => {
+        const options = `<option value=""></option>` + opts.map(o=>`<option value="${e(o[idKey])}" ${String(o[idKey]).trim()===String(cur??'').trim()?'selected':''}>${e(o[nameKey])}</option>`).join('');
+        return `<td style="padding:4px;border:1px solid #e3f2fd;"><select data-field="${field}" style="width:100%;min-width:100px;padding:4px;border:1px solid #42a5f5;border-radius:4px;font-size:12px;">${options}</select></td>`;
+    };
+    const btnS = (bg2,col) => `padding:4px 8px;background:${bg2};color:${col};border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;`;
+
+    if (editMode) return `<tr id="ic-row-${e(row.income)}" data-income="${e(row.income)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;">
+            <div style="display:flex;gap:4px;justify-content:center;">
+                <button onclick="saveIncomeCat('${e(row.income)}')" style="${btnS('linear-gradient(135deg,#43a047,#2e7d32)','white')}">💾 บันทึก</button>
+                <button onclick="cancelIncomeCatEdit()" style="${btnS('#e0e0e0','#546e7a')}">✕</button>
+            </div>
+        </td>
+        ${gray(row.income)}
+        ${inp('income_name', row.income_name)}
+        ${sel('group2', row.group2, icDropdowns.report2, 'group_id', 'group_name')}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${sel('drg_group', row.drg_group, icDropdowns.drgGroup, 'drg_group', 'drg_group_name')}
+        ${sel('income_sss_group_code', row.income_sss_group_code, icDropdowns.sss, 'code', 'name')}
+        ${sel('std_group', row.std_group, icDropdowns.stdGroup, 'std_group', 'name')}
+        ${sel('income_csmbs_code', row.income_csmbs_code, icDropdowns.csmbs, 'income_csmbs_code', 'income_csmbs_name')}
+        ${sel('nk2_group', row.nk2_group_code, icDropdowns.nk2, 'nk2_group', 'name')}
+        ${sel('drg_chrgitem_id', row.drg_chrgitem_id, icDropdowns.chrgitem, 'drg_chrgitem_id', 'drg_chrgitem_name')}
+        ${sel('rvsp_group', row.rvsp_group, icDropdowns.rvsp, 'rvsp_group', 'rvsp_name')}
+    </tr>`;
+
+    return `<tr id="ic-row-${e(row.income)}" data-income="${e(row.income)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;min-width:70px;">
+            <button onclick="editIncomeCat('${e(row.income)}')" style="${btnS('#e3f2fd','#1565c0')} white-space:nowrap;">✏️ แก้ไข</button>
+        </td>
+        ${gray(row.income)}
+        ${td(row.income_name)}
+        ${td(row.income_group2, row.income_group2_check==='N')}${tdc(row.income_group2_check)}
+        ${td(row.drg_group_name)}
+        ${td(row.sss_name)}
+        ${td(row.sks_opd)}
+        ${td(row.sks_ipd)}
+        ${td(row.nk2_group)}
+        ${td(row.eclaim)}
+        ${td(row.rvsp_name)}
+    </tr>`;
+}
+
+function editIncomeCat(income)  { icEditCode = income; renderIncomeCatTable(); }
+function cancelIncomeCatEdit()  { icEditCode = null;   renderIncomeCatTable(); }
+
+async function saveIncomeCat(income) {
+    const tr = document.querySelector(`tr[data-income="${income}"]`);
+    if (!tr) return;
+    const config = getDatabaseConfig();
+    if (!config) return;
+    const original = currentData.find(r => String(r.income) === String(income));
+    if (!original) return;
+
+    const origMap = {
+        income_name: original.income_name,
+        group2: original.group2,
+        drg_group: original.drg_group,
+        income_sss_group_code: original.income_sss_group_code,
+        std_group: original.std_group,
+        income_csmbs_code: original.income_csmbs_code,
+        nk2_group: original.nk2_group_code,
+        drg_chrgitem_id: original.drg_chrgitem_id,
+        rvsp_group: original.rvsp_group
+    };
+
+    const body = { host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type, income };
+    let hasError = false;
+    for (const el of tr.querySelectorAll('input[data-field],select[data-field]')) {
+        const field = el.getAttribute('data-field');
+        const newVal = el.value;
+        if (String(newVal) === String(origMap[field]??'')) continue;
+        try {
+            const res = await fetch(`${window.API_BASE}/api/update-income-field`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ ...body, field, value: newVal || null })
+            });
+            const r = await res.json();
+            if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
+        } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
+    }
+    if (!hasError) { icEditCode = null; await loadIncomeCatMenu(); }
+}
+
+// ====================================================================================
+// ==================== NONDRUG MENU =================================================
+// ====================================================================================
+const ND_CHECK = ['name_check','sks_product_category_check'];
+let ndPage = 1;
+let ndIncomeFilter = '';
+const ND_ROWS = 20;
+let ndEditCode = null;
+let ndDropdowns = { income:[], adpType:[], adpCode:[], sksCat:[] };
+
+async function loadNondrugMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดรายการค่ารักษาพยาบาล...</h2><p>กรุณารอสักครู่</p></div>`;
+    ndEditCode = null;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const post = ep => fetch(`${window.API_BASE}${ep}`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const [mainR,incR,atR,acR,scR] = await Promise.all([
+            post('/api/get-basic-nondrug'),
+            post('/api/get-income-list'),
+            post('/api/get-nhso-adp-type-list'),
+            post('/api/get-nhso-adp-code-list'),
+            post('/api/get-sks-product-cat-list')
+        ]);
+        const [main,inc,at,ac,sc] = await Promise.all([mainR.json(),incR.json(),atR.json(),acR.json(),scR.json()]);
+        ndDropdowns.income  = inc.success ? (inc.data||[]) : [];
+        ndDropdowns.adpType = at.success  ? (at.data ||[]) : [];
+        ndDropdowns.adpCode = ac.success  ? (ac.data ||[]) : [];
+        ndDropdowns.sksCat  = sc.success  ? (sc.data ||[]) : [];
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = ND_CHECK;
+            const needfix = main.data.filter(r => ND_CHECK.some(k=>r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            ndPage = 1;
+            renderNondrugTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderNondrugTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+
+    // Build income filter dropdown
+    const incomeMap = new Map();
+    currentData.forEach(r => { if (!incomeMap.has(r.income)) incomeMap.set(r.income, r.income_name || r.income || ''); });
+    const sortedIncomes = [...incomeMap.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0]), undefined, { numeric: true }));
+    const escHtml = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const incomeOptions = `<option value="">-- ทุกหมวด (${currentData.length.toLocaleString()} รายการ) --</option>` +
+        sortedIncomes.map(([code, name]) => {
+            const cnt = currentData.filter(r => r.income === code).length;
+            return `<option value="${escHtml(code)}" ${ndIncomeFilter === code ? 'selected' : ''}>${escHtml(code)} - ${escHtml(name)} (${cnt.toLocaleString()})</option>`;
+        }).join('');
+    const filterBar = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:#f0f7ff;padding:12px 16px;border-radius:10px;border:1px solid #bbdefb;">
+            <span style="font-size:14px;font-weight:700;color:#1565c0;white-space:nowrap;">🗂️ หมวด income:</span>
+            <select id="nondrug-income-filter" onchange="ndIncomeFilter=this.value;ndPage=1;ndEditCode=null;renderNondrugTable()"
+                style="padding:8px 12px;border:2px solid #90caf9;border-radius:8px;font-size:14px;color:#1565c0;font-weight:600;background:white;cursor:pointer;min-width:260px;">
+                ${incomeOptions}
+            </select>
+        </div>`;
+
+    // Apply income filter then error filter
+    const incomeFiltered = ndIncomeFilter ? currentData.filter(r => r.income === ndIncomeFilter) : currentData;
+    const filtered = showErrorsOnly ? incomeFiltered.filter(r=>ND_CHECK.some(k=>r[k]==='N')) : incomeFiltered;
+
+    if (!filtered.length) {
+        contentArea.innerHTML = filterBar + `<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`;
+        return;
+    }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length/ND_ROWS) : 1;
+    if (usePaging && ndPage>totalPages) ndPage=totalPages;
+    const pageData = usePaging ? filtered.slice((ndPage-1)*ND_ROWS, ndPage*ND_ROWS) : filtered;
+    const startIdx = usePaging ? (ndPage-1)*ND_ROWS : 0;
+
+    const th = (l,c) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${c?'center':'left'};">${l}</th>`;
+    let html = filterBar + `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">🧾 ค่ารักษาพยาบาล (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${ndPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+ND_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}${th('✏️',true)}
+            ${th('icode',true)}
+            ${th('ชื่อรายการ',false)}${th('✓',true)}
+            ${th('หน่วยนับ',false)}
+            ${th('ราคาขาย',false)}
+            ${th('รหัสเบิก',false)}
+            ${th('ชื่อหมวด',false)}
+            ${th('ADP_TYPE',false)}
+            ${th('ADP_Code',false)}
+            ${th('sks_product_category',false)}${th('✓',true)}
+            ${th('ราคาเบิก',false)}
+            ${th('ติ๊กส่งเบิก',false)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row,idx) => {
+        html += renderNondrugRow(row, startIdx+idx, row.icode === ndEditCode);
+    });
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (p,l,a) => `<button onclick="ndGoPage(${p})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${a?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${a?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${l}</button>`;
+        let pages='',maxB=7,s=Math.max(1,ndPage-Math.floor(maxB/2)),e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1)s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++) pages+=pgBtn(i,i,i===ndPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+ND_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">${pgBtn(ndPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(ndPage+1,'ถัดไป →',false)}</div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function ndGoPage(page) {
+    const incomeFiltered = ndIncomeFilter ? currentData.filter(r => r.income === ndIncomeFilter) : currentData;
+    const f = document.getElementById('show-errors-only').checked ? incomeFiltered.filter(r=>ND_CHECK.some(k=>r[k]==='N')) : incomeFiltered;
+    const tp = Math.ceil(f.length/ND_ROWS);
+    if(page<1||page>tp) return;
+    ndPage=page; ndEditCode=null;
+    renderNondrugTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderNondrugRow(row, idx, editMode) {
+    const bg = idx%2===0?'#f5f9ff':'white';
+    const rowBg = editMode?'#fff9c4':bg;
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const gray = v => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;background:#eeeeee;color:#9e9e9e;text-align:center;">${e(v)}</td>`;
+    const td   = (v,red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+    const tdc  = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(v)};font-weight:bold;">${e(v)||'-'}</span></td>`;
+    const inp  = (field,v,type) => `<td style="padding:4px;border:1px solid #e3f2fd;"><input data-field="${field}" type="${type||'text'}" value="${e(v)}" style="width:100%;min-width:70px;padding:4px 6px;border:1px solid #42a5f5;border-radius:4px;font-size:12px;"></td>`;
+    const sel  = (field,cur,opts,idKey,nameKey) => {
+        const opts2 = `<option value=""></option>` + opts.map(o=>`<option value="${e(o[idKey])}" ${String(o[idKey]).trim()===String(cur??'').trim()?'selected':''}>${e(o[nameKey])}</option>`).join('');
+        return `<td style="padding:4px;border:1px solid #e3f2fd;"><select data-field="${field}" style="width:100%;min-width:100px;padding:4px;border:1px solid #42a5f5;border-radius:4px;font-size:12px;">${opts2}</select></td>`;
+    };
+    const btnS = (bg2,col) => `padding:4px 8px;background:${bg2};color:${col};border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;`;
+
+    if (editMode) return `<tr id="nd-row-${e(row.icode)}" data-icode="${e(row.icode)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;">
+            <div style="display:flex;gap:4px;justify-content:center;">
+                <button onclick="saveNondrug('${e(row.icode)}')" style="${btnS('linear-gradient(135deg,#43a047,#2e7d32)','white')}">💾 บันทึก</button>
+                <button onclick="cancelNondrugEdit()" style="${btnS('#e0e0e0','#546e7a')}">✕</button>
+            </div>
+        </td>
+        ${gray(row.icode)}
+        ${inp('name', row.name)}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${inp('unit', row.unit)}
+        ${inp('price', row.price, 'number')}
+        ${inp('billcode', row.billcode)}
+        ${sel('income', row.income, ndDropdowns.income, 'income', 'name')}
+        ${sel('nhso_adp_type_id', row.nhso_adp_type_id, ndDropdowns.adpType, 'nhso_adp_type_id', 'nhso_adp_type_name')}
+        ${sel('nhso_adp_code', row.nhso_adp_code, ndDropdowns.adpCode, 'nhso_adp_code', 'nhso_adp_code_name')}
+        ${sel('sks_product_category_id', row.sks_product_category_id, ndDropdowns.sksCat, 'sks_product_category_id', 'sks_product_category_name')}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${inp('sks_coverage_price', row.sks_coverage_price, 'number')}
+        ${inp('enable_sks_opd', row.enable_sks_opd)}
+    </tr>`;
+
+    return `<tr id="nd-row-${e(row.icode)}" data-icode="${e(row.icode)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;min-width:70px;">
+            <button onclick="editNondrug('${e(row.icode)}')" style="${btnS('#e3f2fd','#1565c0')} white-space:nowrap;">✏️ แก้ไข</button>
+        </td>
+        ${gray(row.icode)}
+        ${td(row.name, row.name_check==='N')}${tdc(row.name_check)}
+        ${td(row.unit)}
+        ${td(row.price)}
+        ${td(row.billcode)}
+        ${td(row.income_name)}
+        ${td(row.nhso_adp_type_name)}
+        ${td(row.nhso_adp_code)}
+        ${td(row.sks_product_category_name, row.sks_product_category_check==='N')}${tdc(row.sks_product_category_check)}
+        ${td(row.sks_coverage_price)}
+        ${td(row.enable_sks_opd)}
+    </tr>`;
+}
+
+function editNondrug(icode)   { ndEditCode = icode; renderNondrugTable(); }
+function cancelNondrugEdit()  { ndEditCode = null;  renderNondrugTable(); }
+
+async function saveNondrug(icode) {
+    const tr = document.querySelector(`tr[data-icode="${icode}"]`);
+    if (!tr) return;
+    const config = getDatabaseConfig();
+    if (!config) return;
+    const original = currentData.find(r => String(r.icode) === String(icode));
+    if (!original) return;
+
+    const origMap = {
+        name: original.name, unit: original.unit, price: String(original.price??''),
+        billcode: original.billcode,
+        income: original.income,
+        nhso_adp_type_id: original.nhso_adp_type_id,
+        nhso_adp_code: original.nhso_adp_code,
+        sks_product_category_id: original.sks_product_category_id,
+        sks_coverage_price: String(original.sks_coverage_price??''),
+        enable_sks_opd: original.enable_sks_opd
+    };
+
+    const body = { host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type, icode };
+    let hasError = false;
+    for (const el of tr.querySelectorAll('input[data-field],select[data-field]')) {
+        const field = el.getAttribute('data-field');
+        const newVal = el.value;
+        if (String(newVal) === String(origMap[field]??'')) continue;
+        try {
+            const res = await fetch(`${window.API_BASE}/api/update-nondrug-field`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ ...body, field, value: newVal || null })
+            });
+            const r = await res.json();
+            if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
+        } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
+    }
+    if (!hasError) { ndEditCode = null; await loadNondrugMenu(); }
+}
+
+// ====================================================================================
+// ==================== LAB MENU (read-only) =========================================
+// ====================================================================================
+const LAB_CHECK = ['lab_catalog_icode_check','lab_catalog_tmlt_check','sks_price_check'];
+let labPage = 1;
+const LAB_ROWS = 20;
+
+async function loadLabMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูล Lab...</h2><p>กรุณารอสักครู่</p></div>`;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const res = await fetch(`${window.API_BASE}/api/get-basic-lab`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const main = await res.json();
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = LAB_CHECK;
+            const needfix = main.data.filter(r => LAB_CHECK.some(k=>r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            labPage = 1;
+            renderLabTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderLabTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r=>LAB_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length/LAB_ROWS) : 1;
+    if (usePaging && labPage>totalPages) labPage=totalPages;
+    const pageData = usePaging ? filtered.slice((labPage-1)*LAB_ROWS, labPage*LAB_ROWS) : filtered;
+    const startIdx = usePaging ? (labPage-1)*LAB_ROWS : 0;
+
+    const th = (l,c) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${c?'center':'left'};">${l}</th>`;
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const td  = (v,red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+    const tdc = v => v===''||v==null ? `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>` :
+                `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(v)};font-weight:bold;">${e(v)}</span></td>`;
+
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">🔬 ข้อมูล Lab (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${labPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+LAB_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}
+            ${th('กลุ่ม Lab',false)}
+            ${th('lab_code',false)}
+            ${th('lab_icode',false)}
+            ${th('lab_catalog_icode',false)}${th('✓',true)}
+            ${th('ไม่ส่ง labcat',true)}
+            ${th('ชื่อ Lab',false)}
+            ${th('ราคา',false)}
+            ${th('lab_tmlt',false)}
+            ${th('lab_catalog_tmlt',false)}${th('✓',true)}
+            ${th('lab_catalog_name',false)}
+            ${th('nondrug_name',false)}
+            ${th('ประเภท',true)}
+            ${th('sks_coverage_price',false)}
+            ${th('pttype_price',false)}${th('✓',true)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row, idx) => {
+        const bg = (startIdx+idx)%2===0?'#f5f9ff':'white';
+        html += `<tr style="background:${bg};">
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${startIdx+idx+1}</td>
+            ${td(row.lab_items_group_name)}
+            ${td(row.lab_code)}
+            ${td(row.lab_icode)}
+            ${td(row.lab_catalog_icode, row.lab_catalog_icode_check==='N')}${tdc(row.lab_catalog_icode_check)}
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"><input type="checkbox" ${row.no_lab_catalog==='Y'?'checked':''} data-icode="${e(row.lab_icode)}" data-labtype="${e(row.lab_type)}" onchange="setNoLabCatalog(this.dataset.icode,this.dataset.labtype,this.checked)" title="ไม่ส่ง labcat" style="width:16px;height:16px;cursor:pointer;"></td>
+            ${td(row.lab_name)}
+            ${td(row.price)}
+            ${td(row.lab_tmlt)}
+            ${td(row.lab_catalog_tmlt, row.lab_catalog_tmlt_check==='N')}${tdc(row.lab_catalog_tmlt_check)}
+            ${td(row.lab_catalog_name)}
+            ${td(row.nondrug_name)}
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${e(row.lab_type)}</td>
+            ${td(row.sks_coverage_price)}
+            ${td(row.pttype_price, row.sks_price_check==='N')}${tdc(row.sks_price_check)}
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (p,l,a) => `<button onclick="labGoPage(${p})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${a?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${a?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${l}</button>`;
+        let pages='',maxB=7,s=Math.max(1,labPage-Math.floor(maxB/2)),e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1) s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++) pages+=pgBtn(i,i,i===labPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+LAB_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">${pgBtn(labPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(labPage+1,'ถัดไป →',false)}</div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function labGoPage(page) {
+    const f = document.getElementById('show-errors-only').checked ? currentData.filter(r=>LAB_CHECK.some(k=>r[k]==='N')) : currentData;
+    const tp = Math.ceil(f.length/LAB_ROWS);
+    if(page<1||page>tp) return;
+    labPage=page;
+    renderLabTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ====================================================================================
+// ==================== BLOODBANK MENU (read-only) ====================================
+// ====================================================================================
+const BB_CHECK = ['bloodbank_tmlt_check','lab_catalog_icode_check','lab_catalog_tmlt_check'];
+let bbPage = 1;
+const BB_ROWS = 20;
+
+async function loadBloodbankMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูล BloodBank...</h2><p>กรุณารอสักครู่</p></div>`;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const res = await fetch(`${window.API_BASE}/api/get-basic-bloodbank`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const main = await res.json();
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = BB_CHECK;
+            const needfix = main.data.filter(r => BB_CHECK.some(k=>r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            bbPage = 1;
+            renderBloodbankTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderBloodbankTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r=>BB_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length/BB_ROWS) : 1;
+    if (usePaging && bbPage>totalPages) bbPage=totalPages;
+    const pageData = usePaging ? filtered.slice((bbPage-1)*BB_ROWS, bbPage*BB_ROWS) : filtered;
+    const startIdx = usePaging ? (bbPage-1)*BB_ROWS : 0;
+
+    const th = (l,c) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${c?'center':'left'};">${l}</th>`;
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const td  = (v,red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+    const tdc = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(v)};font-weight:bold;">${e(v)||'-'}</span></td>`;
+
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">🩸 BloodBank (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${bbPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+BB_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}
+            ${th('bloodbank_id',true)}
+            ${th('ชื่อ BloodBank',false)}
+            ${th('icode',false)}
+            ${th('หน่วย',false)}
+            ${th('TMLT',false)}${th('✓',true)}
+            ${th('lab_catalog_icode',false)}${th('✓',true)}
+            ${th('lab_catalog_tmlt',false)}${th('✓',true)}
+            ${th('lab_catalog_name',false)}
+            ${th('nondrug_name',false)}
+            ${th('ไม่ส่ง labcat',true)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row, idx) => {
+        const bg = (startIdx+idx)%2===0?'#f5f9ff':'white';
+        html += `<tr style="background:${bg};">
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${startIdx+idx+1}</td>
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${e(row.bloodbank_id)}</td>
+            ${td(row.bloodbank_name)}
+            ${td(row.bloodbank_icode)}
+            ${td(row.bloodbank_unit)}
+            ${td(row.bloodbank_tmlt, row.bloodbank_tmlt_check==='N')}${tdc(row.bloodbank_tmlt_check)}
+            ${td(row.lab_catalog_icode, row.lab_catalog_icode_check==='N')}${tdc(row.lab_catalog_icode_check)}
+            ${td(row.lab_catalog_tmlt, row.lab_catalog_tmlt_check==='N')}${tdc(row.lab_catalog_tmlt_check)}
+            ${td(row.lab_catalog_name)}
+            ${td(row.nondrug_name)}
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"><input type="checkbox" ${row.no_lab_catalog==='Y'?'checked':''} data-icode="${e(row.bloodbank_icode)}" data-labtype="Item" onchange="setNoLabCatalog(this.dataset.icode,this.dataset.labtype,this.checked)" title="ไม่ส่ง labcat" style="width:16px;height:16px;cursor:pointer;"></td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (p,l,a) => `<button onclick="bbGoPage(${p})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${a?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${a?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${l}</button>`;
+        let pages='',maxB=7,s=Math.max(1,bbPage-Math.floor(maxB/2)),e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1) s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++) pages+=pgBtn(i,i,i===bbPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+BB_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">${pgBtn(bbPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(bbPage+1,'ถัดไป →',false)}</div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function bbGoPage(page) {
+    const f = document.getElementById('show-errors-only').checked ? currentData.filter(r=>BB_CHECK.some(k=>r[k]==='N')) : currentData;
+    const tp = Math.ceil(f.length/BB_ROWS);
+    if(page<1||page>tp) return;
+    bbPage=page;
+    renderBloodbankTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function setNoLabCatalog(lab_icode, lab_type, checked) {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    const value = checked ? 'Y' : null;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type, lab_icode, lab_type, value });
+        const res = await fetch(`${window.API_BASE}/api/set-no-lab-catalog`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const data = await res.json();
+        if (!data.success) {
+            alert('เกิดข้อผิดพลาด: ' + (data.error||''));
+            if (window.currentMenu==='lab') loadLabMenu();
+            else if (window.currentMenu==='bloodbank') loadBloodbankMenu();
+            return;
+        }
+        if (window.currentMenu==='lab') {
+            currentData.forEach(r => { if (r.lab_icode===lab_icode && r.lab_type===lab_type) r.no_lab_catalog = value||null; });
+        } else {
+            currentData.forEach(r => { if (r.bloodbank_icode===lab_icode) r.no_lab_catalog = value||null; });
+        }
+    } catch(err) { alert('เกิดข้อผิดพลาด: ' + err.message); }
+}
+
+// ====================================================================================
+// ==================== XRAY MENU ====================================================
+// ====================================================================================
+const XRAY_CHECK = ['n_icode_check'];
+let xrayPage = 1;
+const XRAY_ROWS = 20;
+let xrayEditCode = null;
+
+async function loadXrayMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูล X-Ray...</h2><p>กรุณารอสักครู่</p></div>`;
+    xrayEditCode = null;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const res = await fetch(`${window.API_BASE}/api/get-basic-xray`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const main = await res.json();
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = XRAY_CHECK;
+            const needfix = main.data.filter(r => XRAY_CHECK.some(k=>r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            xrayPage = 1;
+            renderXrayTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderXrayTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r=>XRAY_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length/XRAY_ROWS) : 1;
+    if (usePaging && xrayPage>totalPages) xrayPage=totalPages;
+    const pageData = usePaging ? filtered.slice((xrayPage-1)*XRAY_ROWS, xrayPage*XRAY_ROWS) : filtered;
+    const startIdx = usePaging ? (xrayPage-1)*XRAY_ROWS : 0;
+
+    const th = (l,c) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${c?'center':'left'};">${l}</th>`;
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">🩻 ข้อมูล X-Ray (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${xrayPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+XRAY_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}${th('✏️',true)}
+            ${th('xray_code',true)}
+            ${th('ชื่อ X-Ray',false)}
+            ${th('exposure_qty',false)}
+            ${th('ราคา',false)}
+            ${th('xray_icode',false)}
+            ${th('n_icode',false)}${th('✓',true)}
+            ${th('ชื่อค่าใช้จ่าย',false)}
+            ${th('รหัสเบิก',false)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row,idx) => {
+        html += renderXrayRow(row, startIdx+idx, row.xray_code === xrayEditCode);
+    });
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (p,l,a) => `<button onclick="xrayGoPage(${p})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${a?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${a?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${l}</button>`;
+        let pages='',maxB=7,s=Math.max(1,xrayPage-Math.floor(maxB/2)),e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1) s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++) pages+=pgBtn(i,i,i===xrayPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+XRAY_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">${pgBtn(xrayPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(xrayPage+1,'ถัดไป →',false)}</div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function xrayGoPage(page) {
+    const f = document.getElementById('show-errors-only').checked ? currentData.filter(r=>XRAY_CHECK.some(k=>r[k]==='N')) : currentData;
+    const tp = Math.ceil(f.length/XRAY_ROWS);
+    if(page<1||page>tp) return;
+    xrayPage=page; xrayEditCode=null;
+    renderXrayTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderXrayRow(row, idx, editMode) {
+    const bg = idx%2===0?'#f5f9ff':'white';
+    const rowBg = editMode?'#fff9c4':bg;
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const gray = v => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;background:#eeeeee;color:#9e9e9e;">${e(v)}</td>`;
+    const td   = (v,red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+    const tdc  = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(v)};font-weight:bold;">${e(v)||'-'}</span></td>`;
+    const inp  = (field,v) => `<td style="padding:4px;border:1px solid #e3f2fd;"><input data-field="${field}" value="${e(v)}" style="width:100%;min-width:80px;padding:4px 6px;border:1px solid #42a5f5;border-radius:4px;font-size:12px;"></td>`;
+    const btnS = (bg2,col) => `padding:4px 8px;background:${bg2};color:${col};border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;`;
+
+    if (editMode) return `<tr id="xr-row-${e(row.xray_code)}" data-xray="${e(row.xray_code)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;">
+            <div style="display:flex;gap:4px;justify-content:center;">
+                <button onclick="saveXray('${e(row.xray_code)}')" style="${btnS('linear-gradient(135deg,#43a047,#2e7d32)','white')}">💾 บันทึก</button>
+                <button onclick="cancelXrayEdit()" style="${btnS('#e0e0e0','#546e7a')}">✕</button>
+            </div>
+        </td>
+        ${gray(row.xray_code)}
+        ${inp('xray_name', row.xray_name)}
+        ${inp('exposure_qty', row.exposure_qty)}
+        ${inp('price', row.price)}
+        ${gray(row.xray_icode)}
+        ${gray(row.n_icode)}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${gray(row.n_name)}
+        ${gray(row.billcode)}
+    </tr>`;
+
+    return `<tr id="xr-row-${e(row.xray_code)}" data-xray="${e(row.xray_code)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;min-width:70px;">
+            <button onclick="editXray('${e(row.xray_code)}')" style="${btnS('#e3f2fd','#1565c0')} white-space:nowrap;">✏️ แก้ไข</button>
+        </td>
+        ${gray(row.xray_code)}
+        ${td(row.xray_name)}
+        ${td(row.exposure_qty)}
+        ${td(row.price)}
+        ${gray(row.xray_icode)}
+        ${td(row.n_icode, row.n_icode_check==='N')}${tdc(row.n_icode_check)}
+        ${gray(row.n_name)}
+        ${gray(row.billcode)}
+    </tr>`;
+}
+
+function editXray(code)    { xrayEditCode = code; renderXrayTable(); }
+function cancelXrayEdit()  { xrayEditCode = null; renderXrayTable(); }
+
+async function saveXray(xray_code) {
+    const tr = document.querySelector(`tr[data-xray="${xray_code}"]`);
+    if (!tr) return;
+    const config = getDatabaseConfig();
+    if (!config) return;
+    const original = currentData.find(r => String(r.xray_code) === String(xray_code));
+    if (!original) return;
+
+    const origMap = { xray_name: original.xray_name, exposure_qty: String(original.exposure_qty??''), price: String(original.price??'') };
+    const body = { host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type, xray_code };
+    let hasError = false;
+    for (const el of tr.querySelectorAll('input[data-field]')) {
+        const field = el.getAttribute('data-field');
+        const newVal = el.value;
+        if (String(newVal) === String(origMap[field]??'')) continue;
+        try {
+            const res = await fetch(`${window.API_BASE}/api/update-xray-field`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ ...body, field, value: newVal })
+            });
+            const r = await res.json();
+            if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
+        } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
+    }
+    if (!hasError) { xrayEditCode = null; await loadXrayMenu(); }
+}
+
+// ====================================================================================
+// ==================== DRUG MENU (read-only) =========================================
+// ====================================================================================
+const DRUG_CHECK = ['sks_price_check','sks_product_category_name_check','sks_claim_control_type_name_check','sks_drug_code_check'];
+let drugPage = 1;
+const DRUG_ROWS = 20;
+
+async function loadDrugMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดรายการยา...</h2><p>กรุณารอสักครู่</p></div>`;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const res = await fetch(`${window.API_BASE}/api/get-basic-drug-reimb`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const main = await res.json();
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = DRUG_CHECK;
+            const needfix = main.data.filter(r => DRUG_CHECK.some(k=>r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            drugPage = 1;
+            renderDrugTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderDrugTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r=>DRUG_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length/DRUG_ROWS) : 1;
+    if (usePaging && drugPage>totalPages) drugPage=totalPages;
+    const pageData = usePaging ? filtered.slice((drugPage-1)*DRUG_ROWS, drugPage*DRUG_ROWS) : filtered;
+    const startIdx = usePaging ? (drugPage-1)*DRUG_ROWS : 0;
+
+    const th = (l,c) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${c?'center':'left'};">${l}</th>`;
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const td  = (v,red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+    const tdc = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(v)};font-weight:bold;">${e(v)||'-'}</span></td>`;
+
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">💊 รายการยา (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${drugPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+DRUG_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}
+            ${th('icode',false)}
+            ${th('ชื่อยา',false)}
+            ${th('strength',false)}
+            ${th('units',false)}
+            ${th('ราคา',false)}
+            ${th('dosageform',false)}
+            ${th('generic_name',false)}
+            ${th('trade_name',false)}
+            ${th('หมวด',false)}
+            ${th('sks_price',false)}${th('✓',true)}
+            ${th('sks_product_category',false)}${th('✓',true)}
+            ${th('sks_claim_control_type',false)}${th('✓',true)}
+            ${th('sks_drug_code',false)}${th('✓',true)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row, idx) => {
+        const bg = (startIdx+idx)%2===0?'#f5f9ff':'white';
+        html += `<tr style="background:${bg};">
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${startIdx+idx+1}</td>
+            ${td(row.icode)}
+            ${td(row.drugname)}
+            ${td(row.strength)}
+            ${td(row.units)}
+            ${td(row.unitprice)}
+            ${td(row.dosageform)}
+            ${td(row.generic_name)}
+            ${td(row.trade_name)}
+            ${td(row.income_name)}
+            ${td(row.sks_price, row.sks_price_check==='N')}${tdc(row.sks_price_check)}
+            ${td(row.sks_product_category_name, row.sks_product_category_name_check==='N')}${tdc(row.sks_product_category_name_check)}
+            ${td(row.sks_claim_control_type_name, row.sks_claim_control_type_name_check==='N')}${tdc(row.sks_claim_control_type_name_check)}
+            ${td(row.sks_drug_code, row.sks_drug_code_check==='N')}${tdc(row.sks_drug_code_check)}
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (p,l,a) => `<button onclick="drugGoPage(${p})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${a?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${a?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${l}</button>`;
+        let pages='',maxB=7,s=Math.max(1,drugPage-Math.floor(maxB/2)),e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1) s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++) pages+=pgBtn(i,i,i===drugPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+DRUG_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">${pgBtn(drugPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(drugPage+1,'ถัดไป →',false)}</div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function drugGoPage(page) {
+    const f = document.getElementById('show-errors-only').checked ? currentData.filter(r=>DRUG_CHECK.some(k=>r[k]==='N')) : currentData;
+    const tp = Math.ceil(f.length/DRUG_ROWS);
+    if(page<1||page>tp) return;
+    drugPage=page;
+    renderDrugTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ====================================================================================
+// ==================== ICD10TM MENU (read-only) ======================================
+// ====================================================================================
+const ICD_CHECK = ['cut_check','import_check'];
+let icdPage = 1;
+const ICD_ROWS = 20;
+
+async function loadIcd10tmMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลด sks_icd10tm...</h2><p>กรุณารอสักครู่</p></div>`;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const res = await fetch(`${window.API_BASE}/api/get-basic-icd10tm`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const main = await res.json();
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = ICD_CHECK;
+            const needfix = main.data.filter(r => ICD_CHECK.some(k=>r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            icdPage = 1;
+            renderIcd10tmTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderIcd10tmTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r=>ICD_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length/ICD_ROWS) : 1;
+    if (usePaging && icdPage>totalPages) icdPage=totalPages;
+    const pageData = usePaging ? filtered.slice((icdPage-1)*ICD_ROWS, icdPage*ICD_ROWS) : filtered;
+    const startIdx = usePaging ? (icdPage-1)*ICD_ROWS : 0;
+
+    const th = (l,c) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${c?'center':'left'};">${l}</th>`;
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const td  = (v,red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+
+    // Check cell พิเศษ: N = แสดงข้อความแทน
+    const tdcCut    = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;">
+        <span style="color:${v==='N'?'#f44336':'#4caf50'};font-weight:bold;">${v==='N'?'ให้นำออก':v==='Y'?'Y':'-'}</span></td>`;
+    const tdcImport = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;">
+        <span style="color:${v==='N'?'#f44336':'#4caf50'};font-weight:bold;">${v==='N'?'ให้นำเข้า':v==='Y'?'Y':'-'}</span></td>`;
+
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">📖 sks_icd10tm (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${icdPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+ICD_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}
+            ${th('code (ovst_sks_icd10tm)',false)}
+            ${th('icd10_sks (sks_icd10tm_check)',false)}
+            ${th('✓ (ให้นำออก)',true)}
+            ${th('✓ (ให้นำเข้า)',true)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row, idx) => {
+        const bg = (startIdx+idx)%2===0?'#f5f9ff':'white';
+        html += `<tr style="background:${bg};">
+            <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${startIdx+idx+1}</td>
+            ${td(row.code, row.cut_check==='N')}
+            ${td(row.icd10_sks)}
+            ${tdcCut(row.cut_check)}
+            ${tdcImport(row.import_check)}
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (p,l,a) => `<button onclick="icdGoPage(${p})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${a?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${a?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${l}</button>`;
+        let pages='',maxB=7,s=Math.max(1,icdPage-Math.floor(maxB/2)),e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1) s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++) pages+=pgBtn(i,i,i===icdPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+ICD_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">${pgBtn(icdPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(icdPage+1,'ถัดไป →',false)}</div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function icdGoPage(page) {
+    const f = document.getElementById('show-errors-only').checked ? currentData.filter(r=>ICD_CHECK.some(k=>r[k]==='N')) : currentData;
+    const tp = Math.ceil(f.length/ICD_ROWS);
+    if(page<1||page>tp) return;
+    icdPage=page;
+    renderIcd10tmTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ====================================================================================
+// ==================== ALL MENUS MODE ================================================
+// ====================================================================================
+
+// Registry เมนูทั้งหมด (ต้องกำหนดหลังจาก constants ทุกตัว)
+function getAllMenuRegistry() {
+    return [
+        { key:'doctor',     label:'👨‍⚕️ บุคลากรทางการแพทย์',  endpoint:'/api/get-basic-doctor',         checkFields: DR_CHECK },
+        { key:'pttype',     label:'🪪 สิทธิการรักษา',          endpoint:'/api/get-basic-pttype',          checkFields: PT_CHECK },
+        { key:'income_cat', label:'🗂️ หมวดค่ารักษาพยาบาล',    endpoint:'/api/get-basic-income-category', checkFields: IC_CHECK },
+        { key:'nondrug',    label:'🧾 ค่ารักษาพยาบาล',         endpoint:'/api/get-basic-nondrug',         checkFields: ND_CHECK },
+        { key:'lab',        label:'🔬 ข้อมูล Lab',              endpoint:'/api/get-basic-lab',             checkFields: LAB_CHECK },
+        { key:'bloodbank',  label:'🩸 BloodBank',               endpoint:'/api/get-basic-bloodbank',       checkFields: BB_CHECK },
+        { key:'xray',       label:'🩻 ข้อมูล X-Ray',            endpoint:'/api/get-basic-xray',            checkFields: XRAY_CHECK },
+        { key:'drug',       label:'💊 รายการยา',                endpoint:'/api/get-basic-drug-reimb',            checkFields: DRUG_CHECK },
+        { key:'icd10tm',    label:'📖 sks_icd10tm',             endpoint:'/api/get-basic-icd10tm',         checkFields: ICD_CHECK },
+        { key:'opd_oper',   label:'🏥 หัตถการผู้ป่วยนอก',      endpoint:'/api/get-basic-opd-procedure',   checkFields: MENUS.opd_oper?.checkFields || [] },
+        { key:'or_oper',    label:'🔪 รายการผ่าตัด',            endpoint:'/api/get-basic-or-operation',    checkFields: MENUS.or_oper?.checkFields  || [] }
+    ];
+}
+
+// เก็บข้อมูลทุกเมนูในโหมด all
+let allMenusCache = {};
+
+// ==================== Checkbox handler ====================
+async function onShowErrorsChange() {
+    const checked = document.getElementById('show-errors-only').checked;
+    if (checked) {
+        await loadAllMenusErrors();
+    } else {
+        // กลับไปโหมดเมนูเดิม
+        if (window.currentMenu && currentData.length > 0) {
+            rerenderCurrentMenuNormal();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>เลือกรายการทางซ้าย</h2><p>เลือกรายการที่ต้องการตรวจสอบ</p></div>`;
+        }
+    }
+}
+
+// rerenderTable ปกติ (เรียกจากที่อื่น)
+function rerenderCurrentMenuNormal() {
+    if (window.currentMenu === 'doctor')     { renderDoctorTable();     return; }
+    if (window.currentMenu === 'pttype')     { renderPttypeTable();     return; }
+    if (window.currentMenu === 'income_cat') { renderIncomeCatTable();  return; }
+    if (window.currentMenu === 'nondrug')    { renderNondrugTable();    return; }
+    if (window.currentMenu === 'lab')        { renderLabTable();        return; }
+    if (window.currentMenu === 'bloodbank')  { renderBloodbankTable();  return; }
+    if (window.currentMenu === 'xray')       { renderXrayTable();       return; }
+    if (window.currentMenu === 'drug')       { renderDrugTable();       return; }
+    if (window.currentMenu === 'icd10tm')    { renderIcd10tmTable();    return; }
+    rerenderTable(); // generic
+}
+
+// ==================== Load all menus with errors ====================
+async function loadAllMenusErrors() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+    const contentArea = document.getElementById('content-area');
+    contentArea.innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูลทุกแฟ้ม...</h2><p>กรุณารอสักครู่</p></div>`;
+    updateStats(0, 0, 0);
+
+    const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+    const registry = getAllMenuRegistry();
+
+    // Fetch all endpoints in parallel
+    const results = await Promise.allSettled(
+        registry.map(m => fetch(`${window.API_BASE}${m.endpoint}`, { method:'POST', headers:{'Content-Type':'application/json'}, body }).then(r=>r.json()))
+    );
+
+    allMenusCache = {};
+    let totalAll = 0, totalFix = 0;
+
+    registry.forEach((m, i) => {
+        const res = results[i];
+        if (res.status === 'fulfilled' && res.value.success && res.value.data) {
+            const errors = res.value.data.filter(r => m.checkFields.some(k=>r[k]==='N'));
+            allMenusCache[m.key] = { label: m.label, data: res.value.data, errors, checkFields: m.checkFields };
+            totalAll += res.value.data.length;
+            totalFix += errors.length;
+        }
+    });
+
+    updateStats(totalAll, totalAll - totalFix, totalFix);
+    renderAllMenusErrors();
+}
+
+// ==================== Render all menus errors ====================
+function renderAllMenusErrors() {
+    const registry = getAllMenuRegistry();
+    const contentArea = document.getElementById('content-area');
+    const errorMenus = registry.filter(m => allMenusCache[m.key]?.errors?.length > 0);
+
+    if (!errorMenus.length) {
+        contentArea.innerHTML = `<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไขในทุกแฟ้ม</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`;
+        return;
+    }
+
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="color:#c62828;margin:0;">⚠️ รายการที่ต้องแก้ไข — ทุกแฟ้ม (${errorMenus.length} แฟ้มมีปัญหา)</h3>
+    </div>`;
+
+    errorMenus.forEach(m => {
+        const cache = allMenusCache[m.key];
+        html += `
+        <div style="margin-bottom:24px; border:2px solid #ffcdd2; border-radius:12px; overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#c62828,#b71c1c); color:white; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:15px; font-weight:700;">${m.label}</span>
+                <span style="font-size:13px; background:rgba(255,255,255,0.2); padding:3px 10px; border-radius:12px;">${cache.errors.length.toLocaleString()} รายการ</span>
+            </div>
+            <div style="overflow-x:auto; padding:0;">
+                ${renderGenericErrorTable(cache.errors, cache.checkFields)}
+            </div>
+        </div>`;
+    });
+
+    contentArea.innerHTML = html;
+}
+
+// Generic table renderer (errors only, no edit)
+function renderGenericErrorTable(data, checkFields) {
+    if (!data.length) return '';
+    const cols = Object.keys(data[0]);
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+
+    // Map: check col → data col (e.g. licenseno_check → licenseno)
+    const checkToData = {};
+    checkFields.forEach(ck => {
+        const dataKey = ck.replace(/_check\d*$/, '').replace(/_check$/, '');
+        if (cols.includes(dataKey)) checkToData[ck] = dataKey;
+    });
+    const redDataCols = new Set();
+    checkFields.forEach(ck => { if (checkToData[ck]) redDataCols.add(checkToData[ck]); });
+
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="background:linear-gradient(135deg,#ef5350,#c62828);color:white;">
+    ${cols.map(c => `<th style="padding:8px 6px;border:1px solid #ffcdd2;white-space:nowrap;text-align:${checkFields.includes(c)?'center':'left'};">${c}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+    data.forEach((row, idx) => {
+        const bg = idx%2===0?'#fff8f8':'white';
+        html += `<tr style="background:${bg};">`;
+        cols.forEach(col => {
+            const val = row[col];
+            const isCheck = checkFields.includes(col);
+            if (isCheck) {
+                html += `<td style="padding:6px;border:1px solid #ffcdd2;text-align:center;white-space:nowrap;">
+                    <span style="color:${chk(val)};font-weight:bold;">${val==='N'?'N':val==='Y'?'Y':e(val)||'-'}</span></td>`;
+            } else {
+                const relCheck = checkFields.find(ck => {
+                    const dk = ck.replace(/_check\d*$/, '').replace(/_check$/, '');
+                    return dk === col;
+                });
+                const red = relCheck && row[relCheck] === 'N';
+                html += `<td style="padding:6px;border:1px solid #ffcdd2;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(val)}</td>`;
+            }
+        });
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+    return html;
+}
+
+// ==================== Export all menus (multi-sheet) ====================
+function exportCurrentToExcel() {
+    const isAllMode = document.getElementById('show-errors-only').checked;
+    if (isAllMode && Object.keys(allMenusCache).length > 0) {
+        exportAllMenusToExcel();
+        return;
+    }
+    // Single menu export (original logic)
+    exportSingleMenuToExcel();
+}
+
+function exportAllMenusToExcel() {
+    const registry = getAllMenuRegistry();
+    const errorMenus = registry.filter(m => allMenusCache[m.key]?.errors?.length > 0);
+    if (!errorMenus.length) { alert('ไม่มีรายการที่ต้องแก้ไข'); return; }
+
+    const wb = XLSX.utils.book_new();
+
+    errorMenus.forEach(m => {
+        const cache = allMenusCache[m.key];
+        const data = cache.errors;
+        if (!data.length) return;
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const cols = Object.keys(data[0]);
+
+        // Header style
+        cols.forEach((col, c) => {
+            const addr = XLSX.utils.encode_cell({ r:0, c });
+            if (!ws[addr]) return;
+            ws[addr].s = { fill:{patternType:'solid',fgColor:{rgb:'C62828'}}, font:{bold:true,color:{rgb:'FFFFFF'}}, alignment:{horizontal:'center'} };
+        });
+
+        // Red cells
+        data.forEach((row, r) => {
+            cols.forEach((col, c) => {
+                const isCheck = cache.checkFields.includes(col);
+                if (isCheck && row[col] === 'N') {
+                    const ck = XLSX.utils.encode_cell({r:r+1,c});
+                    if (!ws[ck]) ws[ck]={v:'N'};
+                    ws[ck].s = { fill:{patternType:'solid',fgColor:{rgb:'F44336'}}, font:{bold:true,color:{rgb:'FFFFFF'}} };
+                    // data cell
+                    const dataKey = col.replace(/_check\d*$/, '').replace(/_check$/, '');
+                    const dc = cols.indexOf(dataKey);
+                    if (dc >= 0) {
+                        const dk = XLSX.utils.encode_cell({r:r+1,c:dc});
+                        if (!ws[dk]) ws[dk]={v:''};
+                        ws[dk].s = { fill:{patternType:'solid',fgColor:{rgb:'F44336'}}, font:{color:{rgb:'FFFFFF'}} };
+                    }
+                }
+            });
+        });
+
+        const colWidths = cols.map(col => {
+            let max = col.length;
+            data.forEach(row => { const v=String(row[col]??''); if(v.length>max) max=v.length; });
+            return {wch:Math.min(max+2,50)};
+        });
+        ws['!cols'] = colWidths;
+
+        // Sheet name: ใช้ label ย่อ max 31 chars
+        const sheetName = m.label.replace(/[\\\/\[\]\*\?\:]/g,'').substring(0, 31);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    const dateStr = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `BasicCSOPx_AllErrors_${dateStr}.xlsx`);
+}
+
+function exportSingleMenuToExcel() {
+    if (!currentData.length) { alert('ไม่มีข้อมูลสำหรับ Export'); return; }
+    const data = currentData.filter(r => currentCheckFields.some(k=>r[k]==='N'));
+    if (!data.length) { alert('ไม่มีข้อมูลที่ต้องแก้ไข'); return; }
+
+    const isDoctorCheck = (col) => {
+        if (window.currentMenu === 'doctor')     return ['licenseno_check','licenseno_check2','cid_check','pname_check'].includes(col);
+        if (window.currentMenu === 'pttype')     return PT_CHECK.includes(col);
+        if (window.currentMenu === 'income_cat') return IC_CHECK.includes(col);
+        if (window.currentMenu === 'nondrug')    return ND_CHECK.includes(col);
+        if (window.currentMenu === 'lab')        return LAB_CHECK.includes(col);
+        if (window.currentMenu === 'bloodbank')  return BB_CHECK.includes(col);
+        if (window.currentMenu === 'xray')       return XRAY_CHECK.includes(col);
+        if (window.currentMenu === 'drug')       return DRUG_CHECK.includes(col);
+        if (window.currentMenu === 'icd10tm')    return ICD_CHECK.includes(col);
+        return col.startsWith('check_') || currentCheckFields.includes(col);
+    };
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+    const cols = Object.keys(data[0]);
+
+    cols.forEach((col, c) => {
+        const addr = XLSX.utils.encode_cell({r:0,c});
+        if (!ws[addr]) return;
+        ws[addr].s = { fill:{patternType:'solid',fgColor:{rgb:'2196F3'}}, font:{bold:true,color:{rgb:'FFFFFF'}}, alignment:{horizontal:'center'} };
+    });
+    data.forEach((row, r) => {
+        cols.forEach((col, c) => {
+            if (isDoctorCheck(col) && row[col]==='N') {
+                const ck = XLSX.utils.encode_cell({r:r+1,c});
+                if (!ws[ck]) ws[ck]={v:'N'};
+                ws[ck].s = { fill:{patternType:'solid',fgColor:{rgb:'F44336'}}, font:{bold:true,color:{rgb:'FFFFFF'}} };
+                if (c>0) {
+                    const dk = XLSX.utils.encode_cell({r:r+1,c:c-1});
+                    if (!ws[dk]) ws[dk]={v:''};
+                    ws[dk].s = { fill:{patternType:'solid',fgColor:{rgb:'F44336'}}, font:{color:{rgb:'FFFFFF'}} };
+                }
+            }
+        });
+    });
+    const colWidths = cols.map(col => {
+        let max=col.length;
+        data.forEach(row=>{ const v=String(row[col]??''); if(v.length>max) max=v.length; });
+        return {wch:Math.min(max+2,50)};
+    });
+    ws['!cols']=colWidths;
+    const dateStr = new Date().toISOString().slice(0,10);
+    const sheetName = ('BasicCSOPx'+window.currentMenu).slice(0,31);
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+    XLSX.writeFile(wb,`BasicCSOPx${window.currentMenu}_${dateStr}.xlsx`);
+}
+
+// ปิด modal เมื่อคลิกนอก
+document.getElementById('pos-modal').addEventListener('click', function(e) {
+    if (e.target === this) closePositionModal();
+});
+
+// ====================================================================================
+// ==================== PTTYPE MENU: dedicated rendering & inline edit ================
+// ====================================================================================
+const PT_CHECK = ['drg_group_check','print_presc_ned_check','sks_benefit_plan_type_id_check',
+                  'pttype_upp_type_id_check','finance_round_money_check','inc_round_money_check','round_money_check'];
+
+let ptPage = 1;
+const PT_ROWS = 20;
+let ptEditCode = null;
+let ptDropdowns = { pcode:[], inscl:[], benefit:[], upptype:[] };
+
+async function loadPttypeMenu() {
+    const config = getDatabaseConfig();
+    if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูลสิทธิการรักษา...</h2><p>กรุณารอสักครู่</p></div>`;
+    ptEditCode = null;
+    try {
+        const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
+        const [mainRes, pcRes, insclRes, benRes, uppRes] = await Promise.all([
+            fetch(`${window.API_BASE}/api/get-basic-pttype`,          { method:'POST', headers:{'Content-Type':'application/json'}, body }),
+            fetch(`${window.API_BASE}/api/get-pcode-list`,            { method:'POST', headers:{'Content-Type':'application/json'}, body }),
+            fetch(`${window.API_BASE}/api/get-nhso-inscl-list`,       { method:'POST', headers:{'Content-Type':'application/json'}, body }),
+            fetch(`${window.API_BASE}/api/get-sks-benefit-plan-list`, { method:'POST', headers:{'Content-Type':'application/json'}, body }),
+            fetch(`${window.API_BASE}/api/get-pttype-upp-type-list`,  { method:'POST', headers:{'Content-Type':'application/json'}, body })
+        ]);
+        const [main, pc, inscl, ben, upp] = await Promise.all([mainRes.json(), pcRes.json(), insclRes.json(), benRes.json(), uppRes.json()]);
+        ptDropdowns.pcode   = pc.success   ? (pc.data   || []) : [];
+        ptDropdowns.inscl   = inscl.success ? (inscl.data|| []) : [];
+        ptDropdowns.benefit = ben.success   ? (ben.data  || []) : [];
+        ptDropdowns.upptype = upp.success   ? (upp.data  || []) : [];
+        if (main.success && main.data) {
+            currentData = main.data;
+            currentCheckFields = PT_CHECK;
+            const needfix = main.data.filter(r => PT_CHECK.some(k => r[k]==='N')).length;
+            updateStats(main.data.length, main.data.length-needfix, needfix);
+            ptPage = 1;
+            renderPttypeTable();
+        } else {
+            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
+        }
+    } catch(e) {
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+    }
+}
+
+function renderPttypeTable() {
+    const showErrorsOnly = document.getElementById('show-errors-only').checked;
+    const filtered = showErrorsOnly ? currentData.filter(r => PT_CHECK.some(k=>r[k]==='N')) : currentData;
+    const contentArea = document.getElementById('content-area');
+    if (!currentData.length) return;
+    if (!filtered.length) { contentArea.innerHTML=`<div class="welcome-message"><h2>✅ ไม่พบรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกรายการครบถ้วน</p></div>`; return; }
+
+    const usePaging = true;
+    const totalPages = usePaging ? Math.ceil(filtered.length / PT_ROWS) : 1;
+    if (usePaging && ptPage > totalPages) ptPage = totalPages;
+    const pageData = usePaging ? filtered.slice((ptPage-1)*PT_ROWS, ptPage*PT_ROWS) : filtered;
+    const startIdx = usePaging ? (ptPage-1)*PT_ROWS : 0;
+
+    const th = (label, center) => `<th style="padding:10px 8px;border:1px solid #e3f2fd;white-space:nowrap;text-align:${center?'center':'left'};">${label}</th>`;
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <h3 style="color:#1565c0;margin:0;">🪪 สิทธิการรักษา (${filtered.length.toLocaleString()}${showErrorsOnly?' / ทั้งหมด '+currentData.length.toLocaleString():''} รายการ)</h3>
+            ${usePaging&&totalPages>1?`<span style="font-size:13px;color:#546e7a;">หน้า ${ptPage}/${totalPages} (${startIdx+1}–${Math.min(startIdx+PT_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()})</span>`:''}
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%);color:white;">
+            ${th('ลำดับ',true)}${th('✏️',true)}
+            ${th('รหัสสิทธิ',true)}
+            ${th('ชื่อสิทธิ',false)}
+            ${th('pcode',false)}
+            ${th('INSCL',false)}
+            ${th('สปสช.',false)}
+            ${th('DRG Group',false)}${th('✓',true)}
+            ${th('เหตุผลยานอกบัญชี',false)}${th('✓',true)}
+            ${th('benefit_plan สกส.',false)}${th('✓',true)}
+            ${th('sks_code',false)}
+            ${th('UpayPlan',false)}${th('✓',true)}
+            ${th('ปัดเศษเมื่อโอน',false)}${th('✓',true)}
+            ${th('ปัดเศษขึ้นเสมอ',false)}${th('✓',true)}
+            ${th('ปัดเศษบันทึกย่อย',false)}${th('✓',true)}
+        </tr></thead><tbody>`;
+
+    pageData.forEach((row, idx) => {
+        html += renderPttypeRow(row, startIdx+idx, row.pttype === ptEditCode);
+    });
+
+    html += `</tbody></table></div>`;
+
+    if (usePaging && totalPages > 1) {
+        const pgBtn = (page, label, active) => `<button onclick="ptGoPage(${page})" style="padding:7px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${active?'linear-gradient(135deg,#42a5f5,#2196f3)':'white'};color:${active?'white':'#1565c0'};cursor:pointer;font-weight:600;font-size:13px;">${label}</button>`;
+        let pages='', maxB=7, s=Math.max(1,ptPage-Math.floor(maxB/2)), e2=Math.min(totalPages,s+maxB-1);
+        if(e2-s<maxB-1) s=Math.max(1,e2-maxB+1);
+        if(s>1){pages+=pgBtn(1,'1',false);if(s>2)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;}
+        for(let i=s;i<=e2;i++) pages+=pgBtn(i,i,i===ptPage);
+        if(e2<totalPages){if(e2<totalPages-1)pages+=`<span style="padding:7px 4px;color:#9e9e9e;">…</span>`;pages+=pgBtn(totalPages,totalPages,false);}
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:13px;color:#546e7a;">แสดง ${startIdx+1}–${Math.min(startIdx+PT_ROWS,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                ${pgBtn(ptPage-1,'← ก่อนหน้า',false)}${pages}${pgBtn(ptPage+1,'ถัดไป →',false)}
+            </div></div>`;
+    }
+    contentArea.innerHTML = html;
+}
+
+function ptGoPage(page) {
+    const filtered = currentData.filter(r => !document.getElementById('show-errors-only').checked || PT_CHECK.some(k=>r[k]==='N'));
+    const totalPages = Math.ceil(filtered.length / PT_ROWS);
+    if (page<1||page>totalPages) return;
+    ptPage = page; ptEditCode = null;
+    renderPttypeTable();
+    document.getElementById('content-area').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderPttypeRow(row, idx, editMode) {
+    const bg  = idx%2===0?'#f5f9ff':'white';
+    const rowBg = editMode?'#fff9c4':bg;
+    const chk = v => v==='Y'?'#4caf50':v==='N'?'#f44336':'#9e9e9e';
+    const e = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const gray = v => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;background:#eeeeee;color:#9e9e9e;">${e(v)}</td>`;
+    const td   = (v, red) => `<td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;${red?'background:#f44336;color:white;':''}">${e(v)}</td>`;
+    const tdc  = v => `<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;"><span style="color:${chk(v)};font-weight:bold;">${e(v)||'-'}</span></td>`;
+    const inp  = (field, v) => `<td style="padding:4px;border:1px solid #e3f2fd;"><input data-field="${field}" value="${e(v)}" style="width:100%;min-width:70px;padding:4px 6px;border:1px solid #42a5f5;border-radius:4px;font-size:12px;"></td>`;
+    const sel  = (field, cur, opts, idKey, nameKey) => {
+        const options = opts.map(o=>`<option value="${e(o[idKey])}" ${String(o[idKey]).trim()===String(cur??'').trim()?'selected':''}>${e(o[nameKey])}</option>`).join('');
+        return `<td style="padding:4px;border:1px solid #e3f2fd;"><select data-field="${field}" style="width:100%;min-width:90px;padding:4px;border:1px solid #42a5f5;border-radius:4px;font-size:12px;">${options}</select></td>`;
+    };
+    const btnS = (bg2,col) => `padding:4px 8px;background:${bg2};color:${col};border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;`;
+
+    if (editMode) return `<tr id="pt-row-${e(row.pttype)}" data-pttype="${e(row.pttype)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;">
+            <div style="display:flex;gap:4px;justify-content:center;">
+                <button onclick="savePttype('${e(row.pttype)}')" style="${btnS('linear-gradient(135deg,#43a047,#2e7d32)','white')}">💾 บันทึก</button>
+                <button onclick="cancelPttypeEdit()" style="${btnS('#e0e0e0','#546e7a')}">✕</button>
+            </div>
+        </td>
+        ${gray(row.pttype)}
+        ${inp('pttype_name', row.pttype_name)}
+        ${sel('pcode', row.pcode, ptDropdowns.pcode, 'pcode', 'name')}
+        ${sel('hipdata_code', row.hipdata_code, ptDropdowns.inscl, 'inscl_code', 'inscl_name')}
+        ${inp('inscl', row.inscl)}
+        ${inp('drg_group', row.drg_group)}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${inp('print_presc_ned', row.print_presc_ned)}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${sel('sks_benefit_plan_type_id', row.sks_benefit_plan_type_id, ptDropdowns.benefit, 'sks_benefit_plan_type_id', 'sks_benefit_plan_type_name')}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        <td style="padding:8px;border:1px solid #e3f2fd;white-space:nowrap;">${e(row.sks_code)}</td>
+        ${sel('pttype_upp_type_id', row.pttype_upp_type_id, ptDropdowns.upptype, 'pttype_upp_type_id', 'pttype_upp_type_name')}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${inp('finance_round_money', row.finance_round_money)}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${inp('inc_round_money', row.inc_round_money)}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+        ${inp('round_money', row.round_money)}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
+    </tr>`;
+
+    return `<tr id="pt-row-${e(row.pttype)}" data-pttype="${e(row.pttype)}" style="background:${rowBg};">
+        <td style="padding:8px;border:1px solid #e3f2fd;text-align:center;">${idx+1}</td>
+        <td style="padding:4px;border:1px solid #e3f2fd;text-align:center;white-space:nowrap;min-width:70px;">
+            <button onclick="editPttype('${e(row.pttype)}')" style="${btnS('#e3f2fd','#1565c0')} white-space:nowrap;">✏️ แก้ไข</button>
+        </td>
+        ${gray(row.pttype)}
+        ${td(row.pttype_name)}
+        ${td(row.pcode)}
+        ${td(row.hipdata_code)}
+        ${td(row.inscl)}
+        ${td(row.drg_group, row.drg_group_check==='N')}${tdc(row.drg_group_check)}
+        ${td(row.print_presc_ned, row.print_presc_ned_check==='N')}${tdc(row.print_presc_ned_check)}
+        ${td(row.sks_benefit_plan_type_name, row.sks_benefit_plan_type_id_check==='N')}${tdc(row.sks_benefit_plan_type_id_check)}
+        ${td(row.sks_code)}
+        ${td(row.pttype_upp_type_name, row.pttype_upp_type_id_check==='N')}${tdc(row.pttype_upp_type_id_check)}
+        ${td(row.finance_round_money, row.finance_round_money_check==='N')}${tdc(row.finance_round_money_check)}
+        ${td(row.inc_round_money, row.inc_round_money_check==='N')}${tdc(row.inc_round_money_check)}
+        ${td(row.round_money, row.round_money_check==='N')}${tdc(row.round_money_check)}
+    </tr>`;
+}
+
+function editPttype(pttype) { ptEditCode = pttype; renderPttypeTable(); }
+function cancelPttypeEdit() { ptEditCode = null; renderPttypeTable(); }
+
+async function savePttype(pttype) {
+    const tr = document.querySelector(`tr[data-pttype="${pttype}"]`);
+    if (!tr) return;
+    const config = getDatabaseConfig();
+    if (!config) return;
+    const original = currentData.find(r => String(r.pttype) === String(pttype));
+    if (!original) return;
+
+    const body = { host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type, pttype };
+    const fieldMap = {
+        pttype_name: 'pttype_name', pcode: 'pcode', hipdata_code: 'hipdata_code',
+        inscl: 'inscl', drg_group: 'drg_group', print_presc_ned: 'print_presc_ned',
+        sks_benefit_plan_type_id: 'sks_benefit_plan_type_id', pttype_upp_type_id: 'pttype_upp_type_id',
+        finance_round_money: 'finance_round_money', inc_round_money: 'inc_round_money', round_money: 'round_money'
+    };
+    const origMap = {
+        pttype_name: original.pttype_name, pcode: original.pcode, hipdata_code: original.hipdata_code,
+        inscl: original.inscl, drg_group: original.drg_group, print_presc_ned: original.print_presc_ned,
+        sks_benefit_plan_type_id: String(original.sks_benefit_plan_type_id??''),
+        pttype_upp_type_id: String(original.pttype_upp_type_id??''),
+        finance_round_money: original.finance_round_money, inc_round_money: original.inc_round_money, round_money: original.round_money
+    };
+
+    const inputs = tr.querySelectorAll('input[data-field],select[data-field]');
+    let hasError = false;
+    for (const el of inputs) {
+        const field = el.getAttribute('data-field');
+        const newVal = el.value;
+        if (String(newVal) === String(origMap[field]??'')) continue;
+        try {
+            const res = await fetch(`${window.API_BASE}/api/update-pttype-field`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ ...body, field, value: newVal })
+            });
+            const r = await res.json();
+            if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
+        } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
+    }
+    if (!hasError) { ptEditCode = null; await loadPttypeMenu(); }
+}
+</script>
+<script src="zoom_control.js"></script>
+</body>
+</html>

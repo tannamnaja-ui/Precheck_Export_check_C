@@ -1,0 +1,8 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู อาชีพ occupation ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+
+select c.name,c.occupation,c.nhso_code,
+(case when c.nhso_code=p.code and c.name=c.name then 'Y' else 'N' end)as occupa_check 
+from occupation c 
+left outer join provis_occupa p on p.code=c.nhso_code
+order by c.nhso_code;
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

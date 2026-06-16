@@ -1,0 +1,8 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู แผนก spclty ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select spclty,name,
+provis_code,nhso_code,
+(case when provis_code<>'' or length(provis_code)='5' then 'Y' else 'N' end)as provis_check,
+(case when nhso_code<>'' then 'Y' else 'N' end)as nhso_check
+from spclty
+order by nhso_code
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

@@ -1,0 +1,32 @@
+IDX
+http://localhost:8080/fund_fdh
+เมื่อกดเมนู IDX
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT
+        (case when i2.ipt_admit_type_id='5' then concat('ODS',i2.an) else i2.an end)as an,
+        i1.icd10 AS diag,
+        (case when i1.icd10 is not null then 'Y' else 'N' end)as check_diag,
+        i1.diagtype AS dxtype,
+        (case when i1.diagtype<>'' then 'Y' else 'N' end)as check_diagtype,
+        d.licenseno ,
+        (case when d.licenseno<>'' then 'Y' else 'N' end)as check_licenceno
+FROM
+        ipt i2
+        LEFT OUTER JOIN iptdiag i1 ON i1.an = i2.an
+        LEFT OUTER JOIN diagtype dx ON dx.diagtype = i1.diagtype
+        LEFT OUTER JOIN doctor d ON d.CODE = i1.doctor 
+ WHERE i2.dchdate between '2026-03-14'  and '2026-03-30'
+and i2.pttype in(select pttype from pttype where isuse='Y' and hipdata_code in('UCS','WEL'))
+ORDER BY
+        i2.an,
+        i1.diagtype,
+        i1.diag_no,
+        i1.ipt_diag_id
+
+
+'2026-03-14'  and '2026-03-30' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code IN ('UCS', 'WEL')) คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

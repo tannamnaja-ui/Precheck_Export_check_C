@@ -1,0 +1,38 @@
+ODX
+http://localhost:8080/fund_fdh
+เมื่อกดเมนู ODX
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT
+        v.hn, 
+    v.vstdate,
+        o1.icd10 AS diag,
+        (case when o1.icd10 is not null then 'Y' else 'N' end)as check_diag, 
+        v.spclty,
+        (case when sp.provis_code is not null or sp.provis_code = '' then 'Y' else 'N' end)as check_clinic, 
+        o1.diagtype AS dxtype,
+        (case when o1.diagtype<>'' then 'Y' else 'N' end)as check_diagtype,
+        d.licenseno AS licenseno,
+        (case when d.licenseno<>'' then 'Y' else 'N' end)as check_drdx  ,
+        p.cid, 
+    v.vn
+FROM
+        ovst  v
+        LEFT OUTER JOIN ovstdiag o1 ON o1.hn = v.hn 
+        LEFT OUTER JOIN spclty  sp on sp.spclty = v.spclty
+        LEFT OUTER JOIN diagtype dx ON dx.diagtype = o1.diagtype
+        LEFT OUTER JOIN doctor d ON d.code = o1.doctor
+        LEFT OUTER JOIN patient p ON p.hn = v.hn
+ WHERE v.vstdate between '2025-12-01'  and '2025-12-10'
+and v.pttype in(select pttype from pttype where isuse='Y' and hipdata_code in('UCS','WEL'))
+ORDER BY
+        v.hn,
+        o1.diagtype,
+        o1.diag_no,
+        o1.ovst_diag_id 
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

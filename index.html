@@ -1,0 +1,485 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจสอบข้อมูลก่อนส่งออก</title>
+    <script>
+        // Login guard — redirect to login.html if not authenticated
+        (function() {
+            try {
+                const session = JSON.parse(localStorage.getItem('loginSession') || 'null');
+                const TIMEOUT = 8 * 60 * 60 * 1000; // 8 ชั่วโมง
+                if (!session || !session.loginTime || (Date.now() - session.loginTime) > TIMEOUT) {
+                    localStorage.removeItem('loginSession');
+                    window.location.replace('login.html');
+                }
+            } catch(e) {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; }
+
+        /* Top Navigation */
+        .topnav {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+            padding: 0 32px;
+            height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(13,71,161,0.4);
+        }
+        .topnav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .topnav-brand .brand-icon {
+            font-size: 43px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        .topnav-brand .brand-text {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .topnav-brand .brand-sub {
+            font-size: 17px;
+            opacity: 0.75;
+            margin-top: 1px;
+        }
+        .topnav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .btn-logout {
+            padding: 10px 24px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { background: rgba(239,83,80,0.8); border-color: transparent; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1565c0 0%, #1976d2 60%, #42a5f5 100%);
+            padding: 40px 32px 48px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .hero-title { font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: 0.5px; position: relative; }
+        .hero-sub   { font-size: 20px; opacity: 0.85; position: relative; }
+        .hero-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .hero-badge {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        /* Cards */
+        .cards-section {
+            max-width: 1100px;
+            margin: -28px auto 0;
+            padding: 0 24px 48px;
+            position: relative;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .app-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--card-color, #42a5f5);
+            border-radius: 16px 16px 0 0;
+        }
+        .app-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.14);
+            border-color: var(--card-color, #42a5f5);
+        }
+        .app-card.disabled { cursor: default; opacity: 0.65; }
+        .app-card.disabled:hover { transform: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: transparent; }
+
+        .card-icon-wrap {
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            background: var(--card-bg, #e3f2fd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 18px;
+        }
+        .card-title { font-size: 25px; font-weight: 700; color: #1a237e; margin: 0 0 10px; }
+        .card-desc  { font-size: 18px; color: #546e7a; margin: 0 0 22px; line-height: 1.6; }
+        .card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+        .badge-ready    { background: #e8f5e9; color: #2e7d32; }
+        .badge-notready { background: #f5f5f5; color: #757575; }
+        .card-arrow {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #bdbdbd;
+            transition: all 0.3s;
+        }
+        .app-card:not(.disabled):hover .card-arrow { color: var(--card-color, #42a5f5); transform: translateY(-50%) translateX(4px); }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="topnav">
+        <div class="topnav-brand">
+            <span class="brand-icon">🏥</span>
+            <div>
+                <div class="brand-text">Pre-Check Export System</div>
+                <div class="brand-sub">ระบบตรวจสอบข้อมูลก่อนส่งออก</div>
+            </div>
+        </div>
+        <div class="topnav-right">
+            <div class="user-badge">
+                <span>👤</span>
+                <span id="logged-in-user">—</span>
+            </div>
+            <button onclick="window.location.href='index_first.html'" style="padding:9px 20px; background:rgba(255,255,255,0.15); color:white; border:1px solid rgba(255,255,255,0.3); border-radius:20px; font-size:18px; font-weight:600; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">🏠 กลับหน้าหลัก</button>
+            <button class="btn-logout" onclick="doLogout()">🚪 ออกจากระบบ</button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-title">🏥 ระบบตรวจสอบข้อมูลก่อนส่งออก</div>
+        <div class="hero-sub">Pre-Check Export System — ตรวจสอบความถูกต้องของข้อมูลก่อนส่งออกทุกกองทุน</div>
+        <div class="hero-badges">
+            <span class="hero-badge">📋 ข้อมูลพื้นฐาน</span>
+            <span class="hero-badge">📊 ข้อมูลการรับบริการ</span>
+            <span class="hero-badge">🔍 ตรวจสอบความครบถ้วน</span>
+            <span class="hero-badge">📥 Export Excel</span>
+        </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-section">
+        <div class="cards-grid">
+
+            <div class="app-card" style="--card-color:#1976d2; --card-bg:#e3f2fd;" onclick="window.location.href='index_basic.html'">
+                <div class="card-icon-wrap">📋</div>
+                <div class="card-title">ตรวจสอบข้อมูลพื้นฐาน</div>
+                <div class="card-desc">ตรวจสอบตารางอ้างอิง เช่น บุคลากร สิทธิการรักษา รายการยา หัตถการ และข้อมูล Lab ก่อนส่งออก</div>
+                <span class="card-badge badge-ready">✅ พร้อมใช้งาน</span>
+                <span class="card-arrow">›</span>
+            </div>
+
+            <div class="app-card" style="--card-color:#388e3c; --card-bg:#e8f5e9;" onclick="window.location.href='index_fund.html'">
+                <div class="card-icon-wrap">📊</div>
+                <div class="card-title">ตรวจสอบข้อมูลการรับบริการ</div>
+                <div class="card-desc">ตรวจสอบข้อมูล OPD/IPD ทุกกองทุน เช่น CSOP, SSOP, FDH, E-Claim ก่อนส่งออก</div>
+                <span class="card-badge badge-ready">✅ พร้อมใช้งาน</span>
+                <span class="card-arrow">›</span>
+            </div>
+
+            <div class="app-card disabled" style="--card-color:#9e9e9e; --card-bg:#f5f5f5;" onclick="window.location.href='check_c.html'">
+                <div class="card-icon-wrap">🛡️</div>
+                <div class="card-title">ตรวจสอบป้องกันการติด C</div>
+                <div class="card-desc">ตรวจสอบและป้องกันปัญหาข้อมูลที่อาจทำให้การส่งออกได้รับการประเมินระดับ C</div>
+                <span class="card-badge badge-notready">🔧 กำลังพัฒนา</span>
+            </div>
+
+        </div>
+
+        <!-- Steps -->
+        <div style="margin-top:36px; background:white; border-radius:18px; padding:32px 36px; box-shadow:0 2px 16px rgba(0,0,0,0.07);">
+            <div style="font-size:22px; font-weight:800; color:#1565c0; margin-bottom:28px; text-align:center;">🚀 วิธีเริ่มใช้งาน</div>
+            <div style="display:flex; gap:0; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
+
+                <div style="flex:1; min-width:180px; text-align:center; padding:0 14px; position:relative;">
+                    <div style="width:60px; height:60px; background:linear-gradient(135deg,#1976d2,#42a5f5); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px; box-shadow:0 4px 12px rgba(33,150,243,0.35);">1</div>
+                    <div style="font-size:19px; font-weight:700; color:#1a237e; margin-bottom:7px;">เชื่อมต่อ DB</div>
+                    <div style="font-size:16px; color:#78909c; line-height:1.5;">ตั้งค่าการเชื่อมต่อ<br>ฐานข้อมูลโรงพยาบาล</div>
+                </div>
+
+                <div style="padding-top:30px; color:#bdbdbd; font-size:28px; flex-shrink:0;">›</div>
+
+                <div style="flex:1; min-width:180px; text-align:center; padding:0 14px;">
+                    <div style="width:60px; height:60px; background:linear-gradient(135deg,#388e3c,#66bb6a); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px; box-shadow:0 4px 12px rgba(76,175,80,0.35);">2</div>
+                    <div style="font-size:19px; font-weight:700; color:#1a237e; margin-bottom:7px;">เลือกประเภทตรวจ</div>
+                    <div style="font-size:16px; color:#78909c; line-height:1.5;">ข้อมูลพื้นฐาน<br>หรือข้อมูลการรับบริการ</div>
+                </div>
+
+                <div style="padding-top:30px; color:#bdbdbd; font-size:28px; flex-shrink:0;">›</div>
+
+                <div style="flex:1; min-width:180px; text-align:center; padding:0 14px;">
+                    <div style="width:60px; height:60px; background:linear-gradient(135deg,#7b1fa2,#ab47bc); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px; box-shadow:0 4px 12px rgba(156,39,176,0.35);">3</div>
+                    <div style="font-size:19px; font-weight:700; color:#1a237e; margin-bottom:7px;">เลือกกองทุน</div>
+                    <div style="font-size:16px; color:#78909c; line-height:1.5;">CSOP / SSOP / FDH<br>E-Claim และอื่นๆ</div>
+                </div>
+
+                <div style="padding-top:30px; color:#bdbdbd; font-size:28px; flex-shrink:0;">›</div>
+
+                <div style="flex:1; min-width:180px; text-align:center; padding:0 14px;">
+                    <div style="width:60px; height:60px; background:linear-gradient(135deg,#e65100,#ff7043); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px; box-shadow:0 4px 12px rgba(230,81,0,0.35);">4</div>
+                    <div style="font-size:19px; font-weight:700; color:#1a237e; margin-bottom:7px;">ตรวจสอบ &amp; แก้ไข</div>
+                    <div style="font-size:16px; color:#78909c; line-height:1.5;">ดูรายการผิดพลาด<br>แก้ไข inline หรือ Export</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center; padding:28px 0 12px; color:#b0bec5; font-size:16px;">
+            Pre-Check Export System &nbsp;·&nbsp; พัฒนาสำหรับระบบ HOSxP &nbsp;·&nbsp; v1.0
+        </div>
+
+    </div>
+
+    <!-- Database Connection Modal -->
+    <div id="database-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>เชื่อมต่อฐานข้อมูล</h2>
+                <span class="close" onclick="closeDatabaseModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="db-connection-form">
+                    <div class="form-group">
+                        <label for="api-url">API Server URL: <span style="font-size:11px; color:#78909c;">(URL ของ backend server บนเครื่องคุณ)</span></label>
+                        <input type="text" id="api-url" placeholder="http://localhost:3002" value="http://localhost:3002">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="db-type">ประเภทฐานข้อมูล:</label>
+                        <select id="db-type" required>
+                            <option value="">-- เลือกประเภท --</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="postgresql">PostgreSQL</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="db-host">IP Server:</label>
+                        <input type="text" id="db-host" placeholder="เช่น 192.168.1.100 หรือ localhost" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="db-port">Port:</label>
+                        <input type="number" id="db-port" placeholder="3306 สำหรับ MySQL, 5432 สำหรับ PostgreSQL" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="db-name">Database:</label>
+                        <input type="text" id="db-name" placeholder="ชื่อฐานข้อมูล" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="db-user">User:</label>
+                        <input type="text" id="db-user" placeholder="ชื่อผู้ใช้งาน" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="db-password">Password: <span style="font-size: 11px; color: #78909c;">(ถ้าไม่มีรหัสผ่านให้เว้นว่างไว้)</span></label>
+                        <input type="password" id="db-password" placeholder="รหัสผ่าน (ถ้าไม่มีให้เว้นว่าง)">
+                    </div>
+
+                    <div class="connection-status-box" id="connection-result" style="display: none;">
+                        <div id="connection-message"></div>
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button type="button" class="btn-test" onclick="testConnection()">ทดสอบการเชื่อมต่อ</button>
+                        <button type="button" class="btn-save" onclick="saveConnection()" id="btn-save">บันทึกการตั้งค่า</button>
+                        <button type="button" class="btn-cancel" onclick="closeDatabaseModal()">ยกเลิก</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ตารางที่จำเป็น — แสดงด้านล่าง modal เสมอ (ไม่อยู่ใน scroll) -->
+            <div style="border-top:2px solid #e3f2fd; padding:16px 20px; background:#fafbff; border-radius:0 0 15px 15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-size:14px; font-weight:700; color:#1565c0;">🗄️ ตารางที่จำเป็นต้องมีในระบบ</span>
+                    <button type="button" onclick="checkRequiredTables()" id="btn-check-tables"
+                        style="padding:6px 14px; background:linear-gradient(135deg,#42a5f5,#2196f3); color:white; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600;">
+                        🔍 ตรวจสอบ
+                    </button>
+                </div>
+                <div id="required-tables-list" style="display:flex; flex-direction:column; gap:7px; max-height:220px; overflow-y:auto;">
+                    <div style="font-size:13px; color:#9e9e9e; text-align:center; padding:10px;">
+                        บันทึกการเชื่อมต่อแล้วกด "ตรวจสอบ"
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Show logged-in user name
+        try {
+            const s = JSON.parse(localStorage.getItem('loginSession') || '{}');
+            const el = document.getElementById('logged-in-user');
+            if (el && s.name) el.textContent = s.name;
+        } catch(e) {}
+
+        const REQUIRED_TABLE_LABELS = {
+            position_check:                    'ตาราง position_check',
+            lab_items_no_lab_catalog:           'ฟิล lab_items.no_lab_catalog (CHAR 1)',
+            lab_items_sub_group_no_lab_catalog: 'ฟิล lab_items_sub_group.no_lab_catalog (CHAR 1)',
+            sks_icd10tm_check:                  'ตาราง sks_icd10tm_check'
+        };
+
+        async function checkRequiredTables() {
+            const config = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+            if (!config) {
+                document.getElementById('required-tables-list').innerHTML =
+                    '<div style="font-size:13px;color:#f44336;padding:10px;">⚠️ ยังไม่ได้บันทึกการเชื่อมต่อ กรุณาบันทึกก่อน</div>';
+                return;
+            }
+            const list = document.getElementById('required-tables-list');
+            list.innerHTML = '<div style="font-size:13px;color:#546e7a;padding:10px;text-align:center;">⏳ กำลังตรวจสอบ...</div>';
+            try {
+                const res = await fetch(`${config.apiUrl || window.location.origin}/api/check-required-tables`, {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type })
+                });
+                const result = await res.json();
+                if (!result.success) {
+                    list.innerHTML = `<div style="font-size:13px;color:#f44336;padding:10px;">❌ ${result.error}</div>`;
+                    return;
+                }
+                renderRequiredTables(result.data);
+            } catch(e) {
+                list.innerHTML = `<div style="font-size:13px;color:#f44336;padding:10px;">❌ เชื่อมต่อ API ไม่ได้: ${e.message}</div>`;
+            }
+        }
+
+        function renderRequiredTables(items) {
+            const list = document.getElementById('required-tables-list');
+            list.innerHTML = items.map(item => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:${item.exists?'#e8f5e9':'#fff3e0'}; border-radius:8px; border-left:4px solid ${item.exists?'#4caf50':'#ff9800'};">
+                    <div>
+                        <span style="font-size:14px; font-weight:600; color:${item.exists?'#2e7d32':'#e65100'};">
+                            ${item.exists?'✅':'⚠️'} ${item.label}
+                        </span>
+                        <div style="font-size:12px; color:${item.exists?'#4caf50':'#ff9800'}; margin-top:2px;">
+                            ${item.exists?'มีในฐานข้อมูลแล้ว':'ยังไม่มีในฐานข้อมูล'}
+                        </div>
+                    </div>
+                    <button type="button"
+                        onclick="${item.exists?'':  `createRequiredTable('${item.key}')`}"
+                        ${item.exists?'disabled':''}
+                        style="padding:7px 16px; border:none; border-radius:7px; font-size:13px; font-weight:700; cursor:${item.exists?'default':'pointer'};
+                            background:${item.exists?'#bdbdbd':'linear-gradient(135deg,#ff9800,#f57c00)'};
+                            color:white; white-space:nowrap; transition:all 0.2s;">
+                        ${item.exists?'มีแล้ว':'➕ เพิ่มตาราง'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function createRequiredTable(key) {
+            const config = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+            if (!config) return;
+            const label = REQUIRED_TABLE_LABELS[key] || key;
+            if (!confirm(`ต้องการเพิ่ม ${label} ในฐานข้อมูลหรือไม่?`)) return;
+            try {
+                const res = await fetch(`${config.apiUrl || window.location.origin}/api/create-required-table`, {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type, key })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert(`✅ เพิ่ม ${label} สำเร็จ`);
+                    checkRequiredTables(); // refresh
+                } else {
+                    alert(`❌ เกิดข้อผิดพลาด: ${result.error}`);
+                }
+            } catch(e) {
+                alert(`❌ เชื่อมต่อ API ไม่ได้: ${e.message}`);
+            }
+        }
+
+        // Auto-check when modal opens
+        const origOpen = window.openDatabaseModal;
+        window.openDatabaseModal = function() {
+            if (origOpen) origOpen();
+            setTimeout(() => {
+                if (localStorage.getItem('dbConnection')) checkRequiredTables();
+            }, 300);
+        };
+
+        function doLogout() {
+            if (confirm('ต้องการออกจากระบบหรือไม่?')) {
+                localStorage.removeItem('loginSession');
+                window.location.replace('login.html');
+            }
+        }
+    </script>
+<script src="zoom_control.js"></script>
+</body>
+</html>

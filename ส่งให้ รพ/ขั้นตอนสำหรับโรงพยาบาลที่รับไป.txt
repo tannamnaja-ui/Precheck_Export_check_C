@@ -1,0 +1,6 @@
+ขั้นตอนสำหรับโรงพยาบาลที่รับไป:
+
+ติดตั้ง Node.js (LTS)
+1.double-click setup.bat (ครั้งแรกครั้งเดียว)
+2.double-click start_api.bat ทุกครั้งก่อนใช้งาน
+3.เปิด Cloudflare URL → เชื่อมต่อฐานข้อมูล → API URL: http://localhost:3002

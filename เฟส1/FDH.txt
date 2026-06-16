@@ -1,0 +1,28 @@
+คำนำหน้านาม pname
+สัญชาติ nationality
+สถานะภาพ marrystatus
+เพศ sex
+อาชีพ occupation
+ศาสนา religion
+แผนก spclty
+วิธีจำหน่าย dchtype
+สถานภาพจำหน่าย dchstts
+ประเภทการวินิจฉัย diagtype
+หัตถการ OPD er_oper_code
+ค่าใช้จ่ายแยกตามหมวด nondrugite
+หัตถการกายภาพ physic_items
+หัตถการ IPD ipt_oper_code
+หัตถการ OR operation_item
+หัตถการแพทย์แผนไทย health_med_o
+หัตถการทันตกรรม dttm
+บุคลากรทางการแพทย์
+ผู้วินิจฉัยแพทย์ไทย
+สิทธิการรักษา pttype
+สิทธิการรักษา provis_instype
+หมวดค่ารักษาพยาบาล
+รายการยา
+ข้อมูล drugcat
+ข้อมูล labcat
+ข้อมูลประเภทอุบัติเหตุ
+ข้อมูลกรณีอุบัติเหตุ
+ข้อมูลข้อบ่งชี้กรณีฉุกเฉิน

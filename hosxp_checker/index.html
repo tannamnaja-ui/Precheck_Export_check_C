@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOSxP Data Completeness Checker</title>
+<style>
+/* ========= Reset & Base ========= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, sans-serif;
+    font-size: 14px;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ========= Header ========= */
+.header {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.header-left h1 { font-size: 1.3rem; font-weight: 700; }
+.header-left p  { font-size: 0.82rem; opacity: .85; margin-top: 2px; }
+.header-right   { display: flex; gap: 10px; align-items: center; }
+.btn-back {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.4);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background .2s;
+}
+.btn-back:hover { background: rgba(255,255,255,.28); }
+
+/* ========= Status Bar ========= */
+.status-bar {
+    background: #fff;
+    border-bottom: 1px solid #dde;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    flex-wrap: wrap;
+}
+.db-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #eaf3fb;
+    border: 1px solid #aed6f1;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-weight: 600;
+    color: #1a5276;
+}
+.db-badge.pg  { background: #edf7f0; border-color: #a9dfbf; color: #1e8449; }
+.db-badge.err { background: #fdedec; border-color: #f1948a; color: #c0392b; }
+
+/* ========= Main Container ========= */
+.container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+
+/* ========= No-connection card ========= */
+.no-conn-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 48px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.no-conn-card .icon { font-size: 3rem; margin-bottom: 12px; }
+.no-conn-card h2    { color: #e74c3c; margin-bottom: 8px; }
+.no-conn-card p     { color: #666; margin-bottom: 20px; }
+
+/* ========= Buttons ========= */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 22px;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all .18s;
+}
+.btn-primary   { background: #2980b9; color: #fff; }
+.btn-primary:hover { background: #1a6fa3; }
+.btn-primary:disabled { background: #95a5a6; cursor: not-allowed; }
+.btn-success   { background: #27ae60; color: #fff; }
+.btn-success:hover { background: #1e9450; }
+.btn-warning   { background: #e67e22; color: #fff; }
+.btn-warning:hover { background: #ca6f1e; }
+.btn-danger    { background: #e74c3c; color: #fff; }
+.btn-danger:hover { background: #c0392b; }
+.btn-secondary { background: #7f8c8d; color: #fff; }
+.btn-secondary:hover { background: #626567; }
+.btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 5px; }
+
+/* ========= Run panel ========= */
+.run-panel {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.run-panel h2 { font-size: 1rem; color: #1a5276; }
+
+/* ========= Loading ========= */
+#loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    margin-bottom: 20px;
+}
+.spinner {
+    width: 40px; height: 40px;
+    border: 4px solid #d5e8f5;
+    border-top-color: #2980b9;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ========= Summary grid ========= */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+.summary-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+}
+.summary-card:hover { border-color: #2980b9; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.summary-card.active { border-color: #2980b9; }
+.summary-card .card-icon { font-size: 1.6rem; margin-bottom: 6px; }
+.summary-card .card-lbl  { font-size: 12px; color: #555; margin-bottom: 8px; font-weight: 600; line-height: 1.3; }
+.summary-card .card-pct  { font-size: 2rem; font-weight: 700; line-height: 1; }
+.summary-card .card-pct.perfect  { color: #27ae60; }
+.summary-card .card-pct.good     { color: #2ecc71; }
+.summary-card .card-pct.warning  { color: #e67e22; }
+.summary-card .card-pct.danger   { color: #e74c3c; }
+.summary-card .card-pct.skip-all { color: #95a5a6; }
+.summary-card .card-sub  { font-size: 11px; color: #888; margin-top: 4px; }
+.card-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 4px;
+    border-radius: 0 0 0 0;
+    transition: width .6s;
+}
+.bar-green  { background: #27ae60; }
+.bar-orange { background: #e67e22; }
+.bar-red    { background: #e74c3c; }
+.bar-gray   { background: #bdc3c7; }
+
+/* ========= Section tabs ========= */
+.section-tabs {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+.tabs-header {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 2px solid #eee;
+    scrollbar-width: thin;
+}
+.tab-btn {
+    padding: 11px 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    color: #555;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.tab-btn:hover  { background: #f0f5fb; color: #1a5276; }
+.tab-btn.active { color: #2980b9; border-bottom-color: #2980b9; font-weight: 700; }
+.tab-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: #e74c3c;
+    color: #fff;
+    font-weight: 700;
+}
+.tab-badge.ok { background: #27ae60; }
+.tab-content { padding: 20px; display: none; }
+.tab-content.active { display: block; }
+
+/* ========= Detail Table ========= */
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.detail-table th {
+    background: #1a5276;
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+.detail-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+.detail-table tr:hover td { background: #f5f8fb; }
+.detail-table tr.skip-row td { color: #aaa; font-style: italic; }
+
+/* ========= Progress bar in table ========= */
+.pct-cell { min-width: 130px; }
+.pbar-wrap { display: flex; align-items: center; gap: 8px; }
+.pbar-track {
+    flex: 1;
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.pbar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .5s;
+}
+.pbar-lbl { font-size: 12px; font-weight: 700; width: 42px; text-align: right; }
+.fill-green  { background: #27ae60; }
+.fill-orange { background: #e67e22; }
+.fill-red    { background: #e74c3c; }
+.fill-gray   { background: #bdc3c7; }
+
+/* ========= Badges ========= */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.badge-ok   { background: #d5f5e3; color: #1e8449; }
+.badge-warn { background: #fdebd0; color: #a04000; }
+.badge-err  { background: #fadbd8; color: #922b21; }
+.badge-skip { background: #eaecee; color: #717d7e; }
+
+/* ========= Missing value ========= */
+.missing-num { font-weight: 700; color: #e74c3c; }
+.missing-zero { color: #27ae60; font-weight: 700; }
+
+/* ========= Modal ========= */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1000;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 12px;
+    overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 1100px;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,.3);
+}
+.modal-head {
+    background: #1a5276;
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.modal-head h3 { font-size: 15px; }
+.modal-head .modal-close {
+    background: rgba(255,255,255,.2);
+    border: none;
+    color: #fff;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+}
+.modal-head .modal-close:hover { background: rgba(255,255,255,.35); }
+.modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+.modal-foot {
+    padding: 12px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.modal-foot .foot-info { font-size: 12px; color: #777; }
+
+/* ========= Detail rows table ========= */
+.rows-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.rows-table th {
+    background: #2980b9;
+    color: #fff;
+    padding: 8px 10px;
+    text-align: left;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+}
+.rows-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.rows-table tr:hover td { background: #f5faff; }
+.null-val { color: #e74c3c; font-style: italic; font-size: 11px; }
+.empty-val { color: #e67e22; font-style: italic; font-size: 11px; }
+
+/* ========= Responsive ========= */
+@media (max-width: 640px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .run-panel { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-left">
+        <h1>🏥 HOSxP Data Completeness Checker</h1>
+        <p>ตรวจสอบความสมบูรณ์ข้อมูลพื้นฐาน HOSxP</p>
+    </div>
+    <div class="header-right">
+        <button class="btn-back" onclick="goBack()">&#8592; กลับหน้าหลัก</button>
+    </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar" id="statusBar">
+    <span id="connBadge" class="db-badge err">ยังไม่ได้เชื่อมต่อ</span>
+    <span id="connInfo" style="color:#666;"></span>
+</div>
+
+<!-- Main -->
+<div class="container">
+
+    <!-- No connection -->
+    <div id="noConnCard" class="no-conn-card" style="display:none;">
+        <div class="icon">🔌</div>
+        <h2>ยังไม่ได้เชื่อมต่อฐานข้อมูล</h2>
+        <p>กรุณาเชื่อมต่อฐานข้อมูล HOSxP ก่อนใช้งาน</p>
+        <button class="btn btn-primary" onclick="goBack()">&#8592; กลับหน้าหลักเพื่อเชื่อมต่อ</button>
+    </div>
+
+    <!-- Run panel -->
+    <div class="run-panel" id="runPanel" style="display:none;">
+        <div>
+            <h2>ตรวจสอบความสมบูรณ์ข้อมูลพื้นฐาน</h2>
+            <p style="font-size:12px;color:#777;margin-top:4px;">ระบบจะตรวจสอบข้อมูลทั้งหมด 11 หมวด ใช้เวลาประมาณ 10-30 วินาที</p>
+        </div>
+        <button id="btnRun" class="btn btn-success" onclick="runCheck()">
+            &#9654; ตรวจสอบข้อมูล
+        </button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <div style="color:#555;font-size:14px;">กำลังตรวจสอบข้อมูล กรุณารอสักครู่...</div>
+        <div id="loadingNote" style="color:#999;font-size:12px;margin-top:6px;"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" style="display:none;">
+        <!-- Summary grid -->
+        <div class="summary-grid" id="summaryGrid"></div>
+        <!-- Tabs -->
+        <div class="section-tabs">
+            <div class="tabs-header" id="tabsHeader"></div>
+            <div id="tabsBody"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 id="modalTitle">รายการที่ข้อมูลไม่สมบูรณ์</h3>
+            <button class="modal-close" onclick="closeModal()">&#10005;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div style="text-align:center;padding:30px;">
+                <div class="spinner" style="margin:0 auto 10px;"></div>
+                <div>กำลังโหลดข้อมูล...</div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <span class="foot-info" id="modalFootInfo"></span>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-warning btn-sm" id="btnExportCsv" onclick="exportCsv()" style="display:none;">
+                    &#8595; Export CSV
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="closeModal()">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// Session check
+// ============================================================
+try {
+    const session = JSON.parse(localStorage.getItem('loginSession') || 'null');
+    const TIMEOUT = 8 * 60 * 60 * 1000;
+    if (!session || !session.loginTime || (Date.now() - session.loginTime) > TIMEOUT) {
+        localStorage.removeItem('loginSession');
+        window.location.replace('../login.html');
+    }
+} catch(e) { window.location.replace('../login.html'); }
+
+// ============================================================
+// State
+// ============================================================
+let dbConfig = null;
+let lastSections = [];
+let modalRows = [];
+let modalTitle = '';
+
+// ============================================================
+// Init
+// ============================================================
+(function init() {
+    try {
+        const raw = localStorage.getItem('dbConnection');
+        if (!raw) throw new Error('no config');
+        dbConfig = JSON.parse(raw);
+        if (!dbConfig.host || !dbConfig.database) throw new Error('incomplete');
+    } catch(e) {
+        dbConfig = null;
+    }
+
+    if (!dbConfig) {
+        document.getElementById('noConnCard').style.display = 'block';
+        document.getElementById('connBadge').textContent = 'ยังไม่ได้เชื่อมต่อ';
+        return;
+    }
+
+    // Show status bar info
+    const badge = document.getElementById('connBadge');
+    badge.textContent = dbConfig.type === 'postgresql' ? 'PostgreSQL' : 'MySQL';
+    badge.className = 'db-badge ' + (dbConfig.type === 'postgresql' ? 'pg' : '');
+    document.getElementById('connInfo').textContent =
+        `${dbConfig.host}:${dbConfig.port || (dbConfig.type === 'postgresql' ? 5432 : 3306)} / ${dbConfig.database}`;
+
+    document.getElementById('runPanel').style.display = 'flex';
+})();
+
+// ============================================================
+// Run check
+// ============================================================
+async function runCheck() {
+    if (!dbConfig) return;
+    const btn = document.getElementById('btnRun');
+    btn.disabled = true;
+    btn.textContent = 'กำลังตรวจสอบ...';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('loadingNote').textContent = 'กำลังเชื่อมต่อและรันคำสั่ง SQL...';
+
+    try {
+        const resp = await fetch('/api/basic-checker/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dbConfig),
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+        lastSections = data.sections;
+        renderResults(data.sections);
+    } catch(err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+        btn.disabled = false;
+        btn.innerHTML = '&#9654; ตรวจสอบข้อมูล';
+    }
+}
+
+// ============================================================
+// Render results
+// ============================================================
+function renderResults(sections) {
+    document.getElementById('results').style.display = 'block';
+    renderSummary(sections);
+    renderTabs(sections);
+    // Activate first tab
+    const firstTab = document.querySelector('.tab-btn');
+    if (firstTab) firstTab.click();
+}
+
+function calcSectionPct(section) {
+    const rows = section.rows.filter(r => !r.skip);
+    if (!rows.length) return null;
+    const tot = rows.reduce((s, r) => s + (r.tot || 0), 0);
+    const ok  = rows.reduce((s, r) => s + (r.ok  || 0), 0);
+    if (!tot) return null;
+    return Math.round(ok / tot * 100);
+}
+
+function pctClass(pct) {
+    if (pct === null)  return 'skip-all';
+    if (pct >= 100)    return 'perfect';
+    if (pct >= 90)     return 'good';
+    if (pct >= 70)     return 'warning';
+    return 'danger';
+}
+function barClass(pct) {
+    if (pct === null || pct < 70)  return 'bar-red';
+    if (pct < 90)  return 'bar-orange';
+    if (pct < 100) return 'bar-orange';
+    return 'bar-green';
+}
+function fillClass(pct) {
+    if (pct === null || pct < 70)  return 'fill-red';
+    if (pct < 90)  return 'fill-orange';
+    if (pct < 100) return 'fill-orange';
+    return 'fill-green';
+}
+
+function renderSummary(sections) {
+    const grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    sections.forEach((sec, idx) => {
+        const pct = calcSectionPct(sec);
+        const missing = sec.rows.filter(r => !r.skip).reduce((s,r) => s + Math.max(0,(r.tot||0)-(r.ok||0)), 0);
+        const pc = pctClass(pct);
+        const bc = barClass(pct);
+        const pctStr = pct === null ? '-' : pct + '%';
+        const card = document.createElement('div');
+        card.className = 'summary-card';
+        card.dataset.idx = idx;
+        card.onclick = () => activateTab(idx);
+        card.innerHTML = `
+            <div class="card-icon">${escHtml(sec.icon)}</div>
+            <div class="card-lbl">${escHtml(sec.lbl)}</div>
+            <div class="card-pct ${pc}">${pctStr}</div>
+            <div class="card-sub">${missing > 0 ? `ขาด ${missing.toLocaleString()} รายการ` : (pct === null ? 'ไม่มีข้อมูล' : 'สมบูรณ์ครบถ้วน')}</div>
+            <div class="card-bar ${bc}" style="width:${pct || 0}%"></div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function renderTabs(sections) {
+    const header = document.getElementById('tabsHeader');
+    const body   = document.getElementById('tabsBody');
+    header.innerHTML = '';
+    body.innerHTML   = '';
+
+    sections.forEach((sec, idx) => {
+        const missing = sec.rows.filter(r => !r.skip).reduce((s,r) => s + Math.max(0,(r.tot||0)-(r.ok||0)), 0);
+        const badgeCls = missing > 0 ? '' : 'ok';
+        const badgeTxt = missing > 0 ? missing.toLocaleString() : '✓';
+
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.dataset.idx = idx;
+        btn.onclick = () => activateTab(idx);
+        btn.innerHTML = `${escHtml(sec.icon)} ${escHtml(sec.lbl)} <span class="tab-badge ${badgeCls}">${badgeTxt}</span>`;
+        header.appendChild(btn);
+
+        const pane = document.createElement('div');
+        pane.className = 'tab-content';
+        pane.id = 'tab-' + idx;
+        pane.innerHTML = renderSectionTable(sec);
+        body.appendChild(pane);
+    });
+}
+
+function renderSectionTable(sec) {
+    const allSkip = sec.rows.every(r => r.skip);
+    if (allSkip) {
+        return `<div style="color:#999;padding:20px;text-align:center;">ไม่พบตารางนี้ในฐานข้อมูล</div>`;
+    }
+    let html = `<div style="overflow-x:auto;"><table class="detail-table">
+    <thead>
+      <tr>
+        <th>รายการที่ตรวจสอบ</th>
+        <th style="text-align:right;">ทั้งหมด</th>
+        <th style="text-align:right;">สมบูรณ์</th>
+        <th style="text-align:right;">ขาด</th>
+        <th class="pct-cell">ความสมบูรณ์%</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+    sec.rows.forEach(row => {
+        if (row.skip) {
+            html += `<tr class="skip-row">
+              <td>${escHtml(row.lbl)} <span class="badge badge-skip">ไม่พบคอลัมน์/ตาราง</span></td>
+              <td colspan="5" style="color:#bbb;font-size:12px;">-</td>
+            </tr>`;
+            return;
+        }
+        const missing = Math.max(0, (row.tot || 0) - (row.ok || 0));
+        const pct = row.tot > 0 ? Math.round(row.ok / row.tot * 100) : 100;
+        const fc = pct >= 100 ? 'fill-green' : pct >= 70 ? 'fill-orange' : 'fill-red';
+        const pctColor = pct >= 100 ? '#27ae60' : pct >= 70 ? '#e67e22' : '#e74c3c';
+        const missingHtml = missing > 0
+            ? `<span class="missing-num">${missing.toLocaleString()}</span>`
+            : `<span class="missing-zero">0</span>`;
+        const badgeHtml = pct >= 100
+            ? `<span class="badge badge-ok">สมบูรณ์</span>`
+            : pct >= 70
+            ? `<span class="badge badge-warn">บางส่วน</span>`
+            : `<span class="badge badge-err">ไม่สมบูรณ์</span>`;
+        const viewBtn = missing > 0
+            ? `<button class="btn btn-warning btn-sm" onclick="showDetail(${JSON.stringify(escHtml(row.lbl))},${JSON.stringify(row.tbl)},${JSON.stringify(row.col)},${JSON.stringify(row.wh)})">ดูรายการ</button>`
+            : '';
+        const noteHtml = row.note ? `<br><span style="font-size:11px;color:#888;">${escHtml(row.note)}</span>` : '';
+
+        html += `<tr>
+          <td>${escHtml(row.lbl)}${noteHtml} ${badgeHtml}</td>
+          <td style="text-align:right;">${(row.tot||0).toLocaleString()}</td>
+          <td style="text-align:right;">${(row.ok||0).toLocaleString()}</td>
+          <td style="text-align:right;">${missingHtml}</td>
+          <td class="pct-cell">
+            <div class="pbar-wrap">
+              <div class="pbar-track"><div class="pbar-fill ${fc}" style="width:${pct}%"></div></div>
+              <span class="pbar-lbl" style="color:${pctColor};">${pct}%</span>
+            </div>
+          </td>
+          <td>${viewBtn}</td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    return html;
+}
+
+function activateTab(idx) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+    });
+    document.querySelectorAll('.tab-content').forEach((p, i) => {
+        p.classList.toggle('active', i === idx);
+    });
+    document.querySelectorAll('.summary-card').forEach((c, i) => {
+        c.classList.toggle('active', i === idx);
+    });
+    // Scroll tab into view
+    const btn = document.querySelector(`.tab-btn[data-idx="${idx}"]`);
+    if (btn) btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+// ============================================================
+// Detail modal
+// ============================================================
+async function showDetail(lbl, tbl, col, wh) {
+    modalTitle = lbl;
+    modalRows  = [];
+    document.getElementById('modalTitle').textContent = 'รายการขาด: ' + lbl;
+    document.getElementById('modalBody').innerHTML = `
+        <div style="text-align:center;padding:30px;">
+            <div class="spinner" style="margin:0 auto 10px;"></div>
+            <div>กำลังโหลดข้อมูล...</div>
+        </div>`;
+    document.getElementById('modalFootInfo').textContent = '';
+    document.getElementById('btnExportCsv').style.display = 'none';
+    document.getElementById('detailModal').classList.add('open');
+
+    try {
+        const resp = await fetch('/api/basic-checker/detail', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...dbConfig, table: tbl, column: col, where: wh }),
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+        modalRows = data.rows;
+        renderModalRows(data.rows, data.count, lbl, tbl, col);
+    } catch(err) {
+        document.getElementById('modalBody').innerHTML =
+            `<div style="color:#e74c3c;padding:20px;">เกิดข้อผิดพลาด: ${escHtml(err.message)}</div>`;
+    }
+}
+
+function renderModalRows(rows, count, lbl, tbl, col) {
+    if (!rows.length) {
+        document.getElementById('modalBody').innerHTML =
+            `<div style="text-align:center;padding:30px;color:#27ae60;">ไม่พบรายการที่ขาดข้อมูล</div>`;
+        document.getElementById('modalFootInfo').textContent = 'ไม่พบข้อมูล';
+        return;
+    }
+
+    const cols = Object.keys(rows[0]);
+    let html = `<div style="overflow-x:auto;"><table class="rows-table"><thead><tr>`;
+    html += `<th>#</th>`;
+    cols.forEach(c => { html += `<th>${escHtml(c)}</th>`; });
+    html += `</tr></thead><tbody>`;
+
+    rows.forEach((row, i) => {
+        html += `<tr><td style="color:#999;font-size:11px;">${i+1}</td>`;
+        cols.forEach(c => {
+            const v = row[c];
+            if (v === null || v === undefined) {
+                html += `<td><span class="null-val">NULL</span></td>`;
+            } else if (v === '') {
+                html += `<td><span class="empty-val">(ว่าง)</span></td>`;
+            } else {
+                html += `<td title="${escHtml(String(v))}">${escHtml(String(v))}</td>`;
+            }
+        });
+        html += `</tr>`;
+    });
+    html += `</tbody></table></div>`;
+
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('modalFootInfo').textContent =
+        `แสดง ${rows.length.toLocaleString()} รายการ${count > rows.length ? ` (จาก ${count.toLocaleString()} รายการทั้งหมด)` : ''} | ตาราง: ${tbl} | คอลัมน์: ${col}`;
+    document.getElementById('btnExportCsv').style.display = 'inline-flex';
+}
+
+function closeModal() {
+    document.getElementById('detailModal').classList.remove('open');
+}
+document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// ============================================================
+// Export CSV
+// ============================================================
+function exportCsv() {
+    if (!modalRows.length) return;
+    const cols = Object.keys(modalRows[0]);
+    const lines = [cols.map(csvEsc).join(',')];
+    modalRows.forEach(row => {
+        lines.push(cols.map(c => csvEsc(row[c] === null || row[c] === undefined ? '' : String(row[c]))).join(','));
+    });
+    const bom = '﻿';
+    const blob = new Blob([bom + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `missing_${modalTitle.replace(/[^a-zA-Zก-๙0-9]/g,'_')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function csvEsc(v) {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+function goBack() {
+    window.location.href = '../index_first.html';
+}
+
+// ============================================================
+// Utilities
+// ============================================================
+function escHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

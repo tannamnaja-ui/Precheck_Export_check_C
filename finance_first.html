@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจสอบข้อมูลหลังส่งออก</title>
+    <script>
+        (function() {
+            try {
+                const session = JSON.parse(localStorage.getItem('loginSession') || 'null');
+                const TIMEOUT = 8 * 60 * 60 * 1000;
+                if (!session || !session.loginTime || (Date.now() - session.loginTime) > TIMEOUT) {
+                    localStorage.removeItem('loginSession');
+                    window.location.replace('login.html');
+                }
+            } catch(e) {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 50%, #ab47bc 100%);
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 60px 52px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: calc(100% - 384px);
+            max-width: 1200px;
+        }
+        @media (max-width: 600px) {
+            .card { width: calc(100% - 40px); }
+        }
+
+        .icon { font-size: 72px; margin-bottom: 20px; }
+
+        .label-small {
+            font-size: 15px;
+            color: #9e9e9e;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .label-big {
+            font-size: 32px;
+            font-weight: 900;
+            color: #6a1b9a;
+            margin-bottom: 28px;
+            line-height: 1.2;
+        }
+
+        .divider {
+            width: 60px;
+            height: 4px;
+            background: #6a1b9a;
+            border-radius: 2px;
+            margin: 0 auto 28px;
+            opacity: 0.3;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            color: #6a1b9a;
+            font-size: 18px;
+            font-weight: 800;
+            padding: 14px 32px;
+            border-radius: 40px;
+            border: 2px dashed #ab47bc;
+            letter-spacing: 0.5px;
+            margin-bottom: 32px;
+        }
+
+        .sub-text {
+            font-size: 14px;
+            color: #bdbdbd;
+            line-height: 1.6;
+            margin-bottom: 36px;
+        }
+
+        .btn-back {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #6a1b9a, #4a148c);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 4px 16px rgba(106,27,154,0.35);
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(106,27,154,0.45);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="icon">🚧</div>
+
+        <div class="label-small">ระบบตรวจสอบข้อมูล</div>
+        <div class="label-big">หลังส่งออก</div>
+
+        <div class="divider"></div>
+
+        <div class="badge">รวมของพัฒน์ &nbsp;·&nbsp; กำลังพัฒนา &nbsp;·&nbsp; รอรวม</div>
+
+        <div class="sub-text">
+            ระบบนี้อยู่ระหว่างการพัฒนา<br>
+            จะพร้อมใช้งานเร็ว ๆ นี้
+        </div>
+
+        <button class="btn-back" onclick="window.location.href='index_first.html'">← กลับหน้าหลัก</button>
+    </div>
+
+<script src="zoom_control.js"></script>
+</body>
+</html>

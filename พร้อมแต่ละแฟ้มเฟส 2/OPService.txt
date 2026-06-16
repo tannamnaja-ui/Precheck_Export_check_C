@@ -1,0 +1,155 @@
+OPService
+
+http://localhost:3002/fund_ssop.html
+เมื่อกดเมนู OPService 
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูลแทนคำสั่งเดิม
+และให้แปลง String_Agg ให้รองรับ ได้ทั้ง mysql และ postgresql ใน Query ชุดเดียวกัน
+
+SELECT ov.vn AS svid,
+  ov.vstdate,
+  Concat(pa.pname, pa.fname, ' ', pa.lname) AS name,
+  String_Agg(DISTINCT CAST(rc.debt_id AS VARCHAR), ',') AS invno,
+  Max(CASE
+    WHEN rc.debt_id IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END) AS check_debt_id,
+  String_Agg(DISTINCT CASE
+    WHEN n.income = '11'
+    THEN 'OP'
+    WHEN n.income = '12'
+    THEN 'EC'
+    WHEN n.income = '07'
+    THEN 'LB'
+    WHEN n.income = '08'
+    THEN 'XR'
+    WHEN n.income = '09'
+    THEN 'IV'
+    WHEN n.income = '06'
+    THEN 'ZZ'
+    ELSE ''
+  END, ',') AS class,
+  Max(CASE
+    WHEN n.income IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END) AS check_income,
+  (SELECT opdconfig.hospitalcode FROM opdconfig LIMIT 1) AS hcode,
+  pa.hn,
+  pa.cid AS pid,
+  ot.ovstist AS typein,
+  CASE
+    WHEN ot.ovstist IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END AS check_typein,
+  st.ovstost AS typeout,
+  CASE
+    WHEN st.ovstost IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END AS check_typeout,
+  String_Agg(DISTINCT CAST(oa.nextdate AS VARCHAR), ',') AS nextdate,
+  ov.spclty AS clinic,
+  d.licenseno AS svpid,
+  CASE
+    WHEN d.licenseno IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END AS check_svpid,
+  Max(ost.update_datetime) AS enddt,
+  CASE
+    WHEN Max(ost.update_datetime) IS NOT NULL
+    THEN 'Y'
+    ELSE ''
+  END AS check_enddt,
+  String_Agg(DISTINCT n.icode, ',') AS icode,
+  String_Agg(DISTINCT CASE
+    WHEN dp.icd9 IS NOT NULL AND dp.icd9 <> ''
+    THEN 'IN'
+    WHEN li.tmlt_code IS NOT NULL AND li.tmlt_code <> ''
+    THEN 'LC'
+    WHEN di.icd10 IS NOT NULL AND di.icd10 <> ''
+    THEN 'TT'
+    ELSE ''
+  END, ',') AS codeset,
+  Max(CASE
+    WHEN dp.icd9 IS NOT NULL AND dp.icd9 <> ''
+    THEN 'Y'
+    WHEN li.tmlt_code IS NOT NULL AND li.tmlt_code <> ''
+    THEN 'Y'
+    WHEN di.icd10 IS NOT NULL AND di.icd10 <> ''
+    THEN 'Y'
+    ELSE ''
+  END) AS check_codeset,
+  String_Agg(DISTINCT n.billcode, ',') AS stdcode,
+  Max(CASE
+    WHEN n.billcode IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END) AS check_stdcode,
+  'CareAccount' AS careaccount,
+  'TypeServ' AS typeserv,
+  'SvCharge' AS svcharge,
+  'Completion' AS completion,
+  'SvTxCode' AS svtxcode,
+  'ClaimCat' AS claimcat,
+  Concat(ov.vn, ':', rc.debt_id) AS vn
+FROM ovst ov
+  LEFT JOIN patient pa ON pa.hn = ov.hn
+  LEFT JOIN rcpt_debt rc ON rc.vn = ov.vn
+  LEFT JOIN ovstist ot ON ot.ovstist = ov.ovstist
+  LEFT JOIN oapp oa ON oa.vn = ov.vn
+  LEFT JOIN (SELECT DISTINCT opitemrece.vn,
+    opitemrece.icode
+  FROM opitemrece) oi ON oi.vn = ov.vn
+  LEFT JOIN ovstost st ON st.ovstost = ov.ovstost
+  LEFT JOIN ovst_service_time ost ON ost.vn = ov.vn
+  LEFT JOIN nondrugitems n ON n.icode = oi.icode
+  LEFT JOIN (SELECT ovstdiag.vn,
+    ovstdiag.icd10,
+    ovstdiag.doctor,
+    ovstdiag.ovst_diag_id,
+    Row_Number() OVER (PARTITION BY ovstdiag.vn ORDER BY ovstdiag.ovst_diag_id) AS rn
+  FROM ovstdiag) di ON di.vn = ov.vn AND di.rn = 1
+  LEFT JOIN (SELECT doctor_operation.ovst_diag_id,
+    doctor_operation.icd9,
+    Row_Number() OVER (PARTITION BY doctor_operation.ovst_diag_id ORDER BY doctor_operation.ovst_diag_id) AS rn
+  FROM doctor_operation) dp ON dp.ovst_diag_id = di.ovst_diag_id AND dp.rn = 1
+  LEFT JOIN doctor d ON d.code = di.doctor
+  LEFT JOIN lab_items li ON li.icode = n.icode
+  LEFT JOIN drugitems dt ON dt.icode = oi.icode
+WHERE ov.vstdate BETWEEN '2025-12-01' AND '2025-12-01' AND ov.pttype IN (SELECT pttype.pttype FROM pttype
+  WHERE pttype.isuse = 'Y' AND pttype.hipdata_code = 'SSS')
+GROUP BY ov.vn,
+  ov.vstdate,
+  Concat(pa.pname, pa.fname, ' ', pa.lname),
+  (SELECT opdconfig.hospitalcode FROM opdconfig LIMIT 1),
+  pa.hn,
+  pa.cid,
+  ot.ovstist,
+  CASE
+    WHEN ot.ovstist IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END,
+  st.ovstost,
+  CASE
+    WHEN st.ovstost IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END,
+  ov.spclty,
+  d.licenseno,
+  CASE
+    WHEN d.licenseno IS NOT NULL
+    THEN 'Y'
+    ELSE 'N'
+  END,
+  Concat(ov.vn, ':', rc.debt_id)
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='SSS') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

@@ -1,0 +1,52 @@
+OPD
+
+http://localhost:8080/fund_fdh
+เมื่อกดเมนู OPD 
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT ovst.hn AS "HN",
+provis_code,
+CASE WHEN (spclty.provis_code IS NULL OR spclty.provis_code = '') THEN 'N' ELSE 'Y' END AS "CLINIC" ,
+ovst.vstdate,
+CASE WHEN (ovst.vstdate IS NULL ) THEN 'N' ELSE 'Y' END AS "DATEOPD" ,
+ovst.vsttime,
+CASE WHEN (ovst.vsttime IS NULL ) THEN 'N' ELSE 'Y' END AS "TIMEOPD" ,
+ovst.vn,
+CASE WHEN (ovst.vn IS NULL ) THEN 'N' ELSE 'Y' END AS "SEQ" ,
+visit_pttype.request_funds,
+CASE WHEN (visit_pttype.request_funds IS NULL OR visit_pttype.request_funds = '' OR visit_pttype.request_funds = 'N' ) THEN 'N' ELSE 'Y' END AS "UUC" ,
+opdscreen.cc,
+CASE WHEN (opdscreen.cc IS NULL OR opdscreen.cc = '') THEN 'N' ELSE 'Y' END AS "DETAIL" ,
+opdscreen.temperature,
+CASE WHEN (opdscreen.temperature IS NULL ) THEN 'N' ELSE 'Y' END AS "BTEMP" ,
+opdscreen.bps,
+CASE WHEN (opdscreen.bps IS NULL ) THEN 'N' ELSE 'Y' END AS "SBP" ,
+opdscreen.bpd,
+CASE WHEN (opdscreen.bpd IS NULL ) THEN 'N' ELSE 'Y' END AS "DBP" ,
+opdscreen.pulse ,
+CASE WHEN (opdscreen.pulse IS NULL ) THEN 'N' ELSE 'Y' END AS "PR" ,
+opdscreen.rr,
+CASE WHEN (opdscreen.rr IS NULL ) THEN 'N' ELSE 'Y' END AS "RR" ,
+vs.nhso_fee_schedule_list_text,
+CASE WHEN (vs.nhso_fee_schedule_list_text IS NULL ) THEN 'N' ELSE 'Y' END AS "OPTYPE",
+ovst.ovstist,
+CASE WHEN (ovst.ovstist IS NULL ) THEN 'N' ELSE 'Y' END AS "TYPEIN",
+er.er_leave_status_id,
+CASE WHEN (er.er_leave_status_id IS NULL ) THEN 'N' ELSE 'Y' END AS "TYPEOUT"
+ FROM ovst 
+ LEFT JOIN spclty on spclty.spclty = ovst.spclty
+ LEFT JOIN visit_pttype on visit_pttype.vn = ovst.vn 
+ LEFT JOIN opdscreen on opdscreen.vn = ovst.vn
+ LEFT JOIN ovst_seq vs on vs.vn=ovst.vn
+ left JOIN er_regist er on er.vn = ovst.vn
+ WHERE ovst.vstdate between '2025-12-01'  and '2025-12-10'
+and ovst.pttype in(select pttype from pttype where isuse='Y' and hipdata_code in('UCS','WEL'))
+
+
+
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

@@ -1,0 +1,13 @@
+http://localhost:5000/basic_fdh.html  เฉพาะเมนู ผู้วินิจฉัยแพทย์ไทย ให้ใช้คิรี่นี้ในการแสดงข้อมูล
+select h.health_med_doctor_name,h.license_number,
+(case when d.licenseno<>'' then 'Y' else 'N' end)as licenseno_check,
+hh.health_med_curriculum_name,
+l.health_med_license_type_name,
+(case when h.doctor_code<>'' then 'Y' else 'N' end)as doctor_check
+from health_med_doctor h 
+left outer join doctor d on d.code=h.doctor_code
+left outer join health_med_curriculum hh ON h.health_med_curriculum_id = hh.health_med_curriculum_id
+left outer join health_med_license_type l on l.health_med_license_type_id=h.health_med_license_type_id
+where d.provider_type_code in('081','082','084','085')
+and h.active_status='Y';
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด

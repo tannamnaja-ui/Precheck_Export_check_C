@@ -1,0 +1,76 @@
+http://localhost:8080/fund_ssop.html 
+เมื่อกดเมนู OPDx
+การวินิจฉัย
+ให้ใช้คำสั่งนี้ในการคิวรี่ข้อมูล
+
+SELECT
+  ov.hn AS HN,
+  ov.vn AS VN,
+  ov.vstdate AS vsdate,
+  CONCAT(pt.pname, pt.fname, ' ', pt.lname) AS Name,
+    CASE
+    WHEN n.income = '11' THEN 'OP'
+    WHEN n.income = '12' THEN 'EC'
+    WHEN n.income = '07' THEN 'LB'
+    WHEN n.income = '08' THEN 'XR'
+    WHEN n.income = '09' THEN 'IV'
+    WHEN n.income = '06' THEN 'ZZ'
+    ELSE ''
+  END AS class,
+  CASE WHEN n.income IS NOT NULL THEN 'Y' ELSE 'N' END AS check_class,
+  ov.vn AS SvID,  
+    case 
+    when di.diagtype = '1' then '1' 
+    when di.diagtype = '2' then '2' 
+    when di.diagtype = '3' then '3'
+    when di.diagtype = '4' then '4' 
+    when di.diagtype is null or di.diagtype = '' then 'N' 
+    else 'N'
+    end as sl,
+    CASE WHEN di.diagtype IS NOT NULL THEN 'Y' ELSE 'N' END AS check_sl,
+ CASE
+    WHEN dp.icd9 IS NOT NULL AND dp.icd9 <> '' THEN 'IN'
+    WHEN li.tmlt_code IS NOT NULL AND li.tmlt_code <> '' THEN 'LC'
+    WHEN di.icd10 IS NOT NULL AND di.icd10 <> '' THEN 'TT'
+    ELSE ''
+  END AS codeset,
+    CASE
+    WHEN dp.icd9 IS NOT NULL AND dp.icd9 <> '' THEN 'Y'
+    WHEN li.tmlt_code IS NOT NULL AND li.tmlt_code <> '' THEN 'Y'
+    WHEN di.icd10 IS NOT NULL AND di.icd10 <> '' THEN 'Y'
+  ELSE ''
+  END AS check_codeset,
+  di.icd10 AS Code,
+  CASE WHEN di.icd10 IS NOT NULL THEN 'Y' ELSE 'N' END AS check_code,
+  i.name AS Desc 
+
+FROM ovst ov
+LEFT JOIN patient pt ON ov.hn = pt.hn
+INNER JOIN ovstdiag di ON ov.vn = di.vn
+LEFT JOIN icd101 i ON di.icd10 = i.code
+LEFT JOIN doctor_operation dp ON dp.vn = di.vn
+LEFT JOIN opitemrece op ON op.vn = ov.vn
+LEFT JOIN nondrugitems n ON n.icode = op.icode
+LEFT JOIN lab_items li ON li.icode = n.icode
+
+WHERE ov.vstdate between '2025-10-01'  and '2025-12-15'
+and ov.pttype in(select pttype from pttype where isuse='Y' and hipdata_code='SSS' )  
+GROUP BY
+  ov.hn,
+  ov.vn,
+  ov.vstdate,
+  pt.pname,
+  pt.fname,
+  pt.lname,
+  n.income,
+  di.diagtype,
+  dp.icd9,
+  li.tmlt_code,
+  di.icd10,
+  i.name
+
+ '2025-12-01'  and '2025-12-10' วันที่ คือวันที่ ที่เลือกที่หน้าจอ
+and pttype in(select pttype from pttype where isuse='Y' and hipdata_code='OFC') คือสิทธิที่เลือกจากตัวเลือกเท่านั้น
+ถ้าไม่มีการเลือกสิทธิ คือเลือกทุกสิทธิ
+
+ถ้า ✓ เป็น N ให้คอลั่มข้างหน้า เป็นสีแดงสด
