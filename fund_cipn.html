@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ข้าราชการผู้ป่วยใน (CIPN)</title>
+    <title>ข้าราชการผู้ป่วยนอก (CSOP)</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         * {
@@ -67,13 +67,13 @@
         }
 
         .file-menu-item-title {
-            font-size: 14px;
+            font-size: 18px;
             font-weight: 600;
             margin-bottom: 4px;
         }
 
         .file-menu-item-code {
-            font-size: 12px;
+            font-size: 15px;
             opacity: 0.8;
         }
 
@@ -273,7 +273,7 @@
     <div class="full-width-container">
         <!-- Top Bar -->
         <div class="top-bar">
-            <h1>🏥 ข้าราชการผู้ป่วยใน (CIPN)</h1>
+            <h1>💼 ข้าราชการผู้ป่วยนอก (CSOP)</h1>
             <button class="btn-home" onclick="window.location.href='index_fund.html'">← กลับหน้ากองทุน</button>
         </div>
 
@@ -283,28 +283,32 @@
             <div class="left-sidebar">
                 <div class="sidebar-title">📁 แฟ้มกองทุน</div>
                 <div class="file-menu-item active" data-file="all">
-                    <div class="file-menu-item-title">รายการที่ต้องแก้ไขทั้งหมด</div>
+                    <div class="file-menu-item-title">แฟ้มทั้งหมด</div>
                     <div class="file-menu-item-code">All Files</div>
                 </div>
-                <div class="file-menu-item" data-file="ipadt">
-                    <div class="file-menu-item-title">IPADT</div>
-                    <div class="file-menu-item-code">ข้อมูลผู้ป่วยใน</div>
-                </div>
-                <div class="file-menu-item" data-file="ipdx">
-                    <div class="file-menu-item-title">IPDX</div>
-                    <div class="file-menu-item-code">การวินิจฉัย</div>
-                </div>
-                <div class="file-menu-item" data-file="ipop">
-                    <div class="file-menu-item-title">IPOp</div>
-                    <div class="file-menu-item-code">หัตถการ</div>
-                </div>
-                <div class="file-menu-item" data-file="invoices">
-                    <div class="file-menu-item-title">Invoices</div>
-                    <div class="file-menu-item-code">ใบแจ้งหนี้</div>
+                <div class="file-menu-item" data-file="billtran">
+                    <div class="file-menu-item-title">Billtran</div>
+                    <div class="file-menu-item-code">บิลทั่วไป</div>
                 </div>
                 <div class="file-menu-item" data-file="billitems">
                     <div class="file-menu-item-title">BillItems</div>
-                    <div class="file-menu-item-code">รายการค่าใช้จ่าย</div>
+                    <div class="file-menu-item-code">รายการในบิล</div>
+                </div>
+                <div class="file-menu-item" data-file="dispensing">
+                    <div class="file-menu-item-title">Dispensing</div>
+                    <div class="file-menu-item-code">จ่ายยา</div>
+                </div>
+                <div class="file-menu-item" data-file="dispenseditem">
+                    <div class="file-menu-item-title">DispensedItem</div>
+                    <div class="file-menu-item-code">รายการยาที่จ่าย</div>
+                </div>
+                <div class="file-menu-item" data-file="opdx">
+                    <div class="file-menu-item-title">OPDx</div>
+                    <div class="file-menu-item-code">การวินิจฉัย</div>
+                </div>
+                <div class="file-menu-item" data-file="opservice">
+                    <div class="file-menu-item-title">OPService</div>
+                    <div class="file-menu-item-code">บริการผู้ป่วยนอก</div>
                 </div>
             </div>
 
@@ -323,17 +327,23 @@
                 </div>
                 <div class="filter-group">
                     <label for="pttype-dropdown">สิทธิการรักษา:</label>
-                    <div style="position: relative;">
-                        <button type="button" id="pttype-dropdown" style="width:100%; padding:10px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; background:white; text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                            <span id="pttype-selected-text">เลือกสิทธิการรักษา</span><span>▼</span>
-                        </button>
-                        <div id="pttype-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; width:100%; max-height:300px; overflow-y:auto; background:white; border:2px solid #e3f2fd; border-radius:8px; margin-top:5px; z-index:1000; box-shadow:0 4px 16px rgba(66,165,245,0.15);"></div>
+                    <div style="display: flex; gap: 6px; align-items: flex-start;">
+                        <div style="position: relative; flex: 1;">
+                            <button type="button" id="pttype-dropdown" style="width: 100%; padding: 10px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 14px; background: white; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                                <span id="pttype-selected-text">เลือกสิทธิการรักษา</span>
+                                <span>▼</span>
+                            </button>
+                            <div id="pttype-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #e3f2fd; border-radius: 8px; margin-top: 5px; z-index: 1000; box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);">
+                                <!-- Checkboxes will be loaded here -->
+                            </div>
+                        </div>
+                        <button type="button" id="save-pttype-btn" onclick="savePttypeSelection()" title="จำค่าสิทธิที่เลือกไว้" style="padding: 10px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 13px; background: white; cursor: pointer; white-space: nowrap; color: #1565c0; font-weight: 600;">💾 จำค่า</button>
                     </div>
                 </div>
-                <div class="filter-buttons" style="display:flex; flex-direction:column; gap:8px; align-items:flex-start;">
+                <div class="filter-buttons" style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
                     <button class="btn-search" onclick="searchData()">🔍 ค้นหา</button>
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; color:#c62828; font-weight:600; white-space:nowrap;">
-                        <input type="checkbox" id="show-errors-only" onchange="rerenderCurrentMenu()" style="width:16px; height:16px; cursor:pointer; accent-color:#c62828;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #c62828; font-weight: 600; white-space: nowrap;">
+                        <input type="checkbox" id="show-errors-only" onchange="rerenderCurrentMenu()" style="width: 16px; height: 16px; cursor: pointer; accent-color: #c62828;">
                         แสดงเฉพาะที่ต้องแก้ไข
                     </label>
                 </div>
@@ -344,7 +354,7 @@
         <div class="dashboard-stats" id="dashboard-stats">
             <div class="stat-card total">
                 <div class="stat-icon">👥</div>
-                <div class="stat-label">จำนวนผู้รับบริการทั้งหมด</div>
+                <div class="stat-label">จำนวนรายการทั้งหมด</div>
                 <div class="stat-value" id="stat-total">-</div>
             </div>
 
@@ -373,6 +383,7 @@
     </div>
 
     <script>
+        // Dynamic API base URL - reads apiUrl saved in localStorage by connection form
         window.API_BASE = (() => {
             try {
                 const c = JSON.parse(localStorage.getItem('dbConnection'));
@@ -382,309 +393,2063 @@
     </script>
     <script src="script_fund_detail.js"></script>
     <script>
-        window.fundType = 'cipn';
+        // Set fund type and current file view
+        window.fundType = 'csop';
         window.hipdataCode = 'OFC';
         window.currentFileView = 'all';
+
         const API_BASE = window.API_BASE;
 
+        const PTTYPE_SAVE_KEY = 'fund_csop_saved_pttypes';
+
+        function savePttypeSelection() {
+            const selected = getSelectedPttypes();
+            localStorage.setItem(PTTYPE_SAVE_KEY, JSON.stringify(selected));
+            const btn = document.getElementById('save-pttype-btn');
+            const orig = btn.textContent;
+            btn.textContent = '✅ จำแล้ว';
+            btn.style.background = '#e8f5e9';
+            btn.style.borderColor = '#81c784';
+            btn.style.color = '#2e7d32';
+            setTimeout(() => {
+                btn.textContent = orig;
+                btn.style.background = 'white';
+                btn.style.borderColor = '#e3f2fd';
+                btn.style.color = '#1565c0';
+            }, 1500);
+        }
+
+        // Load pttype checkboxes on page load
         document.addEventListener('DOMContentLoaded', async function() {
             await loadPttypeCheckboxes();
             setupDropdown();
             setupFileMenu();
         });
 
+        // Setup dropdown toggle
         function setupDropdown() {
-            const btn = document.getElementById('pttype-dropdown');
-            const menu = document.getElementById('pttype-dropdown-menu');
-            btn.addEventListener('click', e => { e.stopPropagation(); menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; });
-            document.addEventListener('click', e => { if (!btn.contains(e.target) && !menu.contains(e.target)) menu.style.display = 'none'; });
+            const dropdownButton = document.getElementById('pttype-dropdown');
+            const dropdownMenu = document.getElementById('pttype-dropdown-menu');
+
+            // Toggle dropdown on button click
+            dropdownButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.style.display = dropdownMenu.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdownButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    dropdownMenu.style.display = 'none';
+                }
+            });
         }
 
+        // Update selected text based on checked checkboxes
         function updateSelectedText() {
-            const checked = document.querySelectorAll('#pttype-dropdown-menu input[type="checkbox"]:checked');
-            const txt = document.getElementById('pttype-selected-text');
-            txt.textContent = checked.length === 0 ? 'เลือกสิทธิการรักษา' : checked.length === 1 ? checked[0].nextElementSibling.textContent : `เลือกแล้ว ${checked.length} รายการ`;
+            const checkboxes = document.querySelectorAll('#pttype-dropdown-menu input[type="checkbox"]:checked');
+            const selectedText = document.getElementById('pttype-selected-text');
+
+            if (checkboxes.length === 0) {
+                selectedText.textContent = 'เลือกสิทธิการรักษา';
+            } else if (checkboxes.length === 1) {
+                selectedText.textContent = checkboxes[0].nextElementSibling.textContent;
+            } else {
+                selectedText.textContent = `เลือกแล้ว ${checkboxes.length} รายการ`;
+            }
         }
 
+        // Function to load pttype checkboxes from database
         async function loadPttypeCheckboxes() {
             try {
                 const config = getDatabaseConfig();
-                if (!config) return;
-                const res = await fetch(`${API_BASE}/api/get-pttype-list`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ host: config.host, port: config.port, database: config.database, user: config.user, password: config.password, type: config.type, hipdata_code: 'OFC' })
+                if (!config) {
+                    console.error('No database configuration found');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/get-pttype-list`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        host: config.host,
+                        port: config.port,
+                        database: config.database,
+                        user: config.user,
+                        password: config.password,
+                        type: config.type,
+                        hipdata_code: 'OFC'
+                    })
                 });
-                const result = await res.json();
+
+                const result = await response.json();
+
                 if (result.success && result.data) {
                     const container = document.getElementById('pttype-dropdown-menu');
                     container.innerHTML = '';
-                    result.data.forEach(pt => {
-                        const wrap = document.createElement('div');
-                        wrap.style.cssText = 'padding:10px 15px; display:flex; align-items:center; gap:10px; cursor:pointer;';
-                        wrap.addEventListener('mouseenter', function(){ this.style.background='#f5f9ff'; });
-                        wrap.addEventListener('mouseleave', function(){ this.style.background='white'; });
-                        const cb = document.createElement('input');
-                        cb.type = 'checkbox'; cb.id = `pttype-${pt.pttype}`; cb.value = pt.pttype; cb.name = 'pttype';
-                        cb.style.cssText = 'cursor:pointer; width:16px; height:16px;';
-                        cb.addEventListener('change', updateSelectedText);
-                        const lbl = document.createElement('label');
-                        lbl.htmlFor = `pttype-${pt.pttype}`; lbl.textContent = pt.name;
-                        lbl.style.cssText = 'cursor:pointer; font-size:14px; color:#546e7a; flex:1;';
-                        wrap.appendChild(cb); wrap.appendChild(lbl);
-                        wrap.addEventListener('click', e => { if (e.target !== cb) { cb.checked = !cb.checked; updateSelectedText(); } });
-                        container.appendChild(wrap);
+
+                    const savedPttypes = (() => {
+                        try { return JSON.parse(localStorage.getItem(PTTYPE_SAVE_KEY)) || []; }
+                        catch(e) { return []; }
+                    })();
+
+                    result.data.forEach(pttype => {
+                        const checkboxWrapper = document.createElement('div');
+                        checkboxWrapper.style.cssText = 'padding: 10px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s;';
+                        checkboxWrapper.addEventListener('mouseenter', function() {
+                            this.style.background = '#f5f9ff';
+                        });
+                        checkboxWrapper.addEventListener('mouseleave', function() {
+                            this.style.background = 'white';
+                        });
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `pttype-${pttype.pttype}`;
+                        checkbox.value = pttype.pttype;
+                        checkbox.name = 'pttype';
+                        checkbox.style.cssText = 'cursor: pointer; width: 16px; height: 16px;';
+                        checkbox.checked = savedPttypes.includes(pttype.pttype);
+                        checkbox.addEventListener('change', updateSelectedText);
+
+                        const label = document.createElement('label');
+                        label.htmlFor = `pttype-${pttype.pttype}`;
+                        label.textContent = pttype.name;
+                        label.style.cssText = 'cursor: pointer; font-size: 14px; color: #546e7a; flex: 1;';
+
+                        checkboxWrapper.appendChild(checkbox);
+                        checkboxWrapper.appendChild(label);
+
+                        // Allow clicking on wrapper to toggle checkbox
+                        checkboxWrapper.addEventListener('click', function(e) {
+                            if (e.target !== checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                                updateSelectedText();
+                            }
+                        });
+
+                        container.appendChild(checkboxWrapper);
                     });
+
+                    updateSelectedText();
+                } else {
+                    console.error('Failed to load pttype list:', result.error);
                 }
-            } catch(e) { console.error('loadPttypeCheckboxes error:', e); }
+            } catch (error) {
+                console.error('Error loading pttype checkboxes:', error);
+            }
         }
 
-        function getSelectedPttypes() {
-            return Array.from(document.querySelectorAll('#pttype-dropdown-menu input[type="checkbox"]:checked')).map(cb => cb.value);
+        // Setup file menu click handlers
+        function showBilltranHeaders() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📊 Billtran - บิลทั่วไป (0 รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPage(this.value)">
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HMAIN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">AUTHCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">MEMBERNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BILLNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PAID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">AMOUNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="21" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+
+        function showBillitemsHeaders() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📊 BillItems - รายการในบิล (0 รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageBI(this.value)">
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BILLMUAD</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ICODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อค่าใช้จ่าย</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">QTY</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UP</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CHARGEAMT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMUP</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMOUNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVREFID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCAT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENABLE_SKS_OPD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="24" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+
+        function showOpdxHeaders() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">🩺 OPDx - การวินิจฉัย (0 รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOX(this.value)">
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">class</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SvID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">sl</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">codeset</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Code</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Desc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="15" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
+                        </tbody>
+                    </table>
+                </div>`;
         }
 
         function setupFileMenu() {
-            document.querySelectorAll('.file-menu-item').forEach(item => {
+            const fileMenuItems = document.querySelectorAll('.file-menu-item');
+            fileMenuItems.forEach(item => {
                 item.addEventListener('click', function() {
-                    document.querySelectorAll('.file-menu-item').forEach(i => i.classList.remove('active'));
+                    // Remove active class from all items
+                    fileMenuItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to clicked item
                     this.classList.add('active');
+
+                    // Set current file view
                     window.currentFileView = this.getAttribute('data-file');
-                    const df = document.getElementById('dateFrom').value;
-                    const dt = document.getElementById('dateTo').value;
-                    if (df && dt) searchData();
+
+                    // Auto-search when clicking menu
+                    const dateFrom = document.getElementById('dateFrom').value;
+                    const dateTo = document.getElementById('dateTo').value;
+                    const ft = this.getAttribute('data-file');
+
+                    if (dateFrom && dateTo) {
+                        searchData();
+                    } else if (ft === 'billtran') {
+                        showBilltranHeaders();
+                    } else if (ft === 'billitems') {
+                        showBillitemsHeaders();
+                    } else if (ft === 'opdx') {
+                        showOpdxHeaders();
+                    }
                 });
             });
         }
 
+        // Override searchData function to handle different file types
+        const originalSearchData = window.searchData;
         window.searchData = async function() {
-            const ft = window.currentFileView || 'all';
-            if (ft === 'ipadt')     await searchIpnFile('ipadt', 'get-ipn-ipadt', 'IPADT - ข้อมูลผู้ป่วยใน');
-            else if (ft === 'ipdx')     await searchIpnFile('ipdx', 'get-ipn-ipdx', 'IPDX - การวินิจฉัย');
-            else if (ft === 'ipop')     await searchIpnFile('ipop', 'get-ipn-ipop', 'IPOp - หัตถการ');
-            else if (ft === 'invoices') await searchIpnFile('invoices', 'get-ipn-invoices', 'Invoices - ใบแจ้งหนี้');
-            else if (ft === 'billitems')await searchIpnFile('billitems', 'get-ipn-billitems', 'BillItems - รายการค่าใช้จ่าย');
-            else if (ft === 'all')      await searchAllErrors();
+            const fileType = window.currentFileView || 'all';
+
+            if (fileType === 'billtran') {
+                await searchBilltran();
+            } else if (fileType === 'billitems') {
+                await searchBillitems();
+            } else if (fileType === 'opservice') {
+                await searchOpservice();
+            } else if (fileType === 'dispenseditem') {
+                await searchDispenseditem();
+            } else if (fileType === 'dispensing') {
+                await searchDispensing();
+            } else if (fileType === 'opdx') {
+                await searchOpdx();
+            } else if (fileType === 'all') {
+                await originalSearchData();
+            } else {
+                // Other file types (coming soon)
+                const contentArea = document.getElementById('content-area');
+                contentArea.innerHTML = `
+                    <div class="welcome-message">
+                        <h2>🚧 กำลังพัฒนา</h2>
+                        <p>ฟีเจอร์ ${fileType} จะพร้อมใช้งานเร็วๆ นี้</p>
+                    </div>
+                `;
+            }
         };
 
-        const ipnData = {};
-        const ipnPage = {};
-        const ipnRpp  = {};
-
-        async function searchIpnFile(ft, endpoint, label) {
+        // Search Billtran data
+        async function searchBilltran() {
             const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo   = document.getElementById('dateTo').value;
-            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const dateTo = document.getElementById('dateTo').value;
+
+            if (!dateFrom || !dateTo) {
+                alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด');
+                return;
+            }
+
+            const fundType = window.fundType || 'ssop';
+            const hipdataCode = window.hipdataCode || 'OFC';
             const selectedPttypes = getSelectedPttypes();
-            const config = getDatabaseConfig();
-            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
-            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>กำลังโหลด ${label}...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            console.log(`🔍 Searching Billtran for ${fundType} from ${dateFrom} to ${dateTo}`);
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div class="welcome-message">
+                    <h2>กำลังโหลดข้อมูล Billtran...</h2>
+                    <p>กรุณารอสักครู่</p>
+                </div>
+            `;
+
             try {
-                const res = await fetch(`${API_BASE}/api/${endpoint}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ host: config.host, port: config.port, database: config.database, user: config.user, password: config.password, type: config.type, dateFrom, dateTo, selectedPttypes, hipdata_code: window.hipdataCode })
+                const config = getDatabaseConfig();
+                if (!config) {
+                    alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/get-billtran`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        host: config.host,
+                        port: config.port,
+                        database: config.database,
+                        user: config.user,
+                        password: config.password,
+                        type: config.type,
+                        dateFrom: dateFrom,
+                        dateTo: dateTo,
+                        selectedPttypes: selectedPttypes,
+                        hipdata_code: hipdataCode
+                    })
                 });
-                const result = await res.json();
+
+                const result = await response.json();
+
                 if (result.success && result.data) {
-                    ipnData[ft] = result.data;
-                    ipnPage[ft] = 1;
-                    ipnRpp[ft]  = ipnRpp[ft] || 100;
-                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
-                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
-                    renderIpnTable(ft, label);
+                    const checkFields = ['check_invno','check_vercode'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    displayBilltranTable(result.data);
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
                 }
-            } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+            } catch (error) {
+                console.error('Error fetching Billtran:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
         }
 
-        function renderIpnTable(ft, label) {
-            const data = ipnData[ft] || [];
+        // Pagination state
+        let currentPage = 1;
+        let rowsPerPage = 20;
+        let allBilltranData = [];
+        let billtranEditVn = null;
+
+        // Display Billtran table
+        function displayBilltranTable(data) {
             if (data.length === 0) {
-                document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>ไม่พบข้อมูล</h2></div>`;
+                showBilltranHeaders();
                 return;
             }
-            const showErr = document.getElementById('show-errors-only')?.checked;
-            const hasRed  = r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N');
-            const filtered = showErr ? data.filter(hasRed) : data;
-            const rpp = ipnRpp[ft] || 100;
-            const pg  = ipnPage[ft] || 1;
-            const totalPages = Math.ceil(filtered.length / rpp);
-            const start = (pg - 1) * rpp;
-            const pageData = filtered.slice(start, start + rpp);
-            const cols = Object.keys(pageData[0] || {});
-
-            const cell = (v, chk) => `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${chk==='N'?'background:#f44336;color:white;':''}">${v ?? '-'}</td>`;
-            const checkCell = chk => `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${chk==='Y'?'#4caf50':chk==='N'?'#f44336':'#546e7a'}; font-weight:bold;">${chk||'-'}</span></td>`;
-
-            let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                <h3 style="color:#1565c0; margin:0;">📋 ${label} (${filtered.length.toLocaleString()} รายการ)</h3>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">📥 Export Excel</button>
-                    <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="ipnRpp['${ft}']=parseInt(this.value); ipnPage['${ft}']=1; renderIpnTable('${ft}','${label}')">
-                        <option value="100" ${rpp===100?'selected':''}>100</option>
-                        <option value="200" ${rpp===200?'selected':''}>200</option>
-                        <option value="500" ${rpp===500?'selected':''}>500</option>
-                        <option value="1000" ${rpp===1000?'selected':''}>1000</option>
-                    </select>
-                    <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
-                </div></div>
-            <div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;">
-            <thead><tr style="background:linear-gradient(135deg,#42a5f5,#2196f3); color:white;">
-            <th style="padding:10px 8px; border:1px solid #e3f2fd;">ลำดับ</th>`;
-            cols.forEach(c => {
-                const lbl2 = c.startsWith('check_') ? '✓' : c.toUpperCase();
-                html += `<th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap; ${c.startsWith('check_')?'text-align:center;':''}">${lbl2}</th>`;
-            });
-            html += `</tr></thead><tbody>`;
-            pageData.forEach((row, idx) => {
-                const bg = (start + idx) % 2 === 0 ? '#f5f9ff' : 'white';
-                html += `<tr style="background:${bg};"><td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${start + idx + 1}</td>`;
-                cols.forEach((c, ci) => {
-                    if (c.startsWith('check_')) html += checkCell(row[c]);
-                    else {
-                        const next = cols[ci+1];
-                        html += cell(row[c], next && next.startsWith('check_') ? row[next] : null);
-                    }
-                });
-                html += `</tr>`;
-            });
-            html += `</tbody></table></div>`;
-            // Pagination
-            if (totalPages > 1) {
-                const btnS = (active) => `padding:6px 12px; border:${active?'2px solid #1976d2':'1px solid #ddd'}; border-radius:6px; background:${active?'#e3f2fd':'white'}; cursor:pointer; font-weight:${active?'700':'400'};`;
-                html += `<div style="display:flex; justify-content:center; gap:6px; margin-top:16px; flex-wrap:wrap;">`;
-                html += `<button onclick="ipnPage['${ft}']=1; renderIpnTable('${ft}','${label}')" ${pg===1?'disabled':''} style="${btnS(false)}">«</button>`;
-                html += `<button onclick="ipnPage['${ft}']=${pg-1}; renderIpnTable('${ft}','${label}')" ${pg===1?'disabled':''} style="${btnS(false)}">‹</button>`;
-                const sp = Math.max(1,pg-2), ep = Math.min(totalPages,pg+2);
-                for (let p=sp; p<=ep; p++) html += `<button onclick="ipnPage['${ft}']=${p}; renderIpnTable('${ft}','${label}')" style="${btnS(p===pg)}">${p}</button>`;
-                html += `<button onclick="ipnPage['${ft}']=${pg+1}; renderIpnTable('${ft}','${label}')" ${pg===totalPages?'disabled':''} style="${btnS(false)}">›</button>`;
-                html += `<button onclick="ipnPage['${ft}']=${totalPages}; renderIpnTable('${ft}','${label}')" ${pg===totalPages?'disabled':''} style="${btnS(false)}">»</button>`;
-                html += `<span style="color:#546e7a; font-size:14px; margin-left:8px;">หน้า ${pg}/${totalPages} | ${start+1}-${Math.min(start+rpp,filtered.length)} จาก ${filtered.length.toLocaleString()}</span></div>`;
-            } else {
-                html += `<div style="text-align:center; color:#546e7a; font-size:14px; margin-top:12px;">แสดง ${start+1}-${Math.min(start+rpp,filtered.length)} จาก ${filtered.length.toLocaleString()} รายการ</div>`;
-            }
-            document.getElementById('content-area').innerHTML = html;
+            allBilltranData = data;
+            currentPage = 1;
+            renderBilltranTable();
         }
 
-        const IPN_ALL_KEYS = ['ipadt','ipdx','ipop','invoices','billitems'];
-        const IPN_ENDPOINTS = { ipadt:'get-ipn-ipadt', ipdx:'get-ipn-ipdx', ipop:'get-ipn-ipop', invoices:'get-ipn-invoices', billitems:'get-ipn-billitems' };
-        const IPN_LABELS    = { ipadt:'IPADT - ข้อมูลผู้ป่วยใน', ipdx:'IPDX - การวินิจฉัย', ipop:'IPOp - หัตถการ', invoices:'Invoices - ใบแจ้งหนี้', billitems:'BillItems - รายการค่าใช้จ่าย' };
+        // Change rows per page
+        function changeRowsPerPage(value) {
+            rowsPerPage = parseInt(value);
+            currentPage = 1;
+            renderBilltranTable();
+        }
 
-        async function searchAllErrors() {
+        // Change page
+        function goToPage(page) {
+            const totalPages = Math.ceil(allBilltranData.length / rowsPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderBilltranTable();
+            // Scroll to top
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Render table with pagination
+        function renderBilltranTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRedCell = (row) => [row.check_invno, row.check_vercode].some(v => v === 'N');
+            const filteredData = showErrorsOnly ? allBilltranData.filter(hasRedCell) : allBilltranData;
+            const effectiveRowsPerPage = rowsPerPage;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPage - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            let tableHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h3 style="color: #1565c0; margin: 0;">📊 Billtran - บิลทั่วไป (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBilltranData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color: #546e7a; font-size: 14px; font-weight: 600;">แสดง:</label>
+                        <select id="rows-per-page" style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 14px; cursor: pointer;" onchange="changeRowsPerPage(this.value)">
+                            <option value="20" ${rowsPerPage === 20 ? 'selected' : ''}>20</option>
+                            <option value="50" ${rowsPerPage === 50 ? 'selected' : ''}>50</option>
+                            <option value="100" ${rowsPerPage === 100 ? 'selected' : ''}>100</option>
+                            <option value="200" ${rowsPerPage === 200 ? 'selected' : ''}>200</option>
+                            <option value="500" ${rowsPerPage === 500 ? 'selected' : ''}>500</option>
+                            <option value="1000" ${rowsPerPage === 1000 ? 'selected' : ''}>1000</option>
+                        </select>
+                        <span style="color: #546e7a; font-size: 14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%); color: white;">
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">ลำดับ</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">แก้ไข</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">DEBT_ID</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">วันที่</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">VN</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">AUTHCODE</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">DTTRAN</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">HCODE</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">INVNO</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">BILLNO</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">HN</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">MEMBERNO</th>
+                                <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">AMOUNT</th>
+                                <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">PAID</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">VERCODE</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">✓</th>
+                                <th style="padding: 10px 8px; text-align: center; border: 1px solid #e3f2fd; white-space: nowrap;">TFLAG</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">PID</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">HMAIN</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">PAYPLAN</th>
+                                <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">CLAIMAMT</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">OTHERPAYPLAN</th>
+                                <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">OTHERPAY</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const bgColor = index % 2 === 0 ? '#f5f9ff' : 'white';
+                const actualIndex = startIndex + index + 1;
+
+                // Helper function to get cell background color
+                const getCellBg = (checkValue) => {
+                    return checkValue === 'N' ? '#f44336' : bgColor;
+                };
+                const getCellColor = (checkValue) => {
+                    return checkValue === 'N' ? 'color: white;' : '';
+                };
+
+                const isEditing = billtranEditVn !== null && String(billtranEditVn) === String(row.debt_id);
+                const vercodeBg = getCellBg(row.check_vercode);
+
+                tableHTML += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">${actualIndex}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; white-space: nowrap;">
+                            ${isEditing
+                                ? `<button onclick="saveBilltranVercode('${row.debt_id}')" style="padding:4px 10px;background:linear-gradient(135deg,#2e7d32,#43a047);color:white;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;">💾</button><button onclick="billtranEditVn=null;renderBilltranTable()" style="padding:4px 8px;background:#9e9e9e;color:white;border:none;border-radius:5px;font-size:12px;cursor:pointer;">✕</button>`
+                                : row.check_invno === 'N'
+                                    ? `<button onclick="issueInvoice('${row.vn}')" style="padding:4px 10px;background:linear-gradient(135deg,#e65100,#ff6d00);color:white;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📄 ออกใบแจ้งหนี้</button>`
+                                    : `<button onclick="billtranEditVn='${row.debt_id}';renderBilltranTable()" style="padding:4px 10px;background:#1565c0;color:white;border:none;border-radius:5px;font-size:12px;cursor:pointer;">แก้ไข ✏️</button>`
+                            }
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.debt_id || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${fmtDate(row.vstdate)}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.vn || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.authcode || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.dttran || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.hcode || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; background: ${getCellBg(row.check_invno)}; ${getCellColor(row.check_invno)} white-space: nowrap;">${row.invno || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_invno === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_invno || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.billno || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.hn || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.memberno || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.amount ? parseFloat(row.amount).toFixed(2) : '0.00'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.paid ? parseFloat(row.paid).toFixed(2) : '0.00'}</td>
+                        <td style="padding: 6px 8px; border: 1px solid #e3f2fd; background: ${vercodeBg}; white-space: nowrap;">
+                            ${isEditing
+                                ? `<input id="bt-edit-vercode-${row.debt_id}" value="${row.vercode || ''}" style="padding:4px 8px;border:2px solid #f9a825;border-radius:5px;font-size:13px;width:140px;background:${vercodeBg === bgColor ? 'white' : '#fff3f3'};">`
+                                : `<span style="${getCellColor(row.check_vercode)}">${row.vercode || '-'}</span>`
+                            }
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">
+                            <span style="color: ${row.check_vercode === 'Y' ? '#4caf50' : '#f44336'}; font-weight: bold;">${row.check_vercode || '-'}</span>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">${row.tflag || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.pid || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.name || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.hmain || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.payplan || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.claimamt ? parseFloat(row.claimamt).toFixed(2) : '0.00'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd;">${row.otherpayplan || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd;">${row.otherpay || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 15px;">
+                    <div style="color: #546e7a; font-size: 14px;">
+                        แสดง ${startIndex + 1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ
+                    </div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            `;
+
+            // Generate pagination buttons
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            // Previous button
+            tableHTML += `
+                <button onclick="goToPage(${currentPage - 1})"
+                    style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${currentPage === 1 ? '#f5f5f5' : 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)'}; color: ${currentPage === 1 ? '#ccc' : 'white'}; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'}; font-weight: 600; transition: all 0.3s;"
+                    ${currentPage === 1 ? 'disabled' : ''}>
+                    ← ก่อนหน้า
+                </button>
+            `;
+
+            // First page
+            if (startPage > 1) {
+                tableHTML += `
+                    <button onclick="goToPage(1)"
+                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: white; color: #1565c0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        1
+                    </button>
+                `;
+                if (startPage > 2) {
+                    tableHTML += `<span style="padding: 8px; color: #546e7a;">...</span>`;
+                }
+            }
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentPage;
+                tableHTML += `
+                    <button onclick="goToPage(${i})"
+                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${isActive ? 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)' : 'white'}; color: ${isActive ? 'white' : '#1565c0'}; cursor: pointer; font-weight: 600; transition: all 0.3s; ${isActive ? 'box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);' : ''}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            // Last page
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    tableHTML += `<span style="padding: 8px; color: #546e7a;">...</span>`;
+                }
+                tableHTML += `
+                    <button onclick="goToPage(${totalPages})"
+                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: white; color: #1565c0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        ${totalPages}
+                    </button>
+                `;
+            }
+
+            // Next button
+            tableHTML += `
+                <button onclick="goToPage(${currentPage + 1})"
+                    style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${currentPage === totalPages ? '#f5f5f5' : 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)'}; color: ${currentPage === totalPages ? '#ccc' : 'white'}; cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'}; font-weight: 600; transition: all 0.3s;"
+                    ${currentPage === totalPages ? 'disabled' : ''}>
+                    ถัดไป →
+                </button>
+            `;
+
+            tableHTML += `
+                    </div>
+                </div>
+            `;
+
+            contentArea.innerHTML = tableHTML;
+        }
+        // ==================== DispensedItem ====================
+
+        let currentPageDT = 1;
+        let rowsPerPageDT = 20;
+        let allDispenseditemData = [];
+
+        async function searchDispenseditem() {
             const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo   = document.getElementById('dateTo').value;
+            const dateTo = document.getElementById('dateTo').value;
             if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
-            const selectedPttypes = getSelectedPttypes();
-            const config = getDatabaseConfig();
-            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
-            document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังดึงข้อมูลทุกแฟ้ม...</h2><p>กรุณารอสักครู่</p></div>`;
-            const body = { host: config.host, port: config.port, database: config.database, user: config.user, password: config.password, type: config.type, dateFrom, dateTo, selectedPttypes, hipdata_code: window.hipdataCode };
-            await Promise.all(IPN_ALL_KEYS.map(async ft => {
-                try {
-                    const res = await fetch(`${API_BASE}/api/${IPN_ENDPOINTS[ft]}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-                    const result = await res.json();
-                    if (result.success && result.data) ipnData[ft] = result.data;
-                } catch(e) { console.error(`Error fetching ${ft}:`, e); }
-            }));
-            const allErrors = [];
-            IPN_ALL_KEYS.forEach(ft => {
-                (ipnData[ft] || []).forEach(row => {
-                    if (Object.keys(row).some(k => k.startsWith('check_') && row[k] === 'N'))
-                        allErrors.push({ ...row, _file: ft.toUpperCase() });
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล DispensedItem...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-csop-dispenseditem`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: getSelectedPttypes(),
+                        hipdata_code: window.hipdataCode || 'OFC'
+                    })
                 });
-            });
-            if (allErrors.length === 0) {
-                document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>✅ ไม่มีรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกแฟ้มผ่านการตรวจสอบ</p></div>`;
-                updateStatistics(0, 0, 0); return;
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_prdcat','check_drgid','check_sigcode',
+                        'check_sigtext','check_quantity','check_unitprice','check_chargeamt','check_reimbprice'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allDispenseditemData = result.data;
+                    currentPageDT = 1;
+                    renderDispenseditemTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
             }
-            allErrors.sort((a,b) => String(a.hn||'').localeCompare(String(b.hn||'')));
-            updateStatistics(allErrors.length, 0, allErrors.length);
-            // Render all errors table
-            const rpp = 100;
-            const pg  = 1;
-            ipnData['all'] = allErrors; ipnPage['all'] = 1; ipnRpp['all'] = 100;
-            renderAllErrorsTable();
         }
 
-        function renderAllErrorsTable() {
-            const data = ipnData['all'] || [];
-            if (!data.length) return;
-            const rpp = ipnRpp['all'] || 100;
-            const pg  = ipnPage['all'] || 1;
-            const totalPages = Math.ceil(data.length / rpp);
-            const start = (pg-1)*rpp;
-            const pageData = data.slice(start, start+rpp);
-            const getHN = r => r.hn || r.HN || '-';
-            const getAN = r => r.an || r.AN || '-';
-            const getProblems = r => Object.keys(r).filter(k => k.startsWith('check_') && r[k]==='N').map(k => k.replace('check_','')).join(', ');
-            const getName = r => r.ptname || ((r.pname||'')+(r.fname||'')+' '+(r.lname||'')) || '-';
+        function changeRowsPerPageDT(value) { rowsPerPageDT = parseInt(value); currentPageDT = 1; renderDispenseditemTable(); }
 
-            let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                <h3 style="color:#c62828; margin:0;">🔴 รายการที่ต้องแก้ไขทั้งหมด (${data.length.toLocaleString()} รายการ)</h3>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">📥 Export Excel</button>
-                    <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="ipnRpp['all']=parseInt(this.value); ipnPage['all']=1; renderAllErrorsTable()">
-                        <option value="100" ${rpp===100?'selected':''}>100</option>
-                        <option value="200" ${rpp===200?'selected':''}>200</option>
-                        <option value="500" ${rpp===500?'selected':''}>500</option>
-                        <option value="1000" ${rpp===1000?'selected':''}>1000</option>
-                    </select>
-                    <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
-                </div></div>
-            <div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;">
-            <thead><tr style="background:linear-gradient(135deg,#c62828,#b71c1c); color:white;">
-                <th style="padding:10px 8px; border:1px solid #ef9a9a;">#</th>
-                <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">แฟ้ม</th>
-                <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">HN</th>
-                <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">AN</th>
-                <th style="padding:10px 8px; border:1px solid #ef9a9a;">ชื่อ-สกุล</th>
-                <th style="padding:10px 8px; border:1px solid #ef9a9a;">ฟิลด์ที่มีปัญหา</th>
-                <th style="padding:10px 8px; border:1px solid #ef9a9a; text-align:center;">จำนวนปัญหา</th>
-            </tr></thead><tbody>`;
+        function goToPageDT(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const checkFields = ['check_prdcat','check_drgid','check_sigcode',
+                'check_sigtext','check_quantity','check_unitprice','check_chargeamt','check_reimbprice'];
+            const filtered = showErrorsOnly ? allDispenseditemData.filter(r => checkFields.some(k => r[k] === 'N')) : allDispenseditemData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageDT);
+            if (page < 1 || page > totalPages) return;
+            currentPageDT = page;
+            renderDispenseditemTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderDispenseditemTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const checkFields = ['check_prdcat','check_drgid','check_sigcode',
+                'check_sigtext','check_quantity','check_unitprice','check_chargeamt','check_reimbprice'];
+            const filteredData = showErrorsOnly ? allDispenseditemData.filter(r => checkFields.some(k => r[k] === 'N')) : allDispenseditemData;
+            const effectiveRowsPerPage = rowsPerPageDT;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageDT - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (v) => {
+                const color = v === 'Y' ? '#4caf50' : (v === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${v || '-'}</span></td>`;
+            };
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">💊 DispensedItem - รายการยาที่จ่าย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispenseditemData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageDT(this.value)">
+                            <option value="20" ${rowsPerPageDT===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageDT===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageDT===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageDT===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageDT===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageDT===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VSTDATE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DispID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PrdCat</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Hospdrgid</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DrgID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">dfsCode</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">dfsText</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Packsize</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">sigCode</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">sigText</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Quantity</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UnitPrice</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ChargeAmt</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ReimbPrice</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ReimbAmt</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PrdSeCode</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Claimcont</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ClaimCat</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">MultiDisp</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SupplyFor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                const fmt = (v) => v != null ? parseFloat(v).toFixed(2) : '-';
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${fmtDate(row.vstdate)}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.dispid || '-'}</td>
+                        ${cell(row.prdcat, row.check_prdcat)}
+                        ${checkCell(row.check_prdcat)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.hospdrgid || '-'}</td>
+                        ${cell(row.drgid, row.check_drgid)}
+                        ${checkCell(row.check_drgid)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.dfscode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.dfstext || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:right;">${row.packsize ?? '-'}</td>
+                        ${cell(row.sigcode, row.check_sigcode)}
+                        ${checkCell(row.check_sigcode)}
+                        ${cell(row.sigtext, row.check_sigtext)}
+                        ${checkCell(row.check_sigtext)}
+                        ${cell(row.quantity, row.check_quantity)}
+                        ${checkCell(row.check_quantity)}
+                        ${cell(row.unitprice != null ? fmt(row.unitprice) : null, row.check_unitprice)}
+                        ${checkCell(row.check_unitprice)}
+                        ${cell(row.chargeamt != null ? fmt(row.chargeamt) : null, row.check_chargeamt)}
+                        ${checkCell(row.check_chargeamt)}
+                        ${cell(row.reimbprice != null ? fmt(row.reimbprice) : null, row.check_reimbprice)}
+                        ${checkCell(row.check_reimbprice)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:right;">${row.reimbamt != null ? fmt(row.reimbamt) : '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.prdsecode ?? '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimcont || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimcat || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.multidisp ?? '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.supplyfor ?? '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageDT - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            tableHTML += `<button onclick="goToPageDT(${currentPageDT-1})" style="${btnStyle(false)} ${currentPageDT===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDT===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageDT(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageDT(${i})" style="${btnStyle(i===currentPageDT)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageDT(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageDT(${currentPageDT+1})" style="${btnStyle(false)} ${currentPageDT===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDT===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // ==================== Dispensing ====================
+
+        let currentPageDI = 1;
+        let rowsPerPageDI = 20;
+        let allDispensingData = [];
+
+        let _diAbortController = null;
+
+        function cancelDispensing() {
+            if (_diAbortController) { _diAbortController.abort(); _diAbortController = null; }
+        }
+
+        async function searchDispensing() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            _diAbortController = new AbortController();
+            let elapsedSec = 0;
+            const timer = setInterval(() => {
+                elapsedSec++;
+                const el = document.getElementById('_di_timer');
+                if (el) el.textContent = `ผ่านไป ${elapsedSec} วินาที...`;
+            }, 1000);
+
+            contentArea.innerHTML = `
+                <div class="welcome-message">
+                    <h2>⏳ กำลังโหลดข้อมูล Dispensing...</h2>
+                    <p id="_di_timer">กรุณารอสักครู่ (query นี้อาจใช้เวลา 1-3 นาที)</p>
+                    <div style="margin-top:16px;">
+                        <button onclick="cancelDispensing()" style="padding:10px 24px;background:#ef5350;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+                            ✕ ยกเลิกการโหลด
+                        </button>
+                    </div>
+                </div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { clearInterval(timer); alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-dispensing`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: getSelectedPttypes(),
+                        hipdata_code: window.hipdataCode || 'OFC'
+                    }),
+                    signal: _diAbortController.signal
+                });
+                clearInterval(timer);
+                _diAbortController = null;
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_invno'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allDispensingData = result.data;
+                    currentPageDI = 1;
+                    renderDispensingTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                clearInterval(timer);
+                _diAbortController = null;
+                if (error.name === 'AbortError') {
+                    contentArea.innerHTML = `<div class="welcome-message"><h2>⛔ ยกเลิกการโหลด Dispensing</h2><p>กดค้นหาอีกครั้งเพื่อลองใหม่</p></div>`;
+                } else {
+                    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+                }
+            }
+        }
+
+        function changeRowsPerPageDI(value) { rowsPerPageDI = parseInt(value); currentPageDI = 1; renderDispensingTable(); }
+
+        function goToPageDI(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_invno'].some(k => row[k] === 'N');
+            const filtered = showErrorsOnly ? allDispensingData.filter(hasRed) : allDispensingData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageDI);
+            if (page < 1 || page > totalPages) return;
+            currentPageDI = page;
+            renderDispensingTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderDispensingTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_invno'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allDispensingData.filter(hasRed) : allDispensingData;
+            const effectiveRowsPerPage = rowsPerPageDI;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageDI - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : (checkValue === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue || '-'}</span></td>`;
+            };
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">💊 Dispensing - จ่ายยา (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispensingData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageDI(this.value)">
+                            <option value="20" ${rowsPerPageDI===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageDI===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageDI===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageDI===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageDI===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageDI===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PROVIDERID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DISPID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DISPDT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PRESCB</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ITEMCNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CHARGEAMT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PAID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">OTHERPAY</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">REIMBURSER</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BENEFITPLAN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DISPESTAT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DAYCOVER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${fmtDate(row.vstdate)}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.name || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.providerid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.dispid || '-'}</td>
+                        ${cell(row.invno, row.check_invno)}
+                        ${checkCell(row.check_invno)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.pid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.dispdt || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.prescb || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:right;">${row.itemcnt ?? '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:right;">${row.chargeamt ?? '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimamt || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:right;">${row.paid ?? '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.otherpay || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.reimburser || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.benefitplan || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.dispestat || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.svid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.daycover || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageDI - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            tableHTML += `<button onclick="goToPageDI(${currentPageDI-1})" style="${btnStyle(false)} ${currentPageDI===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDI===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageDI(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageDI(${i})" style="${btnStyle(i===currentPageDI)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageDI(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageDI(${currentPageDI+1})" style="${btnStyle(false)} ${currentPageDI===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDI===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // Format date: show only date part (no time)
+        function fmtDate(val) {
+            if (!val) return '-';
+            const s = String(val);
+            // ISO string with T e.g. "2025-12-01T00:00:00.000Z"
+            if (s.includes('T')) return s.split('T')[0];
+            // Already "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"
+            return s.substring(0, 10);
+        }
+
+        // ==================== OPService ====================
+
+        let currentPageOS = 1;
+        let rowsPerPageOS = 20;
+        let allOpserviceData = [];
+
+        let _osAbortController = null;
+
+        function cancelOpservice() {
+            if (_osAbortController) {
+                _osAbortController.abort();
+                _osAbortController = null;
+            }
+        }
+
+        async function searchOpservice() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            const hipdataCode = window.hipdataCode || 'OFC';
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+
+            _osAbortController = new AbortController();
+            let elapsedSec = 0;
+            const timerEl = document.getElementById('_os_timer');
+            const timer = setInterval(() => {
+                elapsedSec++;
+                const el = document.getElementById('_os_timer');
+                if (el) el.textContent = `ผ่านไป ${elapsedSec} วินาที...`;
+            }, 1000);
+
+            contentArea.innerHTML = `
+                <div class="welcome-message">
+                    <h2>⏳ กำลังโหลดข้อมูล OPService...</h2>
+                    <p id="_os_timer">กรุณารอสักครู่ (query นี้อาจใช้เวลา 1-3 นาที)</p>
+                    <div style="margin-top:16px;">
+                        <button onclick="cancelOpservice()" style="padding:10px 24px;background:#ef5350;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+                            ✕ ยกเลิกการโหลด
+                        </button>
+                    </div>
+                </div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { clearInterval(timer); alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-opservice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes, hipdata_code: hipdataCode
+                    }),
+                    signal: _osAbortController.signal
+                });
+                clearInterval(timer);
+                _osAbortController = null;
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_invno','check_typein','check_typeout','check_svpid','check_codeset','check_stdcode'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allOpserviceData = result.data;
+                    currentPageOS = 1;
+                    renderOpserviceTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                clearInterval(timer);
+                _osAbortController = null;
+                if (error.name === 'AbortError') {
+                    document.getElementById('content-area').innerHTML = `
+                        <div class="welcome-message"><h2>⛔ ยกเลิกการโหลด OPService</h2>
+                        <p>กดค้นหาอีกครั้งเพื่อลองใหม่</p></div>`;
+                } else {
+                    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+                }
+            }
+        }
+
+        function changeRowsPerPageOS(value) {
+            rowsPerPageOS = parseInt(value);
+            currentPageOS = 1;
+            renderOpserviceTable();
+        }
+
+        function goToPageOS(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_invno','check_typein','check_typeout','check_svpid','check_codeset','check_stdcode'].some(k => row[k] === 'N');
+            const filtered = showErrorsOnly ? allOpserviceData.filter(hasRed) : allOpserviceData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageOS);
+            if (page < 1 || page > totalPages) return;
+            currentPageOS = page;
+            renderOpserviceTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderOpserviceTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_invno','check_typein','check_typeout','check_svpid','check_codeset','check_stdcode'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allOpserviceData.filter(hasRed) : allOpserviceData;
+            const effectiveRowsPerPage = rowsPerPageOS;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageOS - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : (checkValue === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue || '-'}</span></td>`;
+            };
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">🏥 OPService - บริการผู้ป่วยนอก (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpserviceData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOS(this.value)">
+                            <option value="20" ${rowsPerPageOS===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageOS===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageOS===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageOS===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageOS===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageOS===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLASS</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CAREACCOUNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPESERV</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPEIN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">TYPEOUT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">DTAPPOINT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVPID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLINIC</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BEGDT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENDDT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">LCCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CODESET</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVCHARGE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">COMPLETION</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVTXCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCAT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.svid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${fmtDate(row.vstdate)}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.name || '-'}</td>
+                        ${cell(row.invno, row.check_invno)}
+                        ${checkCell(row.check_invno)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.class || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hcode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.pid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.careaccount || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.typeserv || '-'}</td>
+                        ${cell(row.typein, row.check_typein)}
+                        ${checkCell(row.check_typein)}
+                        ${cell(row.typeout, row.check_typeout)}
+                        ${checkCell(row.check_typeout)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.dtappoint || '-'}</td>
+                        ${cell(row.svpid, row.check_svpid)}
+                        ${checkCell(row.check_svpid)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.clinic || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.begdt || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.enddt || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.lccode || '-'}</td>
+                        ${cell(row.codeset, row.check_codeset)}
+                        ${checkCell(row.check_codeset)}
+                        ${cell(row.stdcode, row.check_stdcode)}
+                        ${checkCell(row.check_stdcode)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svcharge || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.completion || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svtxcode || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.claimcat || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.vn || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageOS - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            tableHTML += `<button onclick="goToPageOS(${currentPageOS-1})" style="${btnStyle(false)} ${currentPageOS===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOS===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageOS(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageOS(${i})" style="${btnStyle(i===currentPageOS)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageOS(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageOS(${currentPageOS+1})" style="${btnStyle(false)} ${currentPageOS===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOS===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // Pagination state for BillItems
+        let currentPageBI = 1;
+        let rowsPerPageBI = 20;
+        let allBillitemsData = [];
+
+        async function searchBillitems() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            if (!dateFrom || !dateTo) {
+                alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด');
+                return;
+            }
+
+            const hipdataCode = window.hipdataCode || 'OFC';
+            const selectedPttypes = getSelectedPttypes();
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล BillItems...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-billitems`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes, hipdata_code: hipdataCode
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_debt_id','check_billmuad','check_stdcode','check_qty','check_up','check_chargeamt','check_claimup','check_claimamount'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    displayBillitemsTable(result.data);
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        function displayBillitemsTable(data) {
+            if (data.length === 0) {
+                showBillitemsHeaders();
+                return;
+            }
+            allBillitemsData = data;
+            currentPageBI = 1;
+            renderBillitemsTable();
+        }
+
+        function changeRowsPerPageBI(value) {
+            rowsPerPageBI = parseInt(value);
+            currentPageBI = 1;
+            renderBillitemsTable();
+        }
+
+        function goToPageBI(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRedCellBI = (row) => ['check_debt_id','check_billmuad','check_stdcode','check_qty','check_up','check_chargeamt','check_claimup','check_claimamount'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allBillitemsData.filter(hasRedCellBI) : allBillitemsData;
+            const totalPages = Math.ceil(filteredData.length / rowsPerPageBI);
+            if (page < 1 || page > totalPages) return;
+            currentPageBI = page;
+            renderBillitemsTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderBillitemsTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRedCellBI = (row) => ['check_debt_id','check_billmuad','check_stdcode','check_qty','check_up','check_chargeamt','check_claimup','check_claimamount'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allBillitemsData.filter(hasRedCellBI) : allBillitemsData;
+            const effectiveRowsPerPage = rowsPerPageBI;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageBI - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : '#f44336';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue ?? '-'}</span></td>`;
+            };
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">📋 BillItems - รายการในบิล (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBillitemsData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageBI(this.value)">
+                            <option value="20" ${rowsPerPageBI===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageBI===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageBI===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageBI===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageBI===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageBI===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BILLMUAD</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ICODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อค่าใช้จ่าย</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">QTY</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UP</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CHARGEAMT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMUP</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMOUNT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVREFID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCAT</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENABLE_SKS_OPD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            pageData.forEach((row, index) => {
+                const actualIndex = startIndex + index + 1;
+                tableHTML += `
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.ptname || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.vn || '-'}</td>
+                        ${cell(row.invno, row.check_debt_id)}
+                        ${checkCell(row.check_debt_id)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${fmtDate(row.vstdate)}</td>
+                        ${cell(row.billmuad, row.check_billmuad)}
+                        ${checkCell(row.check_billmuad)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.icode || '-'}</td>
+                        ${cell(row.stdcode, row.check_stdcode)}
+                        ${checkCell(row.check_stdcode)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.desc || row['desc'] || '-'}</td>
+                        ${cell(row.qty, row.check_qty)}
+                        ${checkCell(row.check_qty)}
+                        ${cell(row.up != null ? parseFloat(row.up).toFixed(2) : null, row.check_up)}
+                        ${checkCell(row.check_up)}
+                        ${cell(row.chargeamt != null ? parseFloat(row.chargeamt).toFixed(2) : null, row.check_chargeamt)}
+                        ${checkCell(row.check_chargeamt)}
+                        ${cell(row.claimup != null ? parseFloat(row.claimup).toFixed(2) : null, row.check_claimup)}
+                        ${checkCell(row.check_claimup)}
+                        ${cell(row.claimamount != null ? parseFloat(row.claimamount).toFixed(2) : null, row.check_claimamount)}
+                        ${checkCell(row.check_claimamount)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svrefid || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${row.claimcat || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${row.enable_sks_opd || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageBI - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            tableHTML += `<button onclick="goToPageBI(${currentPageBI-1})" style="${btnStyle(false)} ${currentPageBI===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageBI(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageBI(${i})" style="${btnStyle(i===currentPageBI)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageBI(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageBI(${currentPageBI+1})" style="${btnStyle(false)} ${currentPageBI===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
+        }
+
+        // ==================== OPDx ====================
+
+        let currentPageOX = 1;
+        let rowsPerPageOX = 20;
+        let allOpdxData = [];
+
+        async function searchOpdx() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล OPDx...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+                const response = await fetch(`${API_BASE}/api/get-opdx`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: getSelectedPttypes(),
+                        hipdata_code: window.hipdataCode || 'OFC'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const checkFields = ['check_class', 'check_sl', 'check_code'];
+                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
+                    allOpdxData = result.data;
+                    currentPageOX = 1;
+                    renderOpdxTable();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        function changeRowsPerPageOX(value) { rowsPerPageOX = parseInt(value); currentPageOX = 1; renderOpdxTable(); }
+
+        function goToPageOX(page) {
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_class', 'check_sl', 'check_code'].some(k => row[k] === 'N');
+            const filtered = showErrorsOnly ? allOpdxData.filter(hasRed) : allOpdxData;
+            const totalPages = Math.ceil(filtered.length / rowsPerPageOX);
+            if (page < 1 || page > totalPages) return;
+            currentPageOX = page;
+            renderOpdxTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderOpdxTable() {
+            const contentArea = document.getElementById('content-area');
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+            const hasRed = (row) => ['check_class', 'check_sl', 'check_code'].some(k => row[k] === 'N');
+            const filteredData = showErrorsOnly ? allOpdxData.filter(hasRed) : allOpdxData;
+            const effectiveRowsPerPage = rowsPerPageOX;
+            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+            const startIndex = (currentPageOX - 1) * effectiveRowsPerPage;
+            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const cell = (value, checkValue) => {
+                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
+                return `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap; ${bg}">${value ?? '-'}</td>`;
+            };
+            const checkCell = (checkValue) => {
+                const color = checkValue === 'Y' ? '#4caf50' : (checkValue === 'N' ? '#f44336' : '#546e7a');
+                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue || '-'}</span></td>`;
+            };
+            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
+
+            let tableHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                    <h3 style="color:#1565c0; margin:0;">🩺 OPDx - การวินิจฉัย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpdxData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
+                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
+                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOX(this.value)">
+                            <option value="20" ${rowsPerPageOX===20?'selected':''}>20</option>
+                            <option value="50" ${rowsPerPageOX===50?'selected':''}>50</option>
+                            <option value="100" ${rowsPerPageOX===100?'selected':''}>100</option>
+                            <option value="200" ${rowsPerPageOX===200?'selected':''}>200</option>
+                            <option value="500" ${rowsPerPageOX===500?'selected':''}>500</option>
+                            <option value="1000" ${rowsPerPageOX===1000?'selected':''}>1000</option>
+                        </select>
+                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">class</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SvID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">sl</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">codeset</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Code</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">Desc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (pageData.length === 0) {
+                tableHTML += `<tr><td colspan="15" style="padding:20px; text-align:center; color:#546e7a;">ไม่พบข้อมูล</td></tr>`;
+            }
+
             pageData.forEach((row, idx) => {
-                const problems = getProblems(row);
-                const cnt = problems.split(',').filter(s=>s.trim()).length;
-                const bg = (start+idx)%2===0 ? '#fff8f8' : '#ffebee';
-                html += `<tr style="background:${bg};">
-                    <td style="padding:8px; border:1px solid #ffcdd2; text-align:center; color:#546e7a;">${start+idx+1}</td>
-                    <td style="padding:8px; border:1px solid #ffcdd2; text-align:center; font-weight:700; color:#c62828;"><span style="background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">${row._file||'-'}</span></td>
-                    <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap;">${getHN(row)}</td>
-                    <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap; font-size:12px;">${getAN(row)}</td>
-                    <td style="padding:8px; border:1px solid #ffcdd2;">${getName(row)}</td>
-                    <td style="padding:8px; border:1px solid #ffcdd2; color:#c62828; font-weight:600;">${problems||'-'}</td>
-                    <td style="padding:8px; border:1px solid #ffcdd2; text-align:center;"><span style="background:#f44336; color:white; border-radius:12px; padding:2px 10px; font-weight:700;">${cnt}</span></td>
-                </tr>`;
+                const actualIndex = startIndex + idx + 1;
+                const bgColor = actualIndex % 2 === 0 ? '#f5f9ff' : 'white';
+                tableHTML += `
+                    <tr style="background:${bgColor};">
+                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.HN || row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.VN || row.vn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${fmtDate(row.vsdate)}</td>
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.Name || row.name || '-'}</td>
+                        ${cell(row.class, row.check_class)}
+                        ${checkCell(row.check_class)}
+                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.SvID || row.svid || '-'}</td>
+                        ${cell(row.sl, row.check_sl)}
+                        ${checkCell(row.check_sl)}
+                        ${cell(row.codeset, row.check_codeset)}
+                        ${checkCell(row.check_codeset)}
+                        ${cell(row.Code || row.code, row.check_code)}
+                        ${checkCell(row.check_code)}
+                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.Desc || row.desc || '-'}</td>
+                    </tr>
+                `;
             });
-            html += `</tbody></table></div>`;
-            if (totalPages > 1) {
-                html += `<div style="display:flex; justify-content:center; gap:6px; margin-top:16px; flex-wrap:wrap;">`;
-                html += `<button onclick="ipnPage['all']=1; renderAllErrorsTable()" ${pg===1?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">«</button>`;
-                html += `<button onclick="ipnPage['all']=${pg-1}; renderAllErrorsTable()" ${pg===1?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">‹</button>`;
-                const sp=Math.max(1,pg-2), ep=Math.min(totalPages,pg+2);
-                for(let p=sp;p<=ep;p++) html+=`<button onclick="ipnPage['all']=${p}; renderAllErrorsTable()" style="padding:6px 12px; border:${p===pg?'2px solid #c62828':'1px solid #ddd'}; border-radius:6px; cursor:pointer; ${p===pg?'background:#ffebee;font-weight:700;color:#c62828;':''}">${p}</button>`;
-                html += `<button onclick="ipnPage['all']=${pg+1}; renderAllErrorsTable()" ${pg===totalPages?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">›</button>`;
-                html += `<button onclick="ipnPage['all']=${totalPages}; renderAllErrorsTable()" ${pg===totalPages?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">»</button>`;
-                html += `<span style="color:#546e7a; font-size:14px; margin-left:8px;">หน้า ${pg}/${totalPages}</span></div>`;
-            }
-            document.getElementById('content-area').innerHTML = html;
+
+            tableHTML += `</tbody></table></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            `;
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPageOX - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            tableHTML += `<button onclick="goToPageOX(${currentPageOX-1})" style="${btnStyle(false)} ${currentPageOX===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOX===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { tableHTML += `<button onclick="goToPageOX(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageOX(${i})" style="${btnStyle(i===currentPageOX)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageOX(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            tableHTML += `<button onclick="goToPageOX(${currentPageOX+1})" style="${btnStyle(false)} ${currentPageOX===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOX===totalPages?'disabled':''}>ถัดไป →</button>`;
+
+            tableHTML += `</div></div>`;
+            contentArea.innerHTML = tableHTML;
         }
+
+        // ==================== Rerender Current Menu ====================
 
         function rerenderCurrentMenu() {
-            const ft = window.currentFileView || 'all';
-            if (ft === 'all') renderAllErrorsTable();
-            else renderIpnTable(ft, IPN_LABELS[ft] || ft.toUpperCase());
+            // Reset to page 1 when toggling error filter
+            currentPage = 1;
+            currentPageDT = 1;
+            currentPageDI = 1;
+            currentPageOS = 1;
+            currentPageBI = 1;
+            currentPageOX = 1;
+
+            const fileType = window.currentFileView || 'all';
+            if (fileType === 'billtran')           renderBilltranTable();
+            else if (fileType === 'billitems')     renderBillitemsTable();
+            else if (fileType === 'opservice')     renderOpserviceTable();
+            else if (fileType === 'dispenseditem') renderDispenseditemTable();
+            else if (fileType === 'dispensing')    renderDispensingTable();
+            else if (fileType === 'opdx')          renderOpdxTable();
         }
 
-        window.exportCurrentToExcel = function() {
-            const ft = window.currentFileView || 'all';
-            const data = ipnData[ft] || [];
-            if (!data.length) { alert('ไม่มีข้อมูลสำหรับ Export'); return; }
-            if (typeof XLSX === 'undefined') { alert('ไม่พบ XLSX library'); return; }
-            const ws = XLSX.utils.json_to_sheet(data);
+        // ==================== ออกใบแจ้งหนี้ ====================
+        let currentInvoiceVn = null;
+        let currentInvoiceRow = null;
+
+        async function issueInvoice(vn) {
+            currentInvoiceVn = vn;
+            currentInvoiceRow = allBilltranData.find(r => String(r.vn) === String(vn));
+            if (!currentInvoiceRow) return;
+
+            const row = currentInvoiceRow;
+            document.getElementById('inv-hn').textContent = row.hn || '-';
+            document.getElementById('inv-name').textContent = row.name || '-';
+            document.getElementById('inv-vn').textContent = row.vn || '-';
+            document.getElementById('inv-date').textContent = fmtDate(row.vstdate);
+            document.getElementById('inv-memberno').textContent = row.memberno || '-';
+            document.getElementById('inv-billno').textContent = row.billno || '-';
+            document.getElementById('inv-paid').textContent = row.paid ? parseFloat(row.paid).toFixed(2) : '0.00';
+            document.getElementById('inv-vercode').value = '';
+            document.getElementById('inv-claimamt').value = '';
+            document.getElementById('inv-items-body').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#78909c;">กำลังโหลดรายการ...</td></tr>';
+            document.getElementById('inv-items-total').textContent = '';
+            document.getElementById('invoice-modal').style.display = 'flex';
+
+            // Load expense items
+            const config = getDatabaseConfig();
+            if (!config) return;
+            try {
+                const resp = await fetch(`${API_BASE}/api/get-vn-expenses`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        host: config.host, port: config.port,
+                        database: config.database, user: config.user,
+                        password: config.password, type: config.type,
+                        vn: vn
+                    })
+                });
+                const result = await resp.json();
+                if (result.success && result.data.length > 0) {
+                    let rows = '';
+                    let total = 0;
+                    result.data.forEach((item, i) => {
+                        const bg = i % 2 === 0 ? '#f5f9ff' : 'white';
+                        const sp = parseFloat(item.sum_price || 0);
+                        total += sp;
+                        rows += `<tr style="background:${bg};">
+                            <td style="padding:6px 8px;border:1px solid #e3f2fd;">${item.icode || '-'}</td>
+                            <td style="padding:6px 8px;border:1px solid #e3f2fd;">${item.items || '-'}</td>
+                            <td style="padding:6px 8px;border:1px solid #e3f2fd;text-align:center;">${item.qty || '-'}</td>
+                            <td style="padding:6px 8px;border:1px solid #e3f2fd;">${item.unit || '-'}</td>
+                            <td style="padding:6px 8px;border:1px solid #e3f2fd;text-align:right;">${sp.toFixed(2)}</td>
+                        </tr>`;
+                    });
+                    document.getElementById('inv-items-body').innerHTML = rows;
+                    document.getElementById('inv-items-total').textContent = `รวม: ${total.toFixed(2)} บาท`;
+                    document.getElementById('inv-claimamt').value = total.toFixed(2);
+                } else {
+                    document.getElementById('inv-items-body').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#78909c;">ไม่พบรายการค่าใช้จ่าย</td></tr>';
+                }
+            } catch(e) {
+                document.getElementById('inv-items-body').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:12px;color:#f44336;">โหลดไม่ได้: ${e.message}</td></tr>`;
+            }
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoice-modal').style.display = 'none';
+            currentInvoiceVn = null;
+            currentInvoiceRow = null;
+            const btn = document.getElementById('inv-confirm-btn');
+            if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันออกใบแจ้งหนี้'; }
+        }
+
+        async function confirmIssueInvoice() {
+            const vercode = document.getElementById('inv-vercode').value.trim();
+            const claimamt = parseFloat(document.getElementById('inv-claimamt').value) || 0;
+            if (!vercode) { alert('⚠️ กรุณากรอก Approve Code ก่อนยืนยัน'); return; }
+            if (claimamt <= 0) { alert('⚠️ กรุณากรอกยอดเรียกเก็บ'); return; }
+
+            const config = getDatabaseConfig();
+            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+            const btn = document.getElementById('inv-confirm-btn');
+            btn.disabled = true;
+            btn.textContent = 'กำลังบันทึก...';
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/create-rcpt-debt`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        host: config.host, port: config.port,
+                        database: config.database, user: config.user,
+                        password: config.password, type: config.type,
+                        vn: currentInvoiceVn,
+                        vercode: vercode,
+                        amount: claimamt,
+                        total_amount: claimamt
+                    })
+                });
+                const result = await resp.json();
+                if (!result.success) {
+                    alert('❌ บันทึกไม่สำเร็จ: ' + (result.error || 'unknown'));
+                    btn.disabled = false;
+                    btn.textContent = 'ยืนยันออกใบแจ้งหนี้';
+                    return;
+                }
+                // Update row in memory
+                const idx = allBilltranData.findIndex(r => String(r.vn) === String(currentInvoiceVn));
+                if (idx >= 0) {
+                    allBilltranData[idx].debt_id = result.debt_id;
+                    allBilltranData[idx].invno = result.debt_id;
+                    allBilltranData[idx].check_invno = 'Y';
+                    allBilltranData[idx].vercode = vercode;
+                    allBilltranData[idx].check_vercode = 'Y';
+                    allBilltranData[idx].claimamt = claimamt;
+                    allBilltranData[idx].total_amount = claimamt;
+                }
+                closeInvoiceModal();
+                renderBilltranTable();
+                btn.disabled = false;
+                btn.textContent = '✅ ยืนยันออกใบแจ้งหนี้';
+                alert('✅ ออกใบแจ้งหนี้สำเร็จ');
+            } catch(e) {
+                alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+                btn.disabled = false;
+                btn.textContent = '✅ ยืนยันออกใบแจ้งหนี้';
+            }
+        }
+
+        // ==================== Billtran inline edit vercode ====================
+        async function saveBilltranVercode(debtId) {
+            const input = document.getElementById(`bt-edit-vercode-${debtId}`);
+            if (!input) return;
+            const newVal = input.value.trim();
+            const idx = allBilltranData.findIndex(r => String(r.debt_id) === String(debtId));
+            if (idx < 0) return;
+            const config = getDatabaseConfig();
+            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+            try {
+                const response = await fetch(`${API_BASE}/api/update-billtran-vercode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port,
+                        database: config.database, user: config.user,
+                        password: config.password, type: config.type,
+                        debt_id: debtId, vercode: newVal
+                    })
+                });
+                const result = await response.json();
+                if (!result.success) {
+                    alert('❌ บันทึกไม่สำเร็จ: ' + (result.error || 'unknown error'));
+                    return;
+                }
+                allBilltranData[idx].vercode = newVal;
+                allBilltranData[idx].check_vercode = (newVal !== '') ? 'Y' : 'N';
+            } catch (e) {
+                alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+                return;
+            }
+            billtranEditVn = null;
+            renderBilltranTable();
+        }
+
+        // ==================== Export Excel ====================
+
+        function exportCurrentToExcel() {
+            const fileType = window.currentFileView || 'all';
+            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
+
+            const getFiltered = (allData, checkKeys) => {
+                if (!showErrorsOnly || !checkKeys) return allData;
+                return allData.filter(row => checkKeys.some(k => row[k] === 'N'));
+            };
+
+            const map = {
+                billtran:     { data: getFiltered(allBilltranData,      ['check_invno','check_vercode']), name: 'Billtran' },
+                billitems:    { data: getFiltered(allBillitemsData,     null), name: 'BillItems' },
+                opservice:    { data: getFiltered(allOpserviceData,     null), name: 'OPService' },
+                dispenseditem:{ data: getFiltered(allDispenseditemData, null), name: 'DispensedItem' },
+                dispensing:   { data: getFiltered(allDispensingData,    null), name: 'Dispensing' },
+                opdx:         { data: getFiltered(allOpdxData,          null), name: 'OPDx' }
+            };
+            const entry = map[fileType];
+            if (!entry) { alert('กรุณาเลือกแฟ้มที่ต้องการ export'); return; }
+            exportToExcel(entry.data, entry.name);
+        }
+
+        function exportToExcel(data, filename) {
+            if (!data || data.length === 0) {
+                alert('ไม่มีข้อมูลที่จะ export\nกรุณาค้นหาข้อมูลก่อน');
+                return;
+            }
+
+            const columns = Object.keys(data[0]);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, ft.toUpperCase());
-            XLSX.writeFile(wb, `CIPN_${ft}_${new Date().toISOString().slice(0,10)}.xlsx`);
-        };
+
+            // Header row
+            const aoa = [columns];
+
+            // Data rows
+            data.forEach(row => {
+                aoa.push(columns.map(col => {
+                    const v = row[col];
+                    return v === null || v === undefined ? '' : v;
+                }));
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+            // Style: header row bold + light blue bg
+            columns.forEach((col, c) => {
+                const addr = XLSX.utils.encode_cell({ r: 0, c });
+                if (!ws[addr]) ws[addr] = { v: col };
+                ws[addr].s = {
+                    fill: { patternType: 'solid', fgColor: { rgb: '1565C0' } },
+                    font: { bold: true, color: { rgb: 'FFFFFF' } },
+                    alignment: { horizontal: 'center' }
+                };
+            });
+
+            // Style: red cell where check_ column = 'N'
+            data.forEach((row, r) => {
+                columns.forEach((col, c) => {
+                    if (col.startsWith('check_') && row[col] === 'N') {
+                        // Color the check cell itself
+                        const checkAddr = XLSX.utils.encode_cell({ r: r + 1, c });
+                        if (!ws[checkAddr]) ws[checkAddr] = { v: 'N' };
+                        ws[checkAddr].s = {
+                            fill: { patternType: 'solid', fgColor: { rgb: 'F44336' } },
+                            font: { bold: true, color: { rgb: 'FFFFFF' } },
+                            alignment: { horizontal: 'center' }
+                        };
+                        // Color the data column before this check column
+                        if (c > 0) {
+                            const dataAddr = XLSX.utils.encode_cell({ r: r + 1, c: c - 1 });
+                            if (!ws[dataAddr]) ws[dataAddr] = { v: '' };
+                            ws[dataAddr].s = {
+                                fill: { patternType: 'solid', fgColor: { rgb: 'F44336' } },
+                                font: { color: { rgb: 'FFFFFF' } }
+                            };
+                        }
+                    }
+                });
+            });
+
+            // Auto column width
+            const colWidths = columns.map((col, c) => {
+                let max = col.length;
+                data.forEach(row => {
+                    const v = String(row[col] ?? '');
+                    if (v.length > max) max = v.length;
+                });
+                return { wch: Math.min(max + 2, 50) };
+            });
+            ws['!cols'] = colWidths;
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+            XLSX.utils.book_append_sheet(wb, ws, filename.slice(0, 31));
+            XLSX.writeFile(wb, `${filename}_${dateStr}.xlsx`);
+        }
     </script>
 <script src="zoom_control.js"></script>
+
+<!-- Modal: ออกใบแจ้งหนี้ -->
+<div id="invoice-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:14px; padding:28px; width:680px; max-width:95vw; max-height:88vh; overflow-y:auto; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+        <button onclick="closeInvoiceModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#546e7a;">✕</button>
+        <h3 style="margin:0 0 18px 0; color:#e65100; font-size:18px;">📄 ออกใบแจ้งหนี้</h3>
+
+        <!-- Patient info -->
+        <div style="background:#f5f9ff; border-radius:10px; padding:14px 18px; margin-bottom:16px; display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; font-size:14px;">
+            <div><span style="color:#546e7a;font-weight:600;">HN:</span> <span id="inv-hn" style="font-weight:700;"></span></div>
+            <div><span style="color:#546e7a;font-weight:600;">ชื่อ-สกุล:</span> <span id="inv-name"></span></div>
+            <div><span style="color:#546e7a;font-weight:600;">VN:</span> <span id="inv-vn" style="font-family:monospace;"></span></div>
+            <div><span style="color:#546e7a;font-weight:600;">วันที่:</span> <span id="inv-date"></span></div>
+            <div><span style="color:#546e7a;font-weight:600;">เลขบัตร:</span> <span id="inv-memberno" style="font-family:monospace;"></span></div>
+            <div><span style="color:#546e7a;font-weight:600;">BILLNO:</span> <span id="inv-billno"></span></div>
+            <div><span style="color:#546e7a;font-weight:600;">ยอดชำระ (PAID):</span> <span id="inv-paid" style="color:#1565c0;font-weight:700;"></span> บาท</div>
+        </div>
+
+        <!-- Expense items -->
+        <div style="margin-bottom:16px;">
+            <div style="font-weight:700; color:#37474f; margin-bottom:8px; font-size:14px;">รายการค่าใช้จ่าย</div>
+            <div style="overflow-x:auto; border-radius:8px; border:1px solid #e3f2fd;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:linear-gradient(135deg,#42a5f5,#2196f3); color:white;">
+                            <th style="padding:8px; text-align:left; white-space:nowrap;">รหัส</th>
+                            <th style="padding:8px; text-align:left;">รายการ</th>
+                            <th style="padding:8px; text-align:center;">จำนวน</th>
+                            <th style="padding:8px; text-align:left;">หน่วย</th>
+                            <th style="padding:8px; text-align:right; white-space:nowrap;">ราคา (บาท)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-items-body">
+                        <tr><td colspan="5" style="text-align:center;padding:12px;color:#78909c;">กำลังโหลด...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="inv-items-total" style="text-align:right; margin-top:6px; font-weight:700; color:#1565c0; font-size:14px;"></div>
+        </div>
+
+        <!-- Form fields -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
+            <div>
+                <label style="display:block; font-size:13px; font-weight:600; color:#37474f; margin-bottom:5px;">ยอดเรียกเก็บ (บาท) <span style="color:#f44336;">*</span></label>
+                <input id="inv-claimamt" type="number" step="0.01" min="0"
+                    style="width:100%; padding:9px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; box-sizing:border-box;"
+                    placeholder="0.00">
+            </div>
+            <div>
+                <label style="display:block; font-size:13px; font-weight:600; color:#37474f; margin-bottom:5px;">Approve Code <span style="color:#f44336;">*</span></label>
+                <input id="inv-vercode" type="text"
+                    style="width:100%; padding:9px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; box-sizing:border-box;"
+                    placeholder="กรอก Approve Code">
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:12px; justify-content:flex-end;">
+            <button onclick="closeInvoiceModal()" style="padding:10px 22px; background:#eceff1; color:#546e7a; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">ยกเลิก</button>
+            <button id="inv-confirm-btn" onclick="confirmIssueInvoice()" style="padding:10px 24px; background:linear-gradient(135deg,#e65100,#ff6d00); color:white; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;">✅ ยืนยันออกใบแจ้งหนี้</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
