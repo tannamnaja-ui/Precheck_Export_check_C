@@ -2192,6 +2192,8 @@
             document.getElementById('invoice-modal').style.display = 'none';
             currentInvoiceVn = null;
             currentInvoiceRow = null;
+            const btn = document.getElementById('inv-confirm-btn');
+            if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันออกใบแจ้งหนี้'; }
         }
 
         async function confirmIssueInvoice() {
@@ -2241,11 +2243,13 @@
                 }
                 closeInvoiceModal();
                 renderBilltranTable();
+                btn.disabled = false;
+                btn.textContent = '✅ ยืนยันออกใบแจ้งหนี้';
                 alert('✅ ออกใบแจ้งหนี้สำเร็จ');
             } catch(e) {
                 alert('❌ เกิดข้อผิดพลาด: ' + e.message);
                 btn.disabled = false;
-                btn.textContent = 'ยืนยันออกใบแจ้งหนี้';
+                btn.textContent = '✅ ยืนยันออกใบแจ้งหนี้';
             }
         }
 

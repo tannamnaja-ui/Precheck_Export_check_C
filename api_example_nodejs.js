@@ -823,13 +823,13 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
             if (!newTrListId) throw new Error('ไม่พบ opd_opi_fn_tr_list_id หลัง Step 1');
             console.log(`[create-rcpt-debt] new tr_list_id=${newTrListId}`);
 
-            // Step 2: opd_opi_hos_guid_transfer
+            // Step 2: opd_opi_hos_guid_transfer — one row per opitemrece item using real hos_guid
+            // HOSxP cancel: SELECT opi_guid WHERE opd_opi_fn_tr_list_id=X → UPDATE opitemrece SET finance_number=NULL WHERE hos_guid=opi_guid
             await client.query(`
-                WITH new_guid AS (SELECT gen_random_uuid()::text AS guid)
                 INSERT INTO opd_opi_hos_guid_transfer(opi_guid, hos_guid, vn, opd_opi_fn_tr_list_id)
-                SELECT new_guid.guid, new_guid.guid, o.vn, $2
-                FROM ovst o, new_guid
-                WHERE o.vn=$1
+                SELECT oi.hos_guid, oi.hos_guid, oi.vn, $2
+                FROM opitemrece oi
+                WHERE oi.vn = $1 AND (oi.finance_number IS NULL OR oi.finance_number = '')
             `, [vn, newTrListId]);
             console.log(`[create-rcpt-debt] Step 2 done`);
 
@@ -884,6 +884,16 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
             if (!newCrListId) throw new Error('ไม่พบ opd_opi_fn_cr_list_id หลัง Step 5');
             console.log(`[create-rcpt-debt] new cr_list_id=${newCrListId}, finance_number=${newFinanceNumber}`);
 
+            // Step 5.5: Link opd_opi_fn_tr_detail → opd_opi_fn_cr_list
+            // HOSxP cancel chain: rcpt_debt.finance_number → cr_list_id → tr_detail.opd_opi_fn_cr_list_id → tr_list_id → opitemrece.finance_number=NULL
+            await client.query(`
+                UPDATE opd_opi_fn_tr_detail
+                SET opd_opi_fn_cr_list_id = $2
+                WHERE opd_opi_fn_tr_list_id = $1
+                AND (opd_opi_fn_cr_list_id IS NULL OR opd_opi_fn_cr_list_id = 0)
+            `, [newTrListId, newCrListId]);
+            console.log(`[create-rcpt-debt] Step 5.5 done — tr_detail.opd_opi_fn_cr_list_id=${newCrListId}`);
+
             // Step 6: opd_opi_fn_cr_detail
             await client.query(`
                 INSERT INTO opd_opi_fn_cr_detail(opd_opi_fn_cr_detail_id, opd_opi_fn_cr_list_id, income, amount_paidst_02, amount_paidst_04, total_amount, original_total_amount)
@@ -908,7 +918,7 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
                 FROM opitemrece op
                 WHERE op.vn=$1
                 GROUP BY op.vn,op.hn,op.vstdate,op.vsttime,op.staff,op.pttype
-            `, [vn, newTrListId, vercode || '']);
+            `, [vn, newFinanceNumber, vercode || '']);
             console.log(`[create-rcpt-debt] Step 7 done`);
 
             // Get the newly inserted debt_id (to avoid joining old cancelled records)
@@ -932,16 +942,15 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
             `, [vn, newDebtId]);
             console.log(`[create-rcpt-debt] Step 8 done`);
 
-            // Step 9: update opitemrece.finance_number
-            // ใช้ newTrListId (opd_opi_fn_tr_list_id) — ตรงกับ rcpt_debt.finance_number ที่ใส่ใน Step 7
-            // HOSxP ยกเลิกโดย WHERE finance_number = rcpt_debt.finance_number ทั้งสองต้องเป็นค่าเดียวกัน
+            // Step 9: update opitemrece.finance_number = opd_opi_fn_cr_list.finance_number
+            // HOSxP cancel chain clears opitemrece WHERE finance_number = cr_list.finance_number → must match
             await client.query(`
                 UPDATE opitemrece
                 SET finance_number = $2
                 WHERE vn = $1
                 AND (finance_number IS NULL OR finance_number = '')
-            `, [vn, newTrListId]);
-            console.log(`[create-rcpt-debt] Step 9 done — finance_number(tr_list_id)=${newTrListId}`);
+            `, [vn, newFinanceNumber]);
+            console.log(`[create-rcpt-debt] Step 9 done — finance_number(cr_list.finance_number)=${newFinanceNumber}`);
 
             await client.query('COMMIT');
 
