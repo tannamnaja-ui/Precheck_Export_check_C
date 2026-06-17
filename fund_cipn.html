@@ -736,6 +736,8 @@
                 await searchIpadt();
             } else if (fileType === 'ipdx') {
                 await searchIpdx();
+            } else if (fileType === 'ipop') {
+                await searchIpop();
             } else if (fileType === 'billtran') {
                 await searchBilltran();
             } else if (fileType === 'billitems') {
@@ -2334,6 +2336,116 @@
             renderIpdxTable();
         }
 
+        // ==================== IPOp ====================
+        let allIpopData = [];
+        let currentPageIPOP = 1;
+        const rowsPerPageIPOP = 50;
+
+        async function searchIpop() {
+            const config = getDatabaseConfig();
+            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo   = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('⚠️ กรุณาเลือกวันที่'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลด IPOp...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/get-cipn-ipop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: window.selectedPttypes || [],
+                        hipdata_code: window.hipdataCode || 'OFC'
+                    })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                allIpopData = data.data || [];
+                currentPageIPOP = 1;
+                updateStatistics(allIpopData.length, allIpopData.length, 0);
+                renderIpopTable();
+            } catch(e) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${e.message}</p></div>`;
+            }
+        }
+
+        function renderIpopTable() {
+            const contentArea = document.getElementById('content-area');
+            if (!allIpopData.length) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>ไม่พบข้อมูล IPOp</h2></div>`;
+                return;
+            }
+
+            const totalPages = Math.ceil(allIpopData.length / rowsPerPageIPOP);
+            const start = (currentPageIPOP - 1) * rowsPerPageIPOP;
+            const pageData = allIpopData.slice(start, start + rowsPerPageIPOP);
+
+            const fmtDate = v => v ? String(v).substring(0, 10) : '-';
+
+            const cols = [
+                { k: 'dchdate',  h: 'DchDate',  fmt: fmtDate },
+                { k: 'ptname',   h: 'ชื่อ-สกุล' },
+                { k: 'an',       h: 'AN' },
+                { k: 'hn',       h: 'HN' },
+                { k: 'sequence', h: 'SEQ' },
+                { k: 'codesys',  h: 'CodeSys' },
+                { k: 'code',     h: 'Code' },
+                { k: 'procterm', h: 'ProcTerm' },
+                { k: 'dr',       h: 'DR' },
+                { k: 'datein',   h: 'DateIn',   fmt: fmtDate },
+                { k: 'dateout',  h: 'DateOut',  fmt: fmtDate },
+                { k: 'location', h: 'Location' },
+            ];
+
+            const thStyle = `padding:8px 10px; border:1px solid #bbdefb; white-space:nowrap; font-size:13px;`;
+            const tdStyle = `padding:7px 10px; border:1px solid #e3f2fd; white-space:nowrap; font-size:13px;`;
+
+            const thead = cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
+            const tbody = pageData.map((row, i) => {
+                const bg = i % 2 === 0 ? '#f5f9ff' : '#fff';
+                const cells = cols.map(c => {
+                    const val = row[c.k];
+                    const display = c.fmt ? c.fmt(val) : (val ?? '-');
+                    return `<td style="${tdStyle}">${display}</td>`;
+                }).join('');
+                return `<tr style="background:${bg}">${cells}</tr>`;
+            }).join('');
+
+            let pager = '';
+            if (totalPages > 1) {
+                pager = `<div style="display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;">
+                    <button onclick="goToPageIPOP(${currentPageIPOP-1})" ${currentPageIPOP<=1?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">◀</button>
+                    <span style="font-size:13px;color:#546e7a;">หน้า ${currentPageIPOP} / ${totalPages} (${allIpopData.length} รายการ)</span>
+                    <button onclick="goToPageIPOP(${currentPageIPOP+1})" ${currentPageIPOP>=totalPages?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">▶</button>
+                </div>`;
+            }
+
+            contentArea.innerHTML = `
+                <div style="font-weight:700;color:#1565c0;margin-bottom:10px;font-size:15px;">📋 IPOp — ${allIpopData.length} รายการ</div>
+                <div style="overflow-x:auto;">
+                    <table style="border-collapse:collapse;width:100%;min-width:1000px;">
+                        <thead style="background:linear-gradient(135deg,#1565c0,#2196f3);color:white;">
+                            <tr>${thead}</tr>
+                        </thead>
+                        <tbody>${tbody}</tbody>
+                    </table>
+                </div>
+                ${pager}
+            `;
+        }
+
+        function goToPageIPOP(page) {
+            const total = Math.ceil(allIpopData.length / rowsPerPageIPOP);
+            if (page < 1 || page > total) return;
+            currentPageIPOP = page;
+            renderIpopTable();
+        }
+
         // ==================== Rerender Current Menu ====================
 
         function rerenderCurrentMenu() {
@@ -2348,6 +2460,7 @@
             const fileType = window.currentFileView || 'all';
             if (fileType === 'ipadt')              renderIpadtTable();
             else if (fileType === 'ipdx')          renderIpdxTable();
+            else if (fileType === 'ipop')          renderIpopTable();
             else if (fileType === 'billtran')      renderBilltranTable();
             else if (fileType === 'billitems')     renderBillitemsTable();
             else if (fileType === 'opservice')     renderOpserviceTable();

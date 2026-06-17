@@ -3296,6 +3296,61 @@ app.post('/api/get-cipn-ipdx', async (req, res) => {
     }
 });
 
+// CIPN - IPOp (ข้าราชการผู้ป่วยใน หัตถการ)
+app.post('/api/get-cipn-ipop', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code } = req.body;
+        const hcode = hipdata_code || 'OFC';
+        let pttypeCond = '';
+        if (selectedPttypes && selectedPttypes.length > 0) {
+            const list = selectedPttypes.map(p => `'${p}'`).join(',');
+            pttypeCond = `AND i.pttype IN (${list})`;
+        }
+        const ph1 = type === 'postgresql' ? '$1' : '?';
+        const ph2 = type === 'postgresql' ? '$2' : '?';
+        const queryStr = `
+            SELECT
+              i.dchdate,
+              CONCAT(p.pname, p.fname, ' ', p.lname) AS ptname,
+              i.an,
+              i.hn,
+              ROW_NUMBER() OVER (PARTITION BY io.an ORDER BY io.iptoprt_id) AS sequence,
+              'ICD9CM' AS codesys,
+              io.icd9 AS code,
+              ic.name AS procterm,
+              d.licenseno AS dr,
+              io.opdate AS datein,
+              io.enddate AS dateout,
+              CONCAT('xxxx:', w.name) AS location
+            FROM iptoprt io
+              LEFT JOIN ipt i ON io.an = i.an
+              LEFT JOIN patient p ON i.hn = p.hn
+              LEFT JOIN doctor d ON io.doctor = d.code
+              LEFT JOIN ward w ON i.ward = w.ward
+              LEFT JOIN icd9cm1 ic ON ic.code = io.icd9
+            WHERE i.dchdate BETWEEN ${ph1} AND ${ph2}
+            AND i.pttype IN (SELECT pttype FROM pttype WHERE isuse = 'Y' AND ${hipdataFilter(hcode)})
+            ${pttypeCond}
+            ORDER BY i.dchdate, i.an, sequence
+        `;
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            const result = await client.query(queryStr, [dateFrom, dateTo]);
+            await client.end();
+            res.json({ success: true, data: result.rows, count: result.rows.length });
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            const [rows] = await connection.execute(queryStr, [dateFrom, dateTo]);
+            await connection.end();
+            res.json({ success: true, data: rows, count: rows.length });
+        }
+    } catch (error) {
+        console.error('CIPN IPOp error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // IPN - IPDX (IPD Diagnosis)
 app.post('/api/get-ipn-ipdx', async (req, res) => {
     try {
