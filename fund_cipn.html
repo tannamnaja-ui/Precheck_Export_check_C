@@ -1827,21 +1827,16 @@
                 return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue ?? '-'}</span></td>`;
             };
 
+            const biTitle = `📋 BillItems - รายการในบิล${showErrorsOnly ? ' (' + filteredData.length.toLocaleString() + ' / ทั้งหมด ' + allBillitemsData.length.toLocaleString() + ')' : ''}`;
             let tableHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#1565c0; margin:0;">📋 BillItems - รายการในบิล (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBillitemsData.length.toLocaleString() : ''} รายการ)</h3>
-                    <div style="display:flex; gap:10px; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                        <h3 style="color:#1565c0; margin:0; font-size:15px; white-space:nowrap;">${biTitle} — ${filteredData.length.toLocaleString()} รายการ</h3>
+                        ${buildPageButtons(currentPageBI, totalPages, 'goToPageBI')}
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageBI(this.value)">
-                            <option value="20" ${rowsPerPageBI===20?'selected':''}>20</option>
-                            <option value="50" ${rowsPerPageBI===50?'selected':''}>50</option>
-                            <option value="100" ${rowsPerPageBI===100?'selected':''}>100</option>
-                            <option value="200" ${rowsPerPageBI===200?'selected':''}>200</option>
-                            <option value="500" ${rowsPerPageBI===500?'selected':''}>500</option>
-                            <option value="1000" ${rowsPerPageBI===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
+                        ${buildRowsPerPageSelect(rowsPerPageBI, 'changeRowsPerPageBI')}
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -1914,25 +1909,8 @@
             });
 
             tableHTML += `</tbody></table></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
-                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
-                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <div style="margin-top:12px; color:#546e7a; font-size:13px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
             `;
-
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPageBI - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-
-            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
-
-            tableHTML += `<button onclick="goToPageBI(${currentPageBI-1})" style="${btnStyle(false)} ${currentPageBI===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===1?'disabled':''}>← ก่อนหน้า</button>`;
-            if (startPage > 1) { tableHTML += `<button onclick="goToPageBI(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
-            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageBI(${i})" style="${btnStyle(i===currentPageBI)}">${i}</button>`;
-            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageBI(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
-            tableHTML += `<button onclick="goToPageBI(${currentPageBI+1})" style="${btnStyle(false)} ${currentPageBI===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===totalPages?'disabled':''}>ถัดไป →</button>`;
-
-            tableHTML += `</div></div>`;
             contentArea.innerHTML = tableHTML;
         }
 
@@ -2106,10 +2084,53 @@
             contentArea.innerHTML = tableHTML;
         }
 
+        // ==================== Shared Table Header (ลำดับ + pagination บนหัวตาราง + เลือกจำนวน/หน้า) ====================
+        function buildPageButtons(currentPage, totalPages, gotoFn) {
+            if (totalPages <= 1) return '';
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+            const btnStyle = (active) => `padding:6px 12px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600; font-size:13px;`;
+            let html = `<div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">`;
+            html += `<button onclick="${gotoFn}(${currentPage-1})" style="${btnStyle(false)} ${currentPage===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPage===1?'disabled':''}>← ก่อนหน้า</button>`;
+            if (startPage > 1) { html += `<button onclick="${gotoFn}(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) html += `<span style="padding:6px; color:#546e7a;">...</span>`; }
+            for (let i = startPage; i <= endPage; i++) html += `<button onclick="${gotoFn}(${i})" style="${btnStyle(i===currentPage)}">${i}</button>`;
+            if (endPage < totalPages) { if (endPage < totalPages-1) html += `<span style="padding:6px; color:#546e7a;">...</span>`; html += `<button onclick="${gotoFn}(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
+            html += `<button onclick="${gotoFn}(${currentPage+1})" style="${btnStyle(false)} ${currentPage===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPage===totalPages?'disabled':''}>ถัดไป →</button>`;
+            html += `</div>`;
+            return html;
+        }
+
+        function buildRowsPerPageSelect(rowsPerPage, changeFn) {
+            const opts = [20,50,100,200,500,1000];
+            let html = `<div style="display:flex; align-items:center; gap:6px;">
+                <label style="color:#546e7a; font-size:13px; font-weight:600;">แสดง:</label>
+                <select style="padding:6px 10px; border:2px solid #e3f2fd; border-radius:6px; font-size:13px; cursor:pointer;" onchange="${changeFn}(this.value)">`;
+            opts.forEach(o => html += `<option value="${o}" ${rowsPerPage===o?'selected':''}>${o}</option>`);
+            html += `</select><span style="color:#546e7a; font-size:13px;">รายการ/หน้า</span></div>`;
+            return html;
+        }
+
+        function buildTableHeaderBar(titleText, totalCount, currentPage, totalPages, gotoFn, rowsPerPage, changeRowsFn, extraRight) {
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                        <div style="font-weight:700; color:#1565c0; font-size:15px; white-space:nowrap;">${titleText} — ${totalCount.toLocaleString()} รายการ</div>
+                        ${buildPageButtons(currentPage, totalPages, gotoFn)}
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        ${extraRight || ''}
+                        ${buildRowsPerPageSelect(rowsPerPage, changeRowsFn)}
+                    </div>
+                </div>
+            `;
+        }
+
         // ==================== IPADT ====================
         let allIpadtData = [];
         let currentPageIPADT = 1;
-        let rowsPerPageIPADT = 50;
+        let rowsPerPageIPADT = 20;
 
         async function searchIpadt() {
             const config = getDatabaseConfig();
@@ -2185,29 +2206,20 @@
             const thStyle = `padding:8px 10px; border:1px solid #bbdefb; white-space:nowrap; font-size:13px;`;
             const tdStyle = `padding:7px 10px; border:1px solid #e3f2fd; white-space:nowrap; font-size:13px;`;
 
-            let thead = cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
+            let thead = `<th style="${thStyle}">ลำดับ</th>` + cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
             let tbody = pageData.map((row, i) => {
                 const bg = i % 2 === 0 ? '#f5f9ff' : '#fff';
+                const seqCell = `<td style="${tdStyle}text-align:center;">${start + i + 1}</td>`;
                 const cells = cols.map(c => {
                     const val = row[c.k];
                     const display = c.fmt ? c.fmt(val) : (val ?? '-');
                     return `<td style="${tdStyle}">${display}</td>`;
                 }).join('');
-                return `<tr style="background:${bg}">${cells}</tr>`;
+                return `<tr style="background:${bg}">${seqCell}${cells}</tr>`;
             }).join('');
 
-            // Pagination
-            let pager = '';
-            if (totalPages > 1) {
-                pager = `<div style="display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;">
-                    <button onclick="goToPageIPADT(${currentPageIPADT-1})" ${currentPageIPADT<=1?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">◀</button>
-                    <span style="font-size:13px;color:#546e7a;">หน้า ${currentPageIPADT} / ${totalPages} (${allIpadtData.length} รายการ)</span>
-                    <button onclick="goToPageIPADT(${currentPageIPADT+1})" ${currentPageIPADT>=totalPages?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">▶</button>
-                </div>`;
-            }
-
             contentArea.innerHTML = `
-                <div style="font-weight:700;color:#1565c0;margin-bottom:10px;font-size:15px;">📋 IPADT — ${allIpadtData.length} รายการ</div>
+                ${buildTableHeaderBar('📋 IPADT', allIpadtData.length, currentPageIPADT, totalPages, 'goToPageIPADT', rowsPerPageIPADT, 'changeRowsPerPageIPADT')}
                 <div style="overflow-x:auto;">
                     <table style="border-collapse:collapse;width:100%;min-width:1400px;">
                         <thead style="background:linear-gradient(135deg,#1565c0,#2196f3);color:white;">
@@ -2216,7 +2228,6 @@
                         <tbody>${tbody}</tbody>
                     </table>
                 </div>
-                ${pager}
             `;
         }
 
@@ -2227,10 +2238,16 @@
             renderIpadtTable();
         }
 
+        function changeRowsPerPageIPADT(value) {
+            rowsPerPageIPADT = parseInt(value);
+            currentPageIPADT = 1;
+            renderIpadtTable();
+        }
+
         // ==================== IPDX ====================
         let allIpdxData = [];
         let currentPageIPDX = 1;
-        const rowsPerPageIPDX = 50;
+        let rowsPerPageIPDX = 20;
 
         async function searchIpdx() {
             const config = getDatabaseConfig();
@@ -2295,28 +2312,20 @@
             const thStyle = `padding:8px 10px; border:1px solid #bbdefb; white-space:nowrap; font-size:13px;`;
             const tdStyle = `padding:7px 10px; border:1px solid #e3f2fd; white-space:nowrap; font-size:13px;`;
 
-            const thead = cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
+            const thead = `<th style="${thStyle}">ลำดับ</th>` + cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
             const tbody = pageData.map((row, i) => {
                 const bg = i % 2 === 0 ? '#f5f9ff' : '#fff';
+                const seqCell = `<td style="${tdStyle}text-align:center;">${start + i + 1}</td>`;
                 const cells = cols.map(c => {
                     const val = row[c.k];
                     const display = c.fmt ? c.fmt(val) : (val ?? '-');
                     return `<td style="${tdStyle}">${display}</td>`;
                 }).join('');
-                return `<tr style="background:${bg}">${cells}</tr>`;
+                return `<tr style="background:${bg}">${seqCell}${cells}</tr>`;
             }).join('');
 
-            let pager = '';
-            if (totalPages > 1) {
-                pager = `<div style="display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;">
-                    <button onclick="goToPageIPDX(${currentPageIPDX-1})" ${currentPageIPDX<=1?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">◀</button>
-                    <span style="font-size:13px;color:#546e7a;">หน้า ${currentPageIPDX} / ${totalPages} (${allIpdxData.length} รายการ)</span>
-                    <button onclick="goToPageIPDX(${currentPageIPDX+1})" ${currentPageIPDX>=totalPages?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">▶</button>
-                </div>`;
-            }
-
             contentArea.innerHTML = `
-                <div style="font-weight:700;color:#1565c0;margin-bottom:10px;font-size:15px;">📋 IPDX — ${allIpdxData.length} รายการ</div>
+                ${buildTableHeaderBar('📋 IPDX', allIpdxData.length, currentPageIPDX, totalPages, 'goToPageIPDX', rowsPerPageIPDX, 'changeRowsPerPageIPDX')}
                 <div style="overflow-x:auto;">
                     <table style="border-collapse:collapse;width:100%;min-width:900px;">
                         <thead style="background:linear-gradient(135deg,#1565c0,#2196f3);color:white;">
@@ -2325,7 +2334,6 @@
                         <tbody>${tbody}</tbody>
                     </table>
                 </div>
-                ${pager}
             `;
         }
 
@@ -2336,10 +2344,16 @@
             renderIpdxTable();
         }
 
+        function changeRowsPerPageIPDX(value) {
+            rowsPerPageIPDX = parseInt(value);
+            currentPageIPDX = 1;
+            renderIpdxTable();
+        }
+
         // ==================== IPOp ====================
         let allIpopData = [];
         let currentPageIPOP = 1;
-        const rowsPerPageIPOP = 50;
+        let rowsPerPageIPOP = 20;
 
         async function searchIpop() {
             const config = getDatabaseConfig();
@@ -2405,28 +2419,20 @@
             const thStyle = `padding:8px 10px; border:1px solid #bbdefb; white-space:nowrap; font-size:13px;`;
             const tdStyle = `padding:7px 10px; border:1px solid #e3f2fd; white-space:nowrap; font-size:13px;`;
 
-            const thead = cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
+            const thead = `<th style="${thStyle}">ลำดับ</th>` + cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
             const tbody = pageData.map((row, i) => {
                 const bg = i % 2 === 0 ? '#f5f9ff' : '#fff';
+                const seqCell = `<td style="${tdStyle}text-align:center;">${start + i + 1}</td>`;
                 const cells = cols.map(c => {
                     const val = row[c.k];
                     const display = c.fmt ? c.fmt(val) : (val ?? '-');
                     return `<td style="${tdStyle}">${display}</td>`;
                 }).join('');
-                return `<tr style="background:${bg}">${cells}</tr>`;
+                return `<tr style="background:${bg}">${seqCell}${cells}</tr>`;
             }).join('');
 
-            let pager = '';
-            if (totalPages > 1) {
-                pager = `<div style="display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;">
-                    <button onclick="goToPageIPOP(${currentPageIPOP-1})" ${currentPageIPOP<=1?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">◀</button>
-                    <span style="font-size:13px;color:#546e7a;">หน้า ${currentPageIPOP} / ${totalPages} (${allIpopData.length} รายการ)</span>
-                    <button onclick="goToPageIPOP(${currentPageIPOP+1})" ${currentPageIPOP>=totalPages?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">▶</button>
-                </div>`;
-            }
-
             contentArea.innerHTML = `
-                <div style="font-weight:700;color:#1565c0;margin-bottom:10px;font-size:15px;">📋 IPOp — ${allIpopData.length} รายการ</div>
+                ${buildTableHeaderBar('📋 IPOp', allIpopData.length, currentPageIPOP, totalPages, 'goToPageIPOP', rowsPerPageIPOP, 'changeRowsPerPageIPOP')}
                 <div style="overflow-x:auto;">
                     <table style="border-collapse:collapse;width:100%;min-width:1000px;">
                         <thead style="background:linear-gradient(135deg,#1565c0,#2196f3);color:white;">
@@ -2435,7 +2441,6 @@
                         <tbody>${tbody}</tbody>
                     </table>
                 </div>
-                ${pager}
             `;
         }
 
@@ -2443,6 +2448,12 @@
             const total = Math.ceil(allIpopData.length / rowsPerPageIPOP);
             if (page < 1 || page > total) return;
             currentPageIPOP = page;
+            renderIpopTable();
+        }
+
+        function changeRowsPerPageIPOP(value) {
+            rowsPerPageIPOP = parseInt(value);
+            currentPageIPOP = 1;
             renderIpopTable();
         }
 
