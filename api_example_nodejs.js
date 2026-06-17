@@ -3170,6 +3170,78 @@ app.post('/api/get-ipn-ipadt', async (req, res) => {
     }
 });
 
+// CIPN - IPADT (ข้าราชการผู้ป่วยใน)
+app.post('/api/get-cipn-ipadt', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code } = req.body;
+        const hcode = hipdata_code || 'OFC';
+        let pttypeCond = '';
+        if (selectedPttypes && selectedPttypes.length > 0) {
+            const list = selectedPttypes.map(p => `'${p}'`).join(',');
+            pttypeCond = `AND i.pttype IN (${list})`;
+        }
+        const ph1 = type === 'postgresql' ? '$1' : '?';
+        const ph2 = type === 'postgresql' ? '$2' : '?';
+        const queryStr = `
+            SELECT
+              i.an, i.hn,
+              pc.cardtype AS idtype,
+              p.cid AS pidpat,
+              p.pname AS title,
+              CONCAT(p.fname, ' ', p.lname) AS namepat,
+              p.birthday AS dob,
+              p.sex,
+              p.marrystatus AS marriage,
+              p.chwpart AS changwat,
+              p.amppart AS amphur,
+              p.nationality AS nation,
+              i.ipt_type AS admtype,
+              (CASE
+                WHEN i.ipt_type='1' THEN 'O'
+                WHEN i.ipt_type='3' THEN 'B'
+                WHEN i.ipt_type='2' THEN 'E'
+                ELSE 'O' END) AS admsource,
+              (i.regdate+i.regtime) AS dtadm,
+              (i.dchdate+i.dchtime) AS dtdisch,
+              (ih.dch_date - ih.reg_date) AS leaveday,
+              i.dchstts AS dischstat,
+              i.dchtype AS dischtype,
+              CASE
+                WHEN a.age_y = 0 AND a.age_m = 0 AND a.age_d < 28 THEN ROUND(i.bw / 1000.0, 3)
+                ELSE ROUND(i.bw / 1000.0, 0)
+              END AS admwt,
+              i.ward AS dischwward,
+              s.nhso_code AS dept
+            FROM ipt i
+              LEFT JOIN an_stat a ON a.an = i.an
+              INNER JOIN patient p ON p.hn = i.hn
+              LEFT JOIN ptcardno pc ON pc.hn = p.hn
+              LEFT JOIN ward w ON w.ward = i.ward
+              LEFT JOIN ipt_home_leave ih ON ih.an = i.an
+              LEFT JOIN spclty s ON s.spclty = i.spclty
+            WHERE i.dchdate BETWEEN ${ph1} AND ${ph2}
+            AND i.pttype IN (SELECT pttype FROM pttype WHERE isuse = 'Y' AND ${hipdataFilter(hcode)})
+            ${pttypeCond}
+            ORDER BY i.dchdate, i.an
+        `;
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            const result = await client.query(queryStr, [dateFrom, dateTo]);
+            await client.end();
+            res.json({ success: true, data: result.rows, count: result.rows.length });
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            const [rows] = await connection.execute(queryStr, [dateFrom, dateTo]);
+            await connection.end();
+            res.json({ success: true, data: rows, count: rows.length });
+        }
+    } catch (error) {
+        console.error('CIPN IPADT error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // IPN - IPDX (IPD Diagnosis)
 app.post('/api/get-ipn-ipdx', async (req, res) => {
     try {

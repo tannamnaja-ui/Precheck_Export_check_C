@@ -732,7 +732,9 @@
         window.searchData = async function() {
             const fileType = window.currentFileView || 'all';
 
-            if (fileType === 'billtran') {
+            if (fileType === 'ipadt') {
+                await searchIpadt();
+            } else if (fileType === 'billtran') {
                 await searchBilltran();
             } else if (fileType === 'billitems') {
                 await searchBillitems();
@@ -2100,6 +2102,127 @@
             contentArea.innerHTML = tableHTML;
         }
 
+        // ==================== IPADT ====================
+        let allIpadtData = [];
+        let currentPageIPADT = 1;
+        let rowsPerPageIPADT = 50;
+
+        async function searchIpadt() {
+            const config = getDatabaseConfig();
+            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo   = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('⚠️ กรุณาเลือกวันที่'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลด IPADT...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/get-cipn-ipadt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: window.selectedPttypes || [],
+                        hipdata_code: window.hipdataCode || 'OFC'
+                    })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                allIpadtData = data.data || [];
+                currentPageIPADT = 1;
+                updateStatistics(allIpadtData.length, allIpadtData.length, 0);
+                renderIpadtTable();
+            } catch(e) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${e.message}</p></div>`;
+            }
+        }
+
+        function renderIpadtTable() {
+            const contentArea = document.getElementById('content-area');
+            if (!allIpadtData.length) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>ไม่พบข้อมูล IPADT</h2></div>`;
+                return;
+            }
+
+            const totalPages = Math.ceil(allIpadtData.length / rowsPerPageIPADT);
+            const start = (currentPageIPADT - 1) * rowsPerPageIPADT;
+            const pageData = allIpadtData.slice(start, start + rowsPerPageIPADT);
+
+            const fmtDT = v => v ? String(v).replace('T', ' ').substring(0, 19) : '-';
+
+            const cols = [
+                { k: 'an',        h: 'AN' },
+                { k: 'hn',        h: 'HN' },
+                { k: 'idtype',    h: 'IDTYPE' },
+                { k: 'pidpat',    h: 'PIDPAT' },
+                { k: 'title',     h: 'TITLE' },
+                { k: 'namepat',   h: 'NAMEPAT' },
+                { k: 'dob',       h: 'DOB' },
+                { k: 'sex',       h: 'SEX' },
+                { k: 'marriage',  h: 'MARRIAGE' },
+                { k: 'changwat',  h: 'CHANGWAT' },
+                { k: 'amphur',    h: 'AMPHUR' },
+                { k: 'nation',    h: 'NATION' },
+                { k: 'admtype',   h: 'AdmType' },
+                { k: 'admsource', h: 'AdmSource' },
+                { k: 'dtadm',     h: 'DTAdm',   fmt: fmtDT },
+                { k: 'dtdisch',   h: 'DTDisch',  fmt: fmtDT },
+                { k: 'leaveday',  h: 'LeaveDay' },
+                { k: 'dischstat', h: 'DischStat' },
+                { k: 'dischtype', h: 'DischType' },
+                { k: 'admwt',     h: 'AdmWt' },
+                { k: 'dischwward',h: 'DischWard' },
+                { k: 'dept',      h: 'Dept' },
+            ];
+
+            const thStyle = `padding:8px 10px; border:1px solid #bbdefb; white-space:nowrap; font-size:13px;`;
+            const tdStyle = `padding:7px 10px; border:1px solid #e3f2fd; white-space:nowrap; font-size:13px;`;
+
+            let thead = cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
+            let tbody = pageData.map((row, i) => {
+                const bg = i % 2 === 0 ? '#f5f9ff' : '#fff';
+                const cells = cols.map(c => {
+                    const val = row[c.k];
+                    const display = c.fmt ? c.fmt(val) : (val ?? '-');
+                    return `<td style="${tdStyle}">${display}</td>`;
+                }).join('');
+                return `<tr style="background:${bg}">${cells}</tr>`;
+            }).join('');
+
+            // Pagination
+            let pager = '';
+            if (totalPages > 1) {
+                pager = `<div style="display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;">
+                    <button onclick="goToPageIPADT(${currentPageIPADT-1})" ${currentPageIPADT<=1?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">◀</button>
+                    <span style="font-size:13px;color:#546e7a;">หน้า ${currentPageIPADT} / ${totalPages} (${allIpadtData.length} รายการ)</span>
+                    <button onclick="goToPageIPADT(${currentPageIPADT+1})" ${currentPageIPADT>=totalPages?'disabled':''} style="padding:5px 12px;border:1px solid #90caf9;border-radius:6px;background:#e3f2fd;cursor:pointer;">▶</button>
+                </div>`;
+            }
+
+            contentArea.innerHTML = `
+                <div style="font-weight:700;color:#1565c0;margin-bottom:10px;font-size:15px;">📋 IPADT — ${allIpadtData.length} รายการ</div>
+                <div style="overflow-x:auto;">
+                    <table style="border-collapse:collapse;width:100%;min-width:1400px;">
+                        <thead style="background:linear-gradient(135deg,#1565c0,#2196f3);color:white;">
+                            <tr>${thead}</tr>
+                        </thead>
+                        <tbody>${tbody}</tbody>
+                    </table>
+                </div>
+                ${pager}
+            `;
+        }
+
+        function goToPageIPADT(page) {
+            const total = Math.ceil(allIpadtData.length / rowsPerPageIPADT);
+            if (page < 1 || page > total) return;
+            currentPageIPADT = page;
+            renderIpadtTable();
+        }
+
         // ==================== Rerender Current Menu ====================
 
         function rerenderCurrentMenu() {
@@ -2112,7 +2235,8 @@
             currentPageOX = 1;
 
             const fileType = window.currentFileView || 'all';
-            if (fileType === 'billtran')           renderBilltranTable();
+            if (fileType === 'ipadt')              renderIpadtTable();
+            else if (fileType === 'billtran')      renderBilltranTable();
             else if (fileType === 'billitems')     renderBillitemsTable();
             else if (fileType === 'opservice')     renderOpserviceTable();
             else if (fileType === 'dispenseditem') renderDispenseditemTable();
