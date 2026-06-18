@@ -738,6 +738,8 @@
                 await searchIpdx();
             } else if (fileType === 'ipop') {
                 await searchIpop();
+            } else if (fileType === 'invoices') {
+                await searchInvoices();
             } else if (fileType === 'billtran') {
                 await searchBilltran();
             } else if (fileType === 'billitems') {
@@ -2457,6 +2459,113 @@
             renderIpopTable();
         }
 
+        // ==================== Invoices ====================
+        let allInvoicesData = [];
+        let currentPageINV = 1;
+        let rowsPerPageINV = 20;
+
+        async function searchInvoices() {
+            const config = getDatabaseConfig();
+            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo   = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('⚠️ กรุณาเลือกวันที่'); return; }
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลด Invoices...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/get-cipn-invoices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo,
+                        selectedPttypes: window.selectedPttypes || [],
+                        hipdata_code: window.hipdataCode || 'OFC'
+                    })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                allInvoicesData = data.data || [];
+                currentPageINV = 1;
+                updateStatistics(allInvoicesData.length, allInvoicesData.length, 0);
+                renderInvoicesTable();
+            } catch(e) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${e.message}</p></div>`;
+            }
+        }
+
+        function renderInvoicesTable() {
+            const contentArea = document.getElementById('content-area');
+            if (!allInvoicesData.length) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>ไม่พบข้อมูล Invoices</h2></div>`;
+                return;
+            }
+
+            const totalPages = Math.ceil(allInvoicesData.length / rowsPerPageINV);
+            const start = (currentPageINV - 1) * rowsPerPageINV;
+            const pageData = allInvoicesData.slice(start, start + rowsPerPageINV);
+
+            const fmtD = v => v ? String(v).substring(0, 10) : '-';
+            const fmtMoney = v => v != null ? parseFloat(v).toFixed(2) : '-';
+
+            const cols = [
+                { k: 'dchdate',         h: 'DchDate',        fmt: fmtD },
+                { k: 'ptname',          h: 'ชื่อ-สกุล' },
+                { k: 'an',              h: 'AN' },
+                { k: 'hn',              h: 'HN' },
+                { k: 'invoice',         h: 'Invoice',        fmt: fmtMoney },
+                { k: 'invnumber',       h: 'InvNumber' },
+                { k: 'invdt',           h: 'InvDT',          fmt: fmtD },
+                { k: 'bllitem',         h: 'BllItem' },
+                { k: 'invadddiscount',  h: 'InvAddDiscount', fmt: fmtMoney },
+                { k: 'drgcharge',       h: 'DrgCharge',      fmt: fmtMoney },
+                { k: 'xdrgclaim',       h: 'XDRGClaim',      fmt: fmtMoney },
+            ];
+
+            const thStyle = `padding:8px 10px; border:1px solid #bbdefb; white-space:nowrap; font-size:13px;`;
+            const tdStyle = `padding:7px 10px; border:1px solid #e3f2fd; white-space:nowrap; font-size:13px;`;
+
+            const thead = `<th style="${thStyle}">ลำดับ</th>` + cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
+            const tbody = pageData.map((row, i) => {
+                const bg = i % 2 === 0 ? '#f5f9ff' : '#fff';
+                const seqCell = `<td style="${tdStyle}text-align:center;">${start + i + 1}</td>`;
+                const cells = cols.map(c => {
+                    const val = row[c.k];
+                    const display = c.fmt ? c.fmt(val) : (val ?? '-');
+                    return `<td style="${tdStyle}">${display}</td>`;
+                }).join('');
+                return `<tr style="background:${bg}">${seqCell}${cells}</tr>`;
+            }).join('');
+
+            contentArea.innerHTML = `
+                ${buildTableHeaderBar('📋 Invoices', allInvoicesData.length, currentPageINV, totalPages, 'goToPageINV', rowsPerPageINV, 'changeRowsPerPageINV')}
+                <div style="overflow-x:auto;">
+                    <table style="border-collapse:collapse;width:100%;min-width:1100px;">
+                        <thead style="background:linear-gradient(135deg,#1565c0,#2196f3);color:white;">
+                            <tr>${thead}</tr>
+                        </thead>
+                        <tbody>${tbody}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function goToPageINV(page) {
+            const total = Math.ceil(allInvoicesData.length / rowsPerPageINV);
+            if (page < 1 || page > total) return;
+            currentPageINV = page;
+            renderInvoicesTable();
+        }
+
+        function changeRowsPerPageINV(value) {
+            rowsPerPageINV = parseInt(value);
+            currentPageINV = 1;
+            renderInvoicesTable();
+        }
+
         // ==================== Rerender Current Menu ====================
 
         function rerenderCurrentMenu() {
@@ -2472,6 +2581,7 @@
             if (fileType === 'ipadt')              renderIpadtTable();
             else if (fileType === 'ipdx')          renderIpdxTable();
             else if (fileType === 'ipop')          renderIpopTable();
+            else if (fileType === 'invoices')      renderInvoicesTable();
             else if (fileType === 'billtran')      renderBilltranTable();
             else if (fileType === 'billitems')     renderBillitemsTable();
             else if (fileType === 'opservice')     renderOpserviceTable();

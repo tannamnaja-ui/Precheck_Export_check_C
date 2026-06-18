@@ -3351,6 +3351,66 @@ app.post('/api/get-cipn-ipop', async (req, res) => {
     }
 });
 
+// CIPN - Invoices (ข้าราชการผู้ป่วยใน ใบแจ้งหนี้)
+app.post('/api/get-cipn-invoices', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code } = req.body;
+        const hcode = hipdata_code || 'OFC';
+        let pttypeCond = '';
+        if (selectedPttypes && selectedPttypes.length > 0) {
+            const list = selectedPttypes.map(p => `'${p}'`).join(',');
+            pttypeCond = `AND i.pttype IN (${list})`;
+        }
+        const ph1 = type === 'postgresql' ? '$1' : '?';
+        const ph2 = type === 'postgresql' ? '$2' : '?';
+        const queryStr = `
+            SELECT
+              i.dchdate,
+              CONCAT(p.fname, ' ', p.lname) AS ptname,
+              i.an, i.hn,
+              rd.total_amount AS invoice,
+              rd.debt_id AS invnumber,
+              rd.debt_date AS invdt,
+              COUNT(opi.icode) AS bllitem,
+              rd.discount_amount AS invadddiscount,
+              (SELECT SUM(op.sum_price - op.discount)
+               FROM opitemrece op
+               LEFT JOIN nondrugitems_sks_bc nb ON nb.icode = op.icode
+               WHERE op.an = i.an AND nb.claim_cat = 'D') AS drgcharge,
+              (SELECT SUM(op.sum_price - op.discount)
+               FROM opitemrece op
+               LEFT JOIN nondrugitems_sks_bc nb ON nb.icode = op.icode
+               WHERE op.an = i.an AND nb.claim_cat = 'T') AS xdrgclaim
+            FROM ipt i
+              INNER JOIN patient p ON p.hn = i.hn
+              LEFT OUTER JOIN rcpt_debt rd ON rd.vn = i.an
+              INNER JOIN pttype ptt ON ptt.pttype = rd.pttype
+              LEFT OUTER JOIN opitemrece opi ON opi.an = rd.vn
+            WHERE i.dchdate BETWEEN ${ph1} AND ${ph2}
+            AND i.pttype IN (SELECT pttype FROM pttype WHERE isuse = 'Y' AND ${hipdataFilter(hcode)})
+            ${pttypeCond}
+            AND rd.total_amount > 0
+            GROUP BY i.dchdate, ptname, i.an, i.hn, rd.vn, rd.total_amount, rd.debt_id, rd.debt_date, rd.discount_amount
+            ORDER BY i.dchdate
+        `;
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            const result = await client.query(queryStr, [dateFrom, dateTo]);
+            await client.end();
+            res.json({ success: true, data: result.rows, count: result.rows.length });
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            const [rows] = await connection.execute(queryStr, [dateFrom, dateTo]);
+            await connection.end();
+            res.json({ success: true, data: rows, count: rows.length });
+        }
+    } catch (error) {
+        console.error('CIPN Invoices error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // IPN - IPDX (IPD Diagnosis)
 app.post('/api/get-ipn-ipdx', async (req, res) => {
     try {
