@@ -3411,6 +3411,74 @@ app.post('/api/get-cipn-invoices', async (req, res) => {
     }
 });
 
+// CIPN - BillItems (ข้าราชการผู้ป่วยใน รายการในบิล)
+app.post('/api/get-cipn-billitems', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code } = req.body;
+        const hcode = hipdata_code || 'OFC';
+        let pttypeCond = '';
+        if (selectedPttypes && selectedPttypes.length > 0) {
+            const list = selectedPttypes.map(p => `'${p}'`).join(',');
+            pttypeCond = `AND i.pttype IN (${list})`;
+        }
+        const ph1 = type === 'postgresql' ? '$1' : '?';
+        const ph2 = type === 'postgresql' ? '$2' : '?';
+        const queryStr = `
+            SELECT
+              i.dchdate,
+              CONCAT(p.fname, ' ', p.lname) AS ptname,
+              i.an, i.hn,
+              ROW_NUMBER() OVER (ORDER BY op.an) AS sequence,
+              op.rxdate AS servdate,
+              op.income AS billgr,
+              op.icode AS lccode,
+              CONCAT(nd.name, ' (', nd.unit, ')') AS descript,
+              op.qty,
+              op.unitprice AS unitprice,
+              (op.qty * op.unitprice) AS chargeamt,
+              (op.sum_price - op.discount) AS discount,
+              'Null' AS procedureseq,
+              'Null' AS diagnosisseq,
+              'CS' AS claimsys,
+              ns.income AS billgrcs,
+              (CASE WHEN op.icode LIKE '1%' THEN d.sks_drug_code
+                    WHEN op.icode LIKE '3%' THEN nd.billcode
+                    ELSE '' END) AS cscode,
+              'Null' AS codesys,
+              'Null' AS stdcode,
+              ns.claim_cat AS claimcat,
+              ns.rev_date AS daterev,
+              'Null' AS claimup,
+              'Null' AS claimamt
+            FROM ipt i
+              INNER JOIN patient p ON p.hn = i.hn
+              INNER JOIN opitemrece op ON op.an = i.an
+              INNER JOIN s_drugitems s ON s.icode = op.icode
+              LEFT JOIN nondrugitems nd ON nd.icode = s.icode
+              LEFT JOIN drugitems d ON d.icode = s.icode
+              LEFT JOIN nondrugitems_sks_bc ns ON ns.icode = nd.icode
+            WHERE i.dchdate BETWEEN ${ph1} AND ${ph2}
+            AND i.pttype IN (SELECT pttype FROM pttype WHERE isuse = 'Y' AND ${hipdataFilter(hcode)})
+            ${pttypeCond}
+        `;
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            const result = await client.query(queryStr, [dateFrom, dateTo]);
+            await client.end();
+            res.json({ success: true, data: result.rows, count: result.rows.length });
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            const [rows] = await connection.execute(queryStr, [dateFrom, dateTo]);
+            await connection.end();
+            res.json({ success: true, data: rows, count: rows.length });
+        }
+    } catch (error) {
+        console.error('CIPN BillItems error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // IPN - IPDX (IPD Diagnosis)
 app.post('/api/get-ipn-ipdx', async (req, res) => {
     try {

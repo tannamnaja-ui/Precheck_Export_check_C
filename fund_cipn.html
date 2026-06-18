@@ -1740,56 +1740,36 @@
         let allBillitemsData = [];
 
         async function searchBillitems() {
+            const config = getDatabaseConfig();
+            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
             const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-
-            if (!dateFrom || !dateTo) {
-                alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด');
-                return;
-            }
-
-            const hipdataCode = window.hipdataCode || 'OFC';
-            const selectedPttypes = getSelectedPttypes();
+            const dateTo   = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('⚠️ กรุณาเลือกวันที่'); return; }
 
             const contentArea = document.getElementById('content-area');
-            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลดข้อมูล BillItems...</h2><p>กรุณารอสักครู่</p></div>`;
+            contentArea.innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลด BillItems...</h2><p>กรุณารอสักครู่</p></div>`;
 
             try {
-                const config = getDatabaseConfig();
-                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
-
-                const response = await fetch(`${API_BASE}/api/get-billitems`, {
+                const res = await fetch(`${API_BASE}/api/get-cipn-billitems`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes, hipdata_code: hipdataCode
+                        dateFrom, dateTo,
+                        selectedPttypes: getSelectedPttypes(),
+                        hipdata_code: window.hipdataCode || 'OFC'
                     })
                 });
-
-                const result = await response.json();
-                if (result.success && result.data) {
-                    const checkFields = ['check_debt_id','check_billmuad','check_stdcode','check_qty','check_up','check_chargeamt','check_claimup','check_claimamount'];
-                    const needfix = result.data.filter(row => checkFields.some(k => row[k] === 'N')).length;
-                    updateStatistics(result.data.length, result.data.length - needfix, needfix);
-                    displayBillitemsTable(result.data);
-                } else {
-                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
-                }
-            } catch (error) {
-                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                allBillitemsData = data.data || [];
+                currentPageBI = 1;
+                updateStatistics(allBillitemsData.length, allBillitemsData.length, 0);
+                renderBillitemsTable();
+            } catch(e) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${e.message}</p></div>`;
             }
-        }
-
-        function displayBillitemsTable(data) {
-            if (data.length === 0) {
-                showBillitemsHeaders();
-                return;
-            }
-            allBillitemsData = data;
-            currentPageBI = 1;
-            renderBillitemsTable();
         }
 
         function changeRowsPerPageBI(value) {
@@ -1799,121 +1779,73 @@
         }
 
         function goToPageBI(page) {
-            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
-            const hasRedCellBI = (row) => ['check_debt_id','check_billmuad','check_stdcode','check_qty','check_up','check_chargeamt','check_claimup','check_claimamount'].some(k => row[k] === 'N');
-            const filteredData = showErrorsOnly ? allBillitemsData.filter(hasRedCellBI) : allBillitemsData;
-            const totalPages = Math.ceil(filteredData.length / rowsPerPageBI);
+            const totalPages = Math.ceil(allBillitemsData.length / rowsPerPageBI);
             if (page < 1 || page > totalPages) return;
             currentPageBI = page;
             renderBillitemsTable();
-            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function renderBillitemsTable() {
             const contentArea = document.getElementById('content-area');
-            const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
-            const hasRedCellBI = (row) => ['check_debt_id','check_billmuad','check_stdcode','check_qty','check_up','check_chargeamt','check_claimup','check_claimamount'].some(k => row[k] === 'N');
-            const filteredData = showErrorsOnly ? allBillitemsData.filter(hasRedCellBI) : allBillitemsData;
-            const effectiveRowsPerPage = rowsPerPageBI;
-            const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
-            const startIndex = (currentPageBI - 1) * effectiveRowsPerPage;
-            const endIndex = Math.min(startIndex + effectiveRowsPerPage, filteredData.length);
-            const pageData = filteredData.slice(startIndex, endIndex);
+            if (!allBillitemsData.length) {
+                contentArea.innerHTML = `<div class="welcome-message"><h2>ไม่พบข้อมูล BillItems</h2></div>`;
+                return;
+            }
 
-            const cell = (value, checkValue) => {
-                const bg = checkValue === 'N' ? 'background:#f44336; color:white;' : '';
-                return `<td style="padding:8px; border:1px solid #e3f2fd; ${bg}">${value ?? '-'}</td>`;
-            };
-            const checkCell = (checkValue) => {
-                const color = checkValue === 'Y' ? '#4caf50' : '#f44336';
-                return `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><span style="color:${color}; font-weight:bold;">${checkValue ?? '-'}</span></td>`;
-            };
+            const totalPages = Math.ceil(allBillitemsData.length / rowsPerPageBI);
+            const start = (currentPageBI - 1) * rowsPerPageBI;
+            const pageData = allBillitemsData.slice(start, start + rowsPerPageBI);
 
-            const biTitle = `📋 BillItems - รายการในบิล${showErrorsOnly ? ' (' + filteredData.length.toLocaleString() + ' / ทั้งหมด ' + allBillitemsData.length.toLocaleString() + ')' : ''}`;
-            let tableHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:12px;">
-                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-                        <h3 style="color:#1565c0; margin:0; font-size:15px; white-space:nowrap;">${biTitle} — ${filteredData.length.toLocaleString()} รายการ</h3>
-                        ${buildPageButtons(currentPageBI, totalPages, 'goToPageBI')}
-                    </div>
-                    <div style="display:flex; gap:12px; align-items:center;">
-                        <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        ${buildRowsPerPageSelect(rowsPerPageBI, 'changeRowsPerPageBI')}
-                    </div>
-                </div>
+            const fmtD = v => v ? String(v).substring(0, 10) : '-';
+            const fmtMoney = v => v != null && v !== 'Null' ? parseFloat(v).toFixed(2) : (v ?? '-');
+
+            const cols = [
+                { k: 'dchdate',      h: 'DchDate',      fmt: fmtD },
+                { k: 'ptname',       h: 'ชื่อ-สกุล' },
+                { k: 'an',           h: 'AN' },
+                { k: 'hn',           h: 'HN' },
+                { k: 'sequence',     h: 'SEQ' },
+                { k: 'servdate',     h: 'ServDate',     fmt: fmtD },
+                { k: 'billgr',       h: 'BillGr' },
+                { k: 'lccode',       h: 'LCCode' },
+                { k: 'descript',     h: 'Descript' },
+                { k: 'qty',          h: 'QTY' },
+                { k: 'unitprice',    h: 'UnitPrice',    fmt: fmtMoney },
+                { k: 'chargeamt',    h: 'ChargeAmt',    fmt: fmtMoney },
+                { k: 'discount',     h: 'Discount',     fmt: fmtMoney },
+                { k: 'claimsys',     h: 'ClaimSys' },
+                { k: 'billgrcs',     h: 'BillGrCS' },
+                { k: 'cscode',       h: 'CSCode' },
+                { k: 'claimcat',     h: 'ClaimCat' },
+                { k: 'daterev',      h: 'DateRev',      fmt: fmtD },
+            ];
+
+            const thStyle = `padding:8px 10px; border:1px solid #bbdefb; white-space:nowrap; font-size:13px;`;
+            const tdStyle = `padding:7px 10px; border:1px solid #e3f2fd; white-space:nowrap; font-size:13px;`;
+
+            const thead = `<th style="${thStyle}">ลำดับ</th>` + cols.map(c => `<th style="${thStyle}">${c.h}</th>`).join('');
+            const tbody = pageData.map((row, i) => {
+                const bg = i % 2 === 0 ? '#f5f9ff' : '#fff';
+                const seqCell = `<td style="${tdStyle}text-align:center;">${start + i + 1}</td>`;
+                const cells = cols.map(c => {
+                    const val = row[c.k];
+                    const display = c.fmt ? c.fmt(val) : (val ?? '-');
+                    return `<td style="${tdStyle}">${display}</td>`;
+                }).join('');
+                return `<tr style="background:${bg}">${seqCell}${cells}</tr>`;
+            }).join('');
+
+            contentArea.innerHTML = `
+                ${buildTableHeaderBar('📋 BillItems', allBillitemsData.length, currentPageBI, totalPages, 'goToPageBI', rowsPerPageBI, 'changeRowsPerPageBI', '<button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>')}
                 <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
-                        <thead>
-                            <tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ลำดับ</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">HN</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อ-สกุล</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">VN</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">INVNO</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">วันที่</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BILLMUAD</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ICODE</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">STDCODE</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ชื่อค่าใช้จ่าย</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">QTY</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">UP</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CHARGEAMT</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMUP</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMOUNT</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">SVREFID</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMCAT</th>
-                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">ENABLE_SKS_OPD</th>
-                            </tr>
+                    <table style="border-collapse:collapse;width:100%;min-width:1300px;">
+                        <thead style="background:linear-gradient(135deg,#1565c0,#2196f3);color:white;">
+                            <tr>${thead}</tr>
                         </thead>
-                        <tbody>
+                        <tbody>${tbody}</tbody>
+                    </table>
+                </div>
             `;
-
-            pageData.forEach((row, index) => {
-                const actualIndex = startIndex + index + 1;
-                tableHTML += `
-                    <tr>
-                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${actualIndex}</td>
-                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.hn || '-'}</td>
-                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.ptname || '-'}</td>
-                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.vn || '-'}</td>
-                        ${cell(row.invno, row.check_debt_id)}
-                        ${checkCell(row.check_debt_id)}
-                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${fmtDate(row.vstdate)}</td>
-                        ${cell(row.billmuad, row.check_billmuad)}
-                        ${checkCell(row.check_billmuad)}
-                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.icode || '-'}</td>
-                        ${cell(row.stdcode, row.check_stdcode)}
-                        ${checkCell(row.check_stdcode)}
-                        <td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${row.desc || row['desc'] || '-'}</td>
-                        ${cell(row.qty, row.check_qty)}
-                        ${checkCell(row.check_qty)}
-                        ${cell(row.up != null ? parseFloat(row.up).toFixed(2) : null, row.check_up)}
-                        ${checkCell(row.check_up)}
-                        ${cell(row.chargeamt != null ? parseFloat(row.chargeamt).toFixed(2) : null, row.check_chargeamt)}
-                        ${checkCell(row.check_chargeamt)}
-                        ${cell(row.claimup != null ? parseFloat(row.claimup).toFixed(2) : null, row.check_claimup)}
-                        ${checkCell(row.check_claimup)}
-                        ${cell(row.claimamount != null ? parseFloat(row.claimamount).toFixed(2) : null, row.check_claimamount)}
-                        ${checkCell(row.check_claimamount)}
-                        <td style="padding:8px; border:1px solid #e3f2fd;">${row.svrefid || '-'}</td>
-                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${row.claimcat || '-'}</td>
-                        <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${row.enable_sks_opd || '-'}</td>
-                    </tr>
-                `;
-            });
-
-            tableHTML += `</tbody></table></div>
-                <div style="margin-top:12px; color:#546e7a; font-size:13px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
-            `;
-            contentArea.innerHTML = tableHTML;
         }
 
         // ==================== OPDx ====================
