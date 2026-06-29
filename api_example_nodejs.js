@@ -51,7 +51,11 @@ app.use('/new_finance_dashboard', (req, res) => {
     res.sendFile(path.join(dashboardDist, 'index.html'));
 });
 
-app.use(express.static(staticDir));
+app.use(express.static(staticDir, {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-store');
+    }
+}));
 
 // Helper: build hipdata_code filter (FDH uses UCS+WEL)
 function hipdataFilter(code) {
@@ -6064,6 +6068,111 @@ app.post('/api/get-c566', async (req, res) => {
         res.json({ success: true, data: normalized, count: normalized.length });
     } catch (error) {
         console.error('C566 error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// FDH - ตัด walkin คู่ CANCER (visit เดียวกันมีทั้ง nhso_adp_code='WALKIN' และ 'CANCER')
+app.post('/api/get-fdh-walkin-ca', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo } = req.body;
+        const isPg = type === 'postgresql';
+        const [ph1, ph2] = isPg ? ['$1', '$2'] : ['?', '?'];
+
+        const buildQuery = () => `
+            SELECT DISTINCT
+                op.vstdate AS "วันที่รับบริการ",
+                op.hn AS "HN",
+                CONCAT(p.pname, p.fname, ' ', p.lname) AS "ชื่อ-นามสกุล",
+                op.vn AS "VN"
+            FROM opitemrece op
+            INNER JOIN patient p ON p.hn = op.hn
+            WHERE op.vstdate BETWEEN ${ph1} AND ${ph2}
+                AND EXISTS (
+                    SELECT 1
+                    FROM opitemrece o2
+                    JOIN nondrugitems n2 ON n2.icode = o2.icode
+                    WHERE o2.vn = op.vn
+                        AND o2.vstdate BETWEEN ${ph1} AND ${ph2}
+                        AND n2.nhso_adp_code = 'WALKIN'
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM opitemrece o3
+                    JOIN nondrugitems n3 ON n3.icode = o3.icode
+                    WHERE o3.vn = op.vn
+                        AND o3.vstdate BETWEEN ${ph1} AND ${ph2}
+                        AND n3.nhso_adp_code = 'CANCER'
+                )
+            ORDER BY op.vstdate, op.vn
+        `;
+
+        let rows;
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            const result = await client.query(buildQuery(), [dateFrom, dateTo]);
+            await client.end();
+            rows = result.rows;
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            const [r] = await connection.execute(buildQuery().replace(/\$1/g,'?').replace(/\$2/g,'?'), [dateFrom, dateTo, dateFrom, dateTo, dateFrom, dateTo]);
+            await connection.end();
+            rows = r;
+        }
+        const normVal = v => {
+            if (v instanceof Date) {
+                const y = v.getFullYear();
+                const m = String(v.getMonth()+1).padStart(2,'0');
+                const d = String(v.getDate()).padStart(2,'0');
+                return `${y}-${m}-${d}`;
+            }
+            return v;
+        };
+        const normalized = rows.map(r => { const o={}; Object.keys(r).forEach(k=>{ o[k]=normVal(r[k]); }); return o; });
+        res.json({ success: true, data: normalized, count: normalized.length });
+    } catch (error) {
+        console.error('FDH walkin-ca error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// FDH - ลบรายการ WALKIN ออกจาก opitemrece สำหรับ VN ที่เลือก (ใช้กับเมนู ตัด walkin คู่ CA)
+app.post('/api/delete-fdh-walkin-items', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, vns } = req.body;
+        if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+
+        let deleted = 0, failed = 0, errors = [];
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            for (const vn of vns) {
+                try {
+                    await client.query(
+                        `DELETE FROM opitemrece WHERE vn = $1 AND icode IN (SELECT icode FROM nondrugitems WHERE nhso_adp_code = 'WALKIN')`,
+                        [vn]
+                    );
+                    deleted++;
+                } catch(e) { failed++; errors.push(`${vn}: ${e.message}`); }
+            }
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            for (const vn of vns) {
+                try {
+                    await connection.execute(
+                        `DELETE FROM opitemrece WHERE vn = ? AND icode IN (SELECT icode FROM nondrugitems WHERE nhso_adp_code = 'WALKIN')`,
+                        [vn]
+                    );
+                    deleted++;
+                } catch(e) { failed++; errors.push(`${vn}: ${e.message}`); }
+            }
+            await connection.end();
+        }
+        res.json({ success: true, deleted, failed, errors });
+    } catch (error) {
+        console.error('FDH delete walkin items error:', error);
         res.json({ success: false, error: error.message });
     }
 });
