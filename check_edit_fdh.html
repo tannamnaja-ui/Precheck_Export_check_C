@@ -723,28 +723,55 @@
                 <h2>📂 นำเข้าไฟล์ ADP (DBF)</h2>
                 <p>นำเข้าไฟล์ ADP (.dbf) เพื่อหาเรคคอร์ด code 30001 ที่เข้าเงื่อนไข: ไฟล์มียา Morphine (TMLTCODE) อยู่ หรือ เรคคอร์ดนั้น total = 0</p>
                 ${extraMsg ? `<p style="color:#1565c0; font-weight:600;">${extraMsg}</p>` : ''}
-                <div style="display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;">
-                    <button onclick="importAdpDbfFile()" style="padding:12px 28px; background:linear-gradient(135deg,#ff9800,#f57c00); color:white; border:none; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer;">
-                        📂 นำเข้าไฟล์ DBF
-                    </button>
+
+                <!-- Drop zone หลัก — ใช้วิธีนี้เสมอ ไม่ถูก Chrome บล็อก -->
+                <div id="adp-drop-zone"
+                     ondragover="event.preventDefault(); this.style.borderColor='#ff9800'; this.style.background='#fff8e1'; this.style.transform='scale(1.01)';"
+                     ondragleave="this.style.borderColor='#ff9800'; this.style.background='#fff3e0'; this.style.transform='';"
+                     ondrop="handleAdpDrop(event)"
+                     style="border:3px dashed #ff9800; border-radius:14px; padding:40px 24px; margin:18px 0 10px 0; text-align:center; background:#fff3e0; transition:all 0.2s; cursor:pointer; user-select:none;"
+                     onclick="importAdpDbfFile()">
+                    <div style="font-size:48px; margin-bottom:10px;">🗂️</div>
+                    <div style="font-size:18px; font-weight:700; color:#e65100; margin-bottom:6px;">ลากไฟล์ .dbf มาวางที่นี่</div>
+                    <div style="font-size:14px; color:#bf360c; margin-bottom:12px;">หรือคลิกเพื่อเลือกไฟล์</div>
+                    <div style="font-size:12px; color:#9e9e9e; background:#fff; border-radius:8px; padding:6px 14px; display:inline-block;">
+                        💡 วิธีนี้เปิดไฟล์ได้ทุกโฟลเดอร์ รวมถึงโฟลเดอร์ที่ Chrome บล็อก
+                    </div>
+                </div>
+                <input type="file" id="adp-dbf-fallback-input" accept="*" style="display:none;" onchange="handleAdpDbfFallbackInput(event)">
+                <div style="text-align:center; margin-top:8px;">
                     ${renderAdpDbfSaveButton()}
                 </div>
-                <input type="file" id="adp-dbf-fallback-input" accept=".dbf" style="display:none;" onchange="handleAdpDbfFallbackInput(event)">
             </div>`;
         }
 
         function renderAdpDbfSaveButton() {
             if (!window._adpDbfModified) return '';
             return `<button onclick="saveAdpDbfFile()" style="padding:12px 28px; background:linear-gradient(135deg,#2e7d32,#1b5e20); color:white; border:none; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer;">
-                💾 บันทึกไฟล์ที่แก้ไข (DBF)
+                💾 ดาวน์โหลดไฟล์ที่แก้ไข (ชื่อเดิม)
             </button>`;
         }
 
-        // ใช้ <input type="file"> เสมอ — showOpenFilePicker บล็อก .dbf บน Chrome
+        // คลิกปุ่ม → เปิด file picker (accept=* ไม่ระบุ type เพื่อลดการบล็อกจาก Chrome)
         async function importAdpDbfFile() {
             window._adpDbfHandle = null;
             const input = document.getElementById('adp-dbf-fallback-input');
             if (input) { input.value = ''; input.click(); }
+        }
+
+        // Drag & drop — ไม่ถูกบล็อกโดย Chrome แม้ไฟล์อยู่ใน system folder
+        function handleAdpDrop(ev) {
+            ev.preventDefault();
+            const zone = document.getElementById('adp-drop-zone');
+            if (zone) { zone.style.borderColor = '#bdbdbd'; zone.style.background = '#fafafa'; }
+            const file = ev.dataTransfer.files[0];
+            if (!file) return;
+            if (!file.name.toLowerCase().endsWith('.dbf')) {
+                alert('⚠️ กรุณาลากเฉพาะไฟล์ .dbf'); return;
+            }
+            window._adpDbfHandle = null;
+            window._adpDbfFileName = file.name;
+            processAdpDbfFile(file);
         }
 
         async function handleAdpDbfFallbackInput(ev) {
@@ -906,39 +933,20 @@
             document.getElementById('content-area').innerHTML = html;
         }
 
-        // บันทึกไฟล์ DBF ที่แก้ไขแล้ว — ใช้ showSaveFilePicker (Chrome/Edge) หรือ download fallback
+        // ดาวน์โหลดไฟล์ DBF ที่แก้ไขแล้วด้วยชื่อเดิม (ไม่ใช้ File System Access API เพื่อหลีกเลี่ยงการบล็อก)
         async function saveAdpDbfFile() {
             const buffer = window._adpDbfLatestBuffer;
             if (!buffer) { alert('⚠️ ไม่มีข้อมูลที่แก้ไขให้บันทึก'); return; }
             try {
-                if (window.showSaveFilePicker) {
-                    try {
-                        const handle = await window.showSaveFilePicker({
-                            suggestedName: window._adpDbfFileName || 'ADP.dbf',
-                            types: [{ description: 'DBF files', accept: { 'application/octet-stream': ['.dbf'] } }]
-                        });
-                        const writable = await handle.createWritable();
-                        await writable.write(buffer);
-                        await writable.close();
-                        window._adpDbfModified = false;
-                        alert(`✅ บันทึกไฟล์สำเร็จ: ${handle.name}`);
-                        if (window._adpDbfCases && window._adpDbfCases.length) renderAdpMorphineTable();
-                        else document.getElementById('content-area').innerHTML = renderAdpDbfWelcome();
-                        return;
-                    } catch(saveErr) {
-                        if (saveErr.name === 'AbortError') return;
-                        // fall through to download
-                    }
-                }
-                // Download fallback
+                const fileName = window._adpDbfFileName || 'ADP.dbf';
                 const blob = new Blob([buffer], { type: 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url; a.download = window._adpDbfFileName || 'ADP.dbf';
+                a.href = url; a.download = fileName;
                 document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 window._adpDbfModified = false;
-                alert(`✅ ดาวน์โหลดไฟล์ที่แก้ไขแล้ว: ${window._adpDbfFileName || 'ADP.dbf'}\nกรุณานำไฟล์ที่ดาวน์โหลดไปทับไฟล์เดิมด้วยตนเอง`);
+                alert(`✅ ดาวน์โหลดไฟล์สำเร็จ: ${fileName}\nนำไฟล์นี้ไปทับไฟล์เดิมที่โฟลเดอร์ต้นทาง`);
                 if (window._adpDbfCases && window._adpDbfCases.length) renderAdpMorphineTable();
                 else document.getElementById('content-area').innerHTML = renderAdpDbfWelcome();
             } catch(err) {
