@@ -736,28 +736,15 @@
         function renderAdpDbfSaveButton() {
             if (!window._adpDbfModified) return '';
             return `<button onclick="saveAdpDbfFile()" style="padding:12px 28px; background:linear-gradient(135deg,#2e7d32,#1b5e20); color:white; border:none; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer;">
-                💾 บันทึกทับไฟล์เดิม (DBF)
+                💾 บันทึกไฟล์ที่แก้ไข (DBF)
             </button>`;
         }
 
-        // เปิดเลือกไฟล์ — ใช้ File System Access API ถ้าเบราว์เซอร์รองรับ (เพื่อให้บันทึกทับไฟล์เดิมได้โดยตรง)
+        // ใช้ <input type="file"> เสมอ — showOpenFilePicker บล็อก .dbf บน Chrome
         async function importAdpDbfFile() {
-            try {
-                if (window.showOpenFilePicker) {
-                    const [handle] = await window.showOpenFilePicker({
-                        types: [{ description: 'DBF files', accept: { 'application/octet-stream': ['.dbf'] } }]
-                    });
-                    window._adpDbfHandle = handle;
-                    const file = await handle.getFile();
-                    window._adpDbfFileName = file.name;
-                    await processAdpDbfFile(file);
-                } else {
-                    window._adpDbfHandle = null;
-                    document.getElementById('adp-dbf-fallback-input')?.click();
-                }
-            } catch(err) {
-                if (err.name !== 'AbortError') alert('❌ ' + err.message);
-            }
+            window._adpDbfHandle = null;
+            const input = document.getElementById('adp-dbf-fallback-input');
+            if (input) { input.value = ''; input.click(); }
         }
 
         async function handleAdpDbfFallbackInput(ev) {
@@ -919,27 +906,39 @@
             document.getElementById('content-area').innerHTML = html;
         }
 
-        // บันทึกไฟล์ DBF ที่แก้ไขแล้วทับไฟล์เดิม (ใช้ File System Access API ถ้ารองรับ — ไม่รองรับจะดาวน์โหลดให้แทน)
+        // บันทึกไฟล์ DBF ที่แก้ไขแล้ว — ใช้ showSaveFilePicker (Chrome/Edge) หรือ download fallback
         async function saveAdpDbfFile() {
             const buffer = window._adpDbfLatestBuffer;
             if (!buffer) { alert('⚠️ ไม่มีข้อมูลที่แก้ไขให้บันทึก'); return; }
             try {
-                if (window._adpDbfHandle && window._adpDbfHandle.createWritable) {
-                    const writable = await window._adpDbfHandle.createWritable();
-                    await writable.write(buffer);
-                    await writable.close();
-                    window._adpDbfModified = false;
-                    alert(`✅ บันทึกทับไฟล์เดิมสำเร็จ: ${window._adpDbfFileName}`);
-                } else {
-                    const blob = new Blob([buffer], { type: 'application/octet-stream' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url; a.download = window._adpDbfFileName || 'ADP.dbf';
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    window._adpDbfModified = false;
-                    alert('⚠️ เบราว์เซอร์นี้ไม่รองรับการบันทึกทับไฟล์เดิมโดยตรง ระบบดาวน์โหลดไฟล์ที่แก้ไขแล้วให้แทน กรุณานำไฟล์ไปทับไฟล์เดิมด้วยตนเอง (ใช้ Chrome หรือ Edge เพื่อบันทึกทับไฟล์เดิมได้โดยตรง)');
+                if (window.showSaveFilePicker) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: window._adpDbfFileName || 'ADP.dbf',
+                            types: [{ description: 'DBF files', accept: { 'application/octet-stream': ['.dbf'] } }]
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(buffer);
+                        await writable.close();
+                        window._adpDbfModified = false;
+                        alert(`✅ บันทึกไฟล์สำเร็จ: ${handle.name}`);
+                        if (window._adpDbfCases && window._adpDbfCases.length) renderAdpMorphineTable();
+                        else document.getElementById('content-area').innerHTML = renderAdpDbfWelcome();
+                        return;
+                    } catch(saveErr) {
+                        if (saveErr.name === 'AbortError') return;
+                        // fall through to download
+                    }
                 }
+                // Download fallback
+                const blob = new Blob([buffer], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = window._adpDbfFileName || 'ADP.dbf';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                window._adpDbfModified = false;
+                alert(`✅ ดาวน์โหลดไฟล์ที่แก้ไขแล้ว: ${window._adpDbfFileName || 'ADP.dbf'}\nกรุณานำไฟล์ที่ดาวน์โหลดไปทับไฟล์เดิมด้วยตนเอง`);
                 if (window._adpDbfCases && window._adpDbfCases.length) renderAdpMorphineTable();
                 else document.getElementById('content-area').innerHTML = renderAdpDbfWelcome();
             } catch(err) {
