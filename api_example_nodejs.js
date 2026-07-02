@@ -1793,7 +1793,7 @@ app.post('/api/get-opdx', async (req, res) => {
 app.post('/api/get-fdh-pttype-list', async (req, res) => {
     try {
         const { host, port, database, user, password, type } = req.body;
-        const query = `SELECT p.pttype, p.name FROM pttype p WHERE p.isuse='Y' AND p.hipdata_code IN ('UCS','WEL') ORDER BY p.pttype`;
+        const query = `SELECT p.pttype, p.name, p.hipdata_code FROM pttype p WHERE p.isuse='Y' ORDER BY p.pttype`;
         if (type === 'postgresql') {
             const client = new PgClient({ host, port, user, password, database, connectionTimeoutMillis: 5000 });
             await client.connect();
@@ -1808,6 +1808,29 @@ app.post('/api/get-fdh-pttype-list', async (req, res) => {
         }
     } catch (error) {
         console.error('FDH pttype list error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// FDH - Dropdown กลุ่มสิทธิ (hipdata_code)
+app.post('/api/get-fdh-hipdata-groups', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type } = req.body;
+        const query = `SELECT p.hipdata_code FROM pttype p WHERE p.isuse='Y' GROUP BY p.hipdata_code ORDER BY p.hipdata_code`;
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port, user, password, database, connectionTimeoutMillis: 5000 });
+            await client.connect();
+            const result = await client.query(query);
+            await client.end();
+            res.json({ success: true, data: result.rows });
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 5000 });
+            const [rows] = await connection.execute(query);
+            await connection.end();
+            res.json({ success: true, data: rows });
+        }
+    } catch (error) {
+        console.error('FDH hipdata groups error:', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -1838,160 +1861,139 @@ app.post('/api/get-eclaim-pttype-list', async (req, res) => {
 // FDH - INS สิทธิการรักษา
 app.post('/api/get-fdh-ins', async (req, res) => {
     try {
-        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code } = req.body;
+        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, selectedGroups, hipdata_code, includeOpd, includeIpd } = req.body;
 
-        // Build pttype filter for OPD (v.pttype) and IPD (vp.pttype)
-        let opdPttypeCond, ipdPttypeCond;
-        if (selectedPttypes && selectedPttypes.length > 0) {
-            const list = selectedPttypes.map(p => `'${p}'`).join(',');
-            opdPttypeCond = `AND v.pttype IN (${list})`;
-            ipdPttypeCond = `AND vp.pttype IN (${list})`;
+        // checkbox OPD/IPD — ไม่ส่งมา/ส่งมาเป็น true = รวมฝั่งนั้นด้วย (ค่าเริ่มต้นเดิมของเมนูนี้คือแสดงทั้งสองฝั่ง)
+        const useOpd = includeOpd !== false;
+        const useIpd = includeIpd !== false;
+
+        // กลุ่มสิทธิ (hipdata_code) ที่เลือก — ใช้กรอง v.pttype (OPD) และ vp.pttype (IPD)
+        let groupCond;
+        if (selectedGroups && selectedGroups.length > 0) {
+            const list = selectedGroups.map(g => `'${g}'`).join(',');
+            groupCond = `hipdata_code IN (${list})`;
         } else {
-            opdPttypeCond = `AND v.pttype IN (SELECT p.pttype FROM pttype p WHERE p.isuse='Y' AND ${hipdataFilter(hipdata_code || 'FDH')})`;
-            ipdPttypeCond = `AND vp.pttype IN (SELECT p.pttype FROM pttype p WHERE p.isuse='Y' AND ${hipdataFilter(hipdata_code || 'FDH')})`;
+            groupCond = hipdataFilter(hipdata_code || 'FDH');
         }
 
-        if (type === 'postgresql') {
-            const query = `
-                SELECT
-                  pt.pname, pt.fname, pt.lname,
-                  v.vstdate AS visit_date,
-                  pt.hn, p.hipdata_code,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code,
-                  vp.pttype,
-                  CASE WHEN vp.pttype IS NOT NULL THEN 'Y' ELSE 'N' END AS check_pttype,
-                  pt.cid,
-                  CASE WHEN pt.cid IS NOT NULL THEN 'Y' ELSE 'N' END AS check_cid,
-                  vp.expire_date,
-                  CASE WHEN vp.expire_date IS NOT NULL THEN 'Y' ELSE 'N' END AS check_expire_date,
-                  vp.hospmain,
-                  CASE WHEN vp.hospmain IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hospmain,
-                  vp.hospsub,
-                  CASE WHEN vp.hospsub IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hospsub,
-                  vp.auth_code,
-                  CASE WHEN vp.auth_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_auth_code,
-                  vp.vn,
-                  p.hipdata_code AS htype,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code_dup,
-                  vp.claim_code,
-                  CASE WHEN vp.claim_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_claim_code,
-                  p.hipdata_pttype,
-                  NULL AS ipt_type,
-                  NULL AS ipt_admit_type_id
-                FROM ovst v
-                  LEFT OUTER JOIN patient pt ON pt.hn = v.hn
-                  LEFT OUTER JOIN visit_pttype vp ON vp.vn = v.vn
-                  LEFT OUTER JOIN pttype p ON p.pttype = vp.pttype
-                WHERE v.vstdate BETWEEN $1 AND $2
-                ${opdPttypeCond}
-                UNION ALL
-                SELECT
-                  pt.pname, pt.fname, pt.lname,
-                  v.dchdate AS visit_date,
-                  pt.hn, p.hipdata_code,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code,
-                  vp.pttype,
-                  CASE WHEN vp.pttype IS NOT NULL THEN 'Y' ELSE 'N' END AS check_pttype,
-                  pt.cid,
-                  CASE WHEN pt.cid IS NOT NULL THEN 'Y' ELSE 'N' END AS check_cid,
-                  vp.expire_date,
-                  CASE WHEN vp.expire_date IS NOT NULL THEN 'Y' ELSE 'N' END AS check_expire_date,
-                  vp.hospmain,
-                  CASE WHEN vp.hospmain BETWEEN '00000' AND '99999' THEN 'Y' ELSE 'N' END AS check_hospmain,
-                  vp.hospsub,
-                  CASE WHEN vp.hospsub IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hospsub,
-                  vp.auth_code,
-                  CASE WHEN vp.auth_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_auth_code,
-                  vp.an,
-                  p.hipdata_code AS htype,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code_dup,
-                  vp.claim_code,
-                  CASE WHEN vp.claim_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_claim_code,
-                  p.hipdata_pttype,
-                  v.ipt_type,
-                  v.ipt_admit_type_id
-                FROM ipt v
-                  LEFT OUTER JOIN patient pt ON pt.hn = v.hn
-                  LEFT OUTER JOIN ipt_pttype vp ON vp.an = v.an
-                  LEFT OUTER JOIN pttype p ON p.pttype = vp.pttype
-                WHERE v.dchdate BETWEEN $1 AND $2
-                ${ipdPttypeCond}
-            `;
+        // รหัสสิทธิเฉพาะที่เลือก (vp.pttype) — ถ้าไม่เลือกจะไม่กรองเพิ่ม (แสดงทุกรหัสในกลุ่มที่เลือก)
+        const pttypeCond = (selectedPttypes && selectedPttypes.length > 0)
+            ? `AND vp.pttype IN (${selectedPttypes.map(p => `'${p}'`).join(',')})`
+            : '';
+
+        const isPg = type === 'postgresql';
+        const dateOnly = (col) => isPg ? `${col}::date` : `DATE(${col})`;
+
+        // standalone=true เมื่อติ๊กเฉพาะ OPD เพียงฝั่งเดียว (an ว่างไว้ เพราะ AN เป็นของฝั่ง IPD เท่านั้น)
+        // standalone=false เมื่อใช้รวมกับ IPD แบบ UNION ALL (คิวรี่เดิม — an = vp.vn ตามเดิม)
+        const opdQuery = (ph1, ph2, standalone) => `
+            SELECT
+              ${dateOnly('v.vstdate')} AS visit_date, CONCAT(pt.pname,pt.fname,' ',pt.lname) AS ptname,
+              p.name AS pttype_name,
+              pt.hn, p.hipdata_code AS INSCL,
+              CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_INSCL,
+              vp.pttype AS SUBTYPE,
+              pt.cid,
+              CASE WHEN pt.cid IS NOT NULL THEN 'Y' ELSE 'N' END AS check_cid,
+              (SELECT hospitalcode FROM opdconfig) AS HCODE,
+              vp.expire_date AS DATEEXP,
+              vp.hospmain AS HOSPMAIN,
+              CASE WHEN vp.hospmain IS NOT NULL AND vp.hospmain<>'' THEN 'Y' ELSE 'N' END AS check_HOSPMAIN,
+              vp.hospsub AS HOSPSUB,
+              CASE WHEN vp.hospsub IS NOT NULL AND vp.hospsub<>'' THEN 'Y' ELSE 'N' END AS check_HOSPSUB,
+              '' AS GOVCODE,
+              '' AS GOVNAME,
+              vp.auth_code AS PERMITNO,
+              CASE WHEN vp.auth_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_PERMITNO,
+              '' AS DOCNO,
+              '' AS OWNRPID,
+              '' AS OWNNAME,
+              ${standalone ? "''" : 'vp.vn'} AS an,
+              vp.vn AS SEQ,
+              p.nhso_code AS SUBINSCL,
+              '' AS RELINSCL,
+              '1' AS HTYPE
+            FROM ovst v
+              LEFT OUTER JOIN patient pt ON pt.hn = v.hn
+              LEFT OUTER JOIN visit_pttype vp ON vp.vn = v.vn
+              LEFT OUTER JOIN pttype p ON p.pttype = vp.pttype
+            WHERE v.vstdate BETWEEN ${ph1} AND ${ph2}
+              AND v.pttype IN (SELECT p.pttype FROM pttype p WHERE p.isuse='Y' AND ${groupCond})
+              ${pttypeCond}
+        `;
+
+        const ipdQuery = (ph1, ph2) => `
+            SELECT
+              ${dateOnly('v.dchdate')} AS visit_date, CONCAT(pt.pname,pt.fname,' ',pt.lname) AS ptname,
+              p.name AS pttype_name,
+              pt.hn, p.hipdata_code AS INSCL,
+              CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_INSCL,
+              vp.pttype AS SUBTYPE,
+              pt.cid,
+              CASE WHEN pt.cid IS NOT NULL THEN 'Y' ELSE 'N' END AS check_cid,
+              (SELECT hospitalcode FROM opdconfig) AS HCODE,
+              vp.expire_date AS DATEEXP,
+              vp.hospmain AS HOSPMAIN,
+              CASE WHEN vp.hospmain IS NOT NULL AND vp.hospmain<>'' THEN 'Y' ELSE 'N' END AS check_HOSPMAIN,
+              vp.hospsub AS HOSPSUB,
+              CASE WHEN vp.hospsub IS NOT NULL AND vp.hospsub<>'' THEN 'Y' ELSE 'N' END AS check_HOSPSUB,
+              '' AS GOVCODE,
+              '' AS GOVNAME,
+              vp.auth_code AS PERMITNO,
+              CASE WHEN vp.auth_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_PERMITNO,
+              '' AS DOCNO,
+              '' AS OWNRPID,
+              '' AS OWNNAME,
+              vp.an AS an,
+              v.vn AS SEQ,
+              p.nhso_code AS SUBINSCL,
+              '' AS RELINSCL,
+              '1' AS HTYPE
+            FROM ipt v
+              LEFT OUTER JOIN patient pt ON pt.hn = v.hn
+              LEFT OUTER JOIN ipt_pttype vp ON vp.an = v.an
+              LEFT OUTER JOIN pttype p ON p.pttype = vp.pttype
+            WHERE v.dchdate BETWEEN ${ph1} AND ${ph2}
+              AND vp.pttype IN (SELECT p.pttype FROM pttype p WHERE p.isuse='Y' AND ${groupCond})
+              ${pttypeCond}
+        `;
+
+        // ถ้าไม่เลือกฝั่งไหนเลย (กรณีผิดปกติ) ให้ถือว่าแสดงทั้งสองฝั่งเหมือนค่าเริ่มต้น
+        const includeBothBranches = useOpd === useIpd; // ทั้งคู่ true หรือทั้งคู่ false
+        const branchCount = includeBothBranches ? 2 : 1;
+        const buildQuery = (ph1, ph2) => {
+            if (includeBothBranches) return `${opdQuery(ph1, ph2, false)} UNION ALL ${ipdQuery(ph1, ph2)}`;
+            return useOpd ? opdQuery(ph1, ph2, true) : ipdQuery(ph1, ph2);
+        };
+
+        // แปลง Date object ของ visit_date ให้เหลือแค่ YYYY-MM-DD (กันไดรเวอร์คืนเวลามาด้วย)
+        const normRows = (rows) => rows.map(r => {
+            if (r.visit_date instanceof Date) {
+                const d = r.visit_date;
+                const y = d.getFullYear();
+                const m = String(d.getMonth()+1).padStart(2,'0');
+                const dd = String(d.getDate()).padStart(2,'0');
+                return { ...r, visit_date: `${y}-${m}-${dd}` };
+            }
+            return r;
+        });
+
+        if (isPg) {
+            const query = buildQuery('$1', '$2');
             const client = new PgClient({ host, port, user, password, database, connectionTimeoutMillis: 10000 });
             await client.connect();
             const result = await client.query(query, [dateFrom, dateTo]);
             await client.end();
-            res.json({ success: true, data: result.rows, count: result.rows.length });
+            const data = normRows(result.rows);
+            res.json({ success: true, data, count: data.length });
         } else {
-            const query = `
-                SELECT
-                  pt.pname, pt.fname, pt.lname,
-                  v.vstdate AS visit_date,
-                  pt.hn, p.hipdata_code,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code,
-                  vp.pttype,
-                  CASE WHEN vp.pttype IS NOT NULL THEN 'Y' ELSE 'N' END AS check_pttype,
-                  pt.cid,
-                  CASE WHEN pt.cid IS NOT NULL THEN 'Y' ELSE 'N' END AS check_cid,
-                  vp.expire_date,
-                  CASE WHEN vp.expire_date IS NOT NULL THEN 'Y' ELSE 'N' END AS check_expire_date,
-                  vp.hospmain,
-                  CASE WHEN vp.hospmain IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hospmain,
-                  vp.hospsub,
-                  CASE WHEN vp.hospsub IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hospsub,
-                  vp.auth_code,
-                  CASE WHEN vp.auth_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_auth_code,
-                  vp.vn,
-                  p.hipdata_code AS htype,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code_dup,
-                  vp.claim_code,
-                  CASE WHEN vp.claim_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_claim_code,
-                  p.hipdata_pttype,
-                  NULL AS ipt_type,
-                  NULL AS ipt_admit_type_id
-                FROM ovst v
-                  LEFT OUTER JOIN patient pt ON pt.hn = v.hn
-                  LEFT OUTER JOIN visit_pttype vp ON vp.vn = v.vn
-                  LEFT OUTER JOIN pttype p ON p.pttype = vp.pttype
-                WHERE v.vstdate BETWEEN ? AND ?
-                ${opdPttypeCond}
-                UNION ALL
-                SELECT
-                  pt.pname, pt.fname, pt.lname,
-                  v.dchdate AS visit_date,
-                  pt.hn, p.hipdata_code,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code,
-                  vp.pttype,
-                  CASE WHEN vp.pttype IS NOT NULL THEN 'Y' ELSE 'N' END AS check_pttype,
-                  pt.cid,
-                  CASE WHEN pt.cid IS NOT NULL THEN 'Y' ELSE 'N' END AS check_cid,
-                  vp.expire_date,
-                  CASE WHEN vp.expire_date IS NOT NULL THEN 'Y' ELSE 'N' END AS check_expire_date,
-                  vp.hospmain,
-                  CASE WHEN vp.hospmain BETWEEN '00000' AND '99999' THEN 'Y' ELSE 'N' END AS check_hospmain,
-                  vp.hospsub,
-                  CASE WHEN vp.hospsub IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hospsub,
-                  vp.auth_code,
-                  CASE WHEN vp.auth_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_auth_code,
-                  vp.an,
-                  p.hipdata_code AS htype,
-                  CASE WHEN p.hipdata_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_hipdata_code_dup,
-                  vp.claim_code,
-                  CASE WHEN vp.claim_code IS NOT NULL THEN 'Y' ELSE 'N' END AS check_claim_code,
-                  p.hipdata_pttype,
-                  v.ipt_type,
-                  v.ipt_admit_type_id
-                FROM ipt v
-                  LEFT OUTER JOIN patient pt ON pt.hn = v.hn
-                  LEFT OUTER JOIN ipt_pttype vp ON vp.an = v.an
-                  LEFT OUTER JOIN pttype p ON p.pttype = vp.pttype
-                WHERE v.dchdate BETWEEN ? AND ?
-                ${ipdPttypeCond}
-            `;
+            const query = buildQuery('?', '?');
             const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 10000 });
-            const [rows] = await connection.execute(query, [dateFrom, dateTo, dateFrom, dateTo]);
+            const mysqlParams = branchCount === 2 ? [dateFrom, dateTo, dateFrom, dateTo] : [dateFrom, dateTo];
+            const [rows] = await connection.execute(query, mysqlParams);
             await connection.end();
-            res.json({ success: true, data: rows, count: rows.length });
+            const data = normRows(rows);
+            res.json({ success: true, data, count: data.length });
         }
     } catch (error) {
         console.error('FDH INS query error:', error);
@@ -2002,19 +2004,22 @@ app.post('/api/get-fdh-ins', async (req, res) => {
 // FDH - PAT ข้อมูลผู้ป่วย
 app.post('/api/get-fdh-pat', async (req, res) => {
     try {
-        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code } = req.body;
+        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code, includeOpd, includeIpd } = req.body;
 
-        let pttypeCond;
-        if (selectedPttypes && selectedPttypes.length > 0) {
-            const list = selectedPttypes.map(p => `'${p}'`).join(',');
-            pttypeCond = `AND o.pttype IN (${list})`;
-        } else {
-            pttypeCond = `AND o.pttype IN (SELECT p.pttype FROM pttype p WHERE p.isuse='Y' AND ${hipdataFilter(hipdata_code || 'FDH')})`;
-        }
+        // checkbox OPD/IPD — ไม่ส่งมา/ส่งมาเป็น true = รวมฝั่งนั้นด้วย (ค่าเริ่มต้นเดิมของเมนูนี้คือแสดงทั้งสองฝั่ง)
+        const useOpd = includeOpd !== false;
+        const useIpd = includeIpd !== false;
 
-        if (type === 'postgresql') {
-            const query = `
-                SELECT
+        const pttypeCondFor = (alias) => {
+            const groupCond = `AND ${alias}.pttype IN (SELECT p.pttype FROM pttype p WHERE p.isuse='Y' AND ${hipdataFilter(hipdata_code || 'FDH')})`;
+            if (selectedPttypes && selectedPttypes.length > 0) {
+                const list = selectedPttypes.map(p => `'${p}'`).join(',');
+                return `${groupCond} AND ${alias}.pttype IN (${list})`;
+            }
+            return groupCond;
+        };
+
+        const patSelectCols = `
                   (SELECT hospitalcode FROM opdconfig LIMIT 1) AS hcode,
                   p.hn,
                   p.chwpart,
@@ -2042,53 +2047,44 @@ app.post('/api/get-fdh-pat', async (req, res) => {
                   p.lname,
                   CASE WHEN (p.lname IS NULL OR p.lname = '') THEN 'N' ELSE 'Y' END AS check_lname,
                   1 AS idtype
+        `;
+
+        const opdQuery = (ph1, ph2) => `
+                SELECT ${patSelectCols}
                 FROM patient p
                   LEFT OUTER JOIN ovst o ON o.hn = p.hn
-                WHERE o.vstdate BETWEEN $1 AND $2
-                ${pttypeCond}
-            `;
+                WHERE o.vstdate BETWEEN ${ph1} AND ${ph2}
+                ${pttypeCondFor('o')}
+        `;
+
+        const ipdQuery = (ph1, ph2) => `
+                SELECT ${patSelectCols}
+                FROM patient p
+                  LEFT OUTER JOIN ipt i ON i.hn = p.hn
+                WHERE i.dchdate BETWEEN ${ph1} AND ${ph2}
+                ${pttypeCondFor('i')}
+        `;
+
+        // ถ้าไม่เลือกฝั่งไหนเลย (กรณีผิดปกติ) ให้ถือว่าแสดงทั้งสองฝั่งเหมือนค่าเริ่มต้น
+        const includeBothBranches = useOpd === useIpd; // ทั้งคู่ true หรือทั้งคู่ false
+        const branchCount = includeBothBranches ? 2 : 1;
+        const buildQuery = (ph1, ph2) => {
+            if (includeBothBranches) return `${opdQuery(ph1, ph2)} UNION ALL ${ipdQuery(ph1, ph2)}`;
+            return useOpd ? opdQuery(ph1, ph2) : ipdQuery(ph1, ph2);
+        };
+
+        if (type === 'postgresql') {
+            const query = buildQuery('$1', '$2');
             const client = new PgClient({ host, port, user, password, database, connectionTimeoutMillis: 10000 });
             await client.connect();
             const result = await client.query(query, [dateFrom, dateTo]);
             await client.end();
             res.json({ success: true, data: result.rows, count: result.rows.length });
         } else {
-            const query = `
-                SELECT
-                  (SELECT hospitalcode FROM opdconfig LIMIT 1) AS hcode,
-                  p.hn,
-                  p.chwpart,
-                  CASE WHEN (p.chwpart IS NULL OR p.chwpart = '') THEN 'N' ELSE 'Y' END AS check_chwpart,
-                  p.amppart,
-                  CASE WHEN (p.amppart IS NULL OR p.amppart = '') THEN 'N' ELSE 'Y' END AS check_amppart,
-                  p.birthday,
-                  CASE WHEN p.birthday IS NULL THEN 'N' ELSE 'Y' END AS check_birthday,
-                  p.sex,
-                  CASE WHEN (p.sex IS NULL OR p.sex = '') THEN 'N' ELSE 'Y' END AS check_sex,
-                  p.marrystatus,
-                  CASE WHEN (p.marrystatus IS NULL OR p.marrystatus = '') THEN 'N' ELSE 'Y' END AS check_marrystatus,
-                  p.occupation,
-                  CASE WHEN (p.occupation IS NULL OR p.occupation = '') THEN 'N' ELSE 'Y' END AS check_occupation,
-                  p.nationality,
-                  CASE WHEN (p.nationality IS NULL OR p.nationality = '') THEN 'N' ELSE 'Y' END AS check_nationality,
-                  p.cid,
-                  CASE WHEN (p.cid IS NULL OR p.cid = '') THEN 'N' ELSE 'Y' END AS check_cid,
-                  CONCAT(p.fname, ' ', p.lname) AS ptname,
-                  CASE WHEN (CONCAT(p.fname, ' ', p.lname) IS NULL OR TRIM(CONCAT(p.fname, ' ', p.lname)) = '') THEN 'N' ELSE 'Y' END AS check_ptname,
-                  p.pname,
-                  CASE WHEN (p.pname IS NULL OR p.pname = '') THEN 'N' ELSE 'Y' END AS check_pname,
-                  p.fname,
-                  CASE WHEN (p.fname IS NULL OR p.fname = '') THEN 'N' ELSE 'Y' END AS check_fname,
-                  p.lname,
-                  CASE WHEN (p.lname IS NULL OR p.lname = '') THEN 'N' ELSE 'Y' END AS check_lname,
-                  1 AS idtype
-                FROM patient p
-                  LEFT OUTER JOIN ovst o ON o.hn = p.hn
-                WHERE o.vstdate BETWEEN ? AND ?
-                ${pttypeCond}
-            `;
+            const query = buildQuery('?', '?');
             const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 10000 });
-            const [rows] = await connection.execute(query, [dateFrom, dateTo]);
+            const mysqlParams = branchCount === 2 ? [dateFrom, dateTo, dateFrom, dateTo] : [dateFrom, dateTo];
+            const [rows] = await connection.execute(query, mysqlParams);
             await connection.end();
             res.json({ success: true, data: rows, count: rows.length });
         }
@@ -5699,7 +5695,8 @@ app.post('/api/check-required-tables', async (req, res) => {
             { key: 'lab_items_no_lab_catalog',           label: 'ฟิล lab_items.no_lab_catalog',           exists: await checkCol(conn, 'lab_items', 'no_lab_catalog') },
             { key: 'lab_items_sub_group_no_lab_catalog', label: 'ฟิล lab_items_sub_group.no_lab_catalog', exists: await checkCol(conn, 'lab_items_sub_group', 'no_lab_catalog') },
             { key: 'sks_icd10tm_check',                  label: 'ตาราง sks_icd10tm_check',                exists: await checkTable(conn, 'sks_icd10tm_check') },
-            { key: 'drugitems_cancer',                   label: 'ตาราง drugitems_cancer',                 exists: await checkTable(conn, 'drugitems_cancer') }
+            { key: 'drugitems_cancer',                   label: 'ตาราง drugitems_cancer',                 exists: await checkTable(conn, 'drugitems_cancer') },
+            { key: 'drug_morphine',                      label: 'ตาราง drug_morphine',                    exists: await checkTable(conn, 'drug_morphine') }
         ];
 
         if (isPg) await conn.end(); else await conn.end();
@@ -5748,6 +5745,13 @@ app.post('/api/create-required-table', async (req, res) => {
                 await conn.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_drugitems_cancer_icode ON drugitems_cancer USING BTREE (icode)`);
             } else {
                 await conn.execute(`CREATE TABLE IF NOT EXISTS \`drugitems_cancer\` (\`icode\` VARCHAR(7) NOT NULL, \`name\` VARCHAR(250), \`strength\` VARCHAR(50), \`units\` VARCHAR(50), PRIMARY KEY (\`icode\`), UNIQUE INDEX \`idx_drugitems_cancer_icode\` (\`icode\`) USING BTREE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+            }
+        } else if (key === 'drug_morphine') {
+            if (isPg) {
+                await conn.query(`CREATE TABLE IF NOT EXISTS drug_morphine (drug_morphine_id SERIAL NOT NULL, icode VARCHAR(7), name VARCHAR(100), strength VARCHAR(50), units VARCHAR(50), CONSTRAINT pk_drug_morphine PRIMARY KEY (drug_morphine_id))`);
+                await conn.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_drug_morphine_id ON drug_morphine USING BTREE (drug_morphine_id)`);
+            } else {
+                await conn.execute(`CREATE TABLE IF NOT EXISTS \`drug_morphine\` (\`drug_morphine_id\` INT NOT NULL AUTO_INCREMENT, \`icode\` VARCHAR(7), \`name\` VARCHAR(100), \`strength\` VARCHAR(50), \`units\` VARCHAR(50), PRIMARY KEY (\`drug_morphine_id\`), UNIQUE INDEX \`idx_drug_morphine_id\` (\`drug_morphine_id\`) USING BTREE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
             }
         } else {
             if (isPg) await conn.end(); else await conn.end();
@@ -6177,6 +6181,140 @@ app.post('/api/delete-fdh-walkin-items', async (req, res) => {
     }
 });
 
+// FDH - หา VN ที่มีทั้ง project code ADP30001 และมีรายการยาที่ icode อยู่ในตาราง drug_morphine (ใช้กับเมนู ตัด ADP30001 ที่รับยา Morphine)
+app.post('/api/get-fdh-adp-morphine', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo } = req.body;
+        const isPg = type === 'postgresql';
+        const [ph1, ph2] = isPg ? ['$1', '$2'] : ['?', '?'];
+
+        const buildQuery = () => `
+            SELECT DISTINCT
+                op.vstdate AS "วันที่รับบริการ",
+                op.hn AS "HN",
+                CONCAT(p.pname, p.fname, ' ', p.lname) AS "ชื่อ-นามสกุล",
+                op.vn AS "VN"
+            FROM opitemrece op
+            INNER JOIN patient p ON p.hn = op.hn
+            WHERE op.vstdate BETWEEN ${ph1} AND ${ph2}
+                AND EXISTS (
+                    SELECT 1
+                    FROM opitemrece o2
+                    JOIN nondrugitems n2 ON n2.icode = o2.icode
+                    WHERE o2.vn = op.vn
+                        AND o2.vstdate BETWEEN ${ph1} AND ${ph2}
+                        AND n2.nhso_adp_code = 'ADP30001'
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM opitemrece o3
+                    JOIN drug_morphine dm ON dm.icode = o3.icode
+                    WHERE o3.vn = op.vn
+                        AND o3.vstdate BETWEEN ${ph1} AND ${ph2}
+                )
+            ORDER BY op.vstdate, op.vn
+        `;
+
+        let rows;
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            const result = await client.query(buildQuery(), [dateFrom, dateTo]);
+            await client.end();
+            rows = result.rows;
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            const [r] = await connection.execute(buildQuery().replace(/\$1/g,'?').replace(/\$2/g,'?'), [dateFrom, dateTo, dateFrom, dateTo, dateFrom, dateTo]);
+            await connection.end();
+            rows = r;
+        }
+        const normVal = v => {
+            if (v instanceof Date) {
+                const y = v.getFullYear();
+                const m = String(v.getMonth()+1).padStart(2,'0');
+                const d = String(v.getDate()).padStart(2,'0');
+                return `${y}-${m}-${d}`;
+            }
+            return v;
+        };
+        const normalized = rows.map(r => { const o={}; Object.keys(r).forEach(k=>{ o[k]=normVal(r[k]); }); return o; });
+        res.json({ success: true, data: normalized, count: normalized.length });
+    } catch (error) {
+        console.error('FDH adp-morphine error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// FDH - ลบรายการ ADP30001 ออกจาก opitemrece สำหรับ VN ที่เลือก (ใช้กับเมนู ตัด ADP30001 ที่รับยา Morphine)
+app.post('/api/delete-fdh-adp-morphine-items', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, vns } = req.body;
+        if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+
+        let deleted = 0, failed = 0, errors = [];
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            for (const vn of vns) {
+                try {
+                    await client.query(
+                        `DELETE FROM opitemrece WHERE vn = $1 AND icode IN (SELECT icode FROM nondrugitems WHERE nhso_adp_code = 'ADP30001')`,
+                        [vn]
+                    );
+                    deleted++;
+                } catch(e) { failed++; errors.push(`${vn}: ${e.message}`); }
+            }
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            for (const vn of vns) {
+                try {
+                    await connection.execute(
+                        `DELETE FROM opitemrece WHERE vn = ? AND icode IN (SELECT icode FROM nondrugitems WHERE nhso_adp_code = 'ADP30001')`,
+                        [vn]
+                    );
+                    deleted++;
+                } catch(e) { failed++; errors.push(`${vn}: ${e.message}`); }
+            }
+            await connection.end();
+        }
+        res.json({ success: true, deleted, failed, errors });
+    } catch (error) {
+        console.error('FDH delete adp-morphine items error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// แก้ไข HOSPMAIN/HOSPSUB ของเมนู INS — บันทึกที่ visit_pttype ของ vn+pttype (สิทธิ) ที่ตรงกัน
+app.post('/api/update-fdh-ins-hospital', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, vn, pttype, hospmain, hospsub } = req.body;
+        if (!vn || !pttype) return res.json({ success: false, error: 'ไม่พบ VN หรือสิทธิของรายการนี้' });
+
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            const result = await client.query(
+                `UPDATE visit_pttype SET hospmain = $1, hospsub = $2 WHERE vn = $3 AND pttype = $4`,
+                [hospmain || null, hospsub || null, vn, pttype]
+            );
+            await client.end();
+            res.json({ success: true, updated: result.rowCount });
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            const [result] = await connection.execute(
+                `UPDATE visit_pttype SET hospmain = ?, hospsub = ? WHERE vn = ? AND pttype = ?`,
+                [hospmain || null, hospsub || null, vn, pttype]
+            );
+            await connection.end();
+            res.json({ success: true, updated: result.affectedRows });
+        }
+    } catch (error) {
+        console.error('FDH update INS hospital error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // ==================== Basic Checker Endpoints ====================
 
 // Helper: run a completeness check for one column in a table
@@ -6589,6 +6727,150 @@ app.post('/api/delete-drugitems-cancer-row', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('delete-drugitems-cancer-row error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// ==================== drug_morphine: เลือก icode จาก drugitems มาเพิ่ม + ดู/แก้ไข/ลบ ====================
+
+// รายการยาที่ใช้งานอยู่ (istatus='Y') สำหรับเลือกเพิ่มเข้า drug_morphine — ไม่แสดง icode ที่มีอยู่แล้ว
+app.post('/api/get-drugitems-for-morphine', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type } = req.body;
+        const isPg = type === 'postgresql';
+        let rows = [];
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            const r = await client.query(`SELECT icode, name, strength, units, CONCAT(name,' ',strength,' ',units) AS drugname FROM drugitems WHERE istatus='Y' AND icode NOT IN (SELECT icode FROM drug_morphine) ORDER BY name`);
+            rows = r.rows;
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            const [r] = await connection.execute(`SELECT icode, name, strength, units, CONCAT(name,' ',strength,' ',units) AS drugname FROM \`drugitems\` WHERE istatus='Y' AND icode NOT IN (SELECT icode FROM drug_morphine) ORDER BY name`);
+            rows = r;
+            await connection.end();
+        }
+        res.json({ success: true, data: rows });
+    } catch (error) {
+        console.error('get-drugitems-for-morphine error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// เพิ่มรายการที่เลือกเข้า drug_morphine — drug_morphine_id เริ่มที่ 1 แล้วรันต่อจากเลขมากสุด+1
+app.post('/api/add-drug-morphine-items', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, items } = req.body;
+        if (!items || !items.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+        const isPg = type === 'postgresql';
+
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            const maxR = await client.query(`SELECT COALESCE(MAX(drug_morphine_id),0) AS maxid FROM drug_morphine`);
+            let nextId = parseInt(maxR.rows[0].maxid) + 1;
+            for (const item of items) {
+                await client.query(
+                    `INSERT INTO drug_morphine (drug_morphine_id, icode, name, strength, units) VALUES ($1,$2,$3,$4,$5)`,
+                    [nextId, item.icode, item.name || null, item.strength || null, item.units || null]
+                );
+                nextId++;
+            }
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            const [maxR] = await connection.execute(`SELECT COALESCE(MAX(drug_morphine_id),0) AS maxid FROM drug_morphine`);
+            let nextId = parseInt(maxR[0].maxid) + 1;
+            for (const item of items) {
+                await connection.execute(
+                    `INSERT INTO \`drug_morphine\` (drug_morphine_id, icode, name, strength, units) VALUES (?,?,?,?,?)`,
+                    [nextId, item.icode, item.name || null, item.strength || null, item.units || null]
+                );
+                nextId++;
+            }
+            await connection.end();
+        }
+        res.json({ success: true, added: items.length });
+    } catch (error) {
+        console.error('add-drug-morphine-items error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// ดึงรายการ drug_morphine ที่บันทึกไว้ทั้งหมด
+app.post('/api/get-drug-morphine-list', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type } = req.body;
+        const isPg = type === 'postgresql';
+        let rows = [];
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            const r = await client.query(`SELECT dm.drug_morphine_id, dm.icode, dm.name, dm.strength, dm.units, di.ttmt_code FROM drug_morphine dm LEFT JOIN drugitems di ON di.icode = dm.icode ORDER BY dm.drug_morphine_id`);
+            rows = r.rows;
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            const [r] = await connection.execute(`SELECT dm.drug_morphine_id, dm.icode, dm.name, dm.strength, dm.units, di.ttmt_code FROM \`drug_morphine\` dm LEFT JOIN \`drugitems\` di ON di.icode = dm.icode ORDER BY dm.drug_morphine_id`);
+            rows = r;
+            await connection.end();
+        }
+        res.json({ success: true, data: rows });
+    } catch (error) {
+        console.error('get-drug-morphine-list error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// แก้ไขแถว drug_morphine ตาม drug_morphine_id
+app.post('/api/update-drug-morphine-row', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, drug_morphine_id, icode, name, strength, units } = req.body;
+        if (!drug_morphine_id) return res.json({ success: false, error: 'ไม่พบ drug_morphine_id' });
+        const isPg = type === 'postgresql';
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            await client.query(
+                `UPDATE drug_morphine SET icode=$1, name=$2, strength=$3, units=$4 WHERE drug_morphine_id=$5`,
+                [icode, name || null, strength || null, units || null, drug_morphine_id]
+            );
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            await connection.execute(
+                `UPDATE \`drug_morphine\` SET icode=?, name=?, strength=?, units=? WHERE drug_morphine_id=?`,
+                [icode, name || null, strength || null, units || null, drug_morphine_id]
+            );
+            await connection.end();
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error('update-drug-morphine-row error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// ลบแถว drug_morphine ตาม drug_morphine_id
+app.post('/api/delete-drug-morphine-row', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, drug_morphine_id } = req.body;
+        if (!drug_morphine_id) return res.json({ success: false, error: 'ไม่พบ drug_morphine_id' });
+        const isPg = type === 'postgresql';
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 15000 });
+            await client.connect();
+            await client.query(`DELETE FROM drug_morphine WHERE drug_morphine_id=$1`, [drug_morphine_id]);
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 15000 });
+            await connection.execute(`DELETE FROM \`drug_morphine\` WHERE drug_morphine_id=?`, [drug_morphine_id]);
+            await connection.end();
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error('delete-drug-morphine-row error:', error);
         res.json({ success: false, error: error.message });
     }
 });

@@ -374,6 +374,18 @@
                     <input type="date" id="dateTo">
                 </div>
                 <div class="filter-group">
+                    <label for="hipdata-group-dropdown">กลุ่มสิทธิ:</label>
+                    <div style="position: relative;">
+                        <button type="button" id="hipdata-group-dropdown" style="width: 100%; padding: 10px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 14px; background: white; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <span id="hipdata-group-selected-text">เลือกกลุ่มสิทธิ</span>
+                            <span>▼</span>
+                        </button>
+                        <div id="hipdata-group-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #e3f2fd; border-radius: 8px; margin-top: 5px; z-index: 1000; box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);">
+                            <!-- Checkboxes will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-group">
                     <label for="pttype-dropdown">สิทธิการรักษา:</label>
                     <div style="position: relative;">
                         <button type="button" id="pttype-dropdown" style="width: 100%; padding: 10px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 14px; background: white; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
@@ -385,8 +397,22 @@
                         </div>
                     </div>
                 </div>
+                <div class="filter-group">
+                    <label>ประเภทผู้ป่วย:</label>
+                    <div style="display:flex; align-items:center; gap:16px; padding:10px 0;">
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:14px; color:#37474f; font-weight:600; white-space:nowrap;">
+                            <input type="checkbox" id="filter-opd" style="width:16px; height:16px; cursor:pointer; accent-color:#42a5f5;">
+                            OPD
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:14px; color:#37474f; font-weight:600; white-space:nowrap;">
+                            <input type="checkbox" id="filter-ipd" style="width:16px; height:16px; cursor:pointer; accent-color:#42a5f5;">
+                            IPD
+                        </label>
+                    </div>
+                </div>
                 <div class="filter-buttons" style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
                     <button class="btn-search" onclick="searchData()">🔍 ค้นหา</button>
+                    <button type="button" onclick="saveFilterMemory()" style="padding: 10px 18px; background: linear-gradient(135deg,#6a1b9a,#4a148c); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">💾 จำค่า</button>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #c62828; font-weight: 600; white-space: nowrap;">
                         <input type="checkbox" id="show-errors-only" onchange="rerenderCurrentMenu()" style="width: 16px; height: 16px; cursor: pointer; accent-color: #c62828;">
                         แสดงเฉพาะที่ต้องแก้ไข
@@ -448,14 +474,17 @@
         // Load pttype checkboxes on page load
         document.addEventListener('DOMContentLoaded', async function() {
             await loadPttypeCheckboxes();
-            setupDropdown();
+            await loadHipdataGroupCheckboxes();
+            setupDropdown('pttype-dropdown', 'pttype-dropdown-menu');
+            setupDropdown('hipdata-group-dropdown', 'hipdata-group-dropdown-menu');
             setupFileMenu();
+            restoreFilterMemory();
         });
 
-        // Setup dropdown toggle
-        function setupDropdown() {
-            const dropdownButton = document.getElementById('pttype-dropdown');
-            const dropdownMenu = document.getElementById('pttype-dropdown-menu');
+        // Setup dropdown toggle (ใช้ร่วมกันทั้ง pttype-dropdown และ hipdata-group-dropdown)
+        function setupDropdown(buttonId, menuId) {
+            const dropdownButton = document.getElementById(buttonId);
+            const dropdownMenu = document.getElementById(menuId);
 
             // Toggle dropdown on button click
             dropdownButton.addEventListener('click', function(e) {
@@ -494,7 +523,7 @@
                     return;
                 }
 
-                const response = await fetch(`${API_BASE}/api/get-pttype-list`, {
+                const response = await fetch(`${API_BASE}/api/get-fdh-pttype-list`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -505,8 +534,7 @@
                         database: config.database,
                         user: config.user,
                         password: config.password,
-                        type: config.type,
-                        hipdata_codes: ['UCS','WEL','LGO','OFC','STP','']
+                        type: config.type
                     })
                 });
 
@@ -531,6 +559,7 @@
                         checkbox.id = `pttype-${pttype.pttype}`;
                         checkbox.value = pttype.pttype;
                         checkbox.name = 'pttype';
+                        checkbox.dataset.hipdataCode = pttype.hipdata_code || '';
                         checkbox.style.cssText = 'cursor: pointer; width: 16px; height: 16px;';
                         checkbox.addEventListener('change', updateSelectedText);
 
@@ -560,6 +589,142 @@
             }
         }
 
+        // ดึงรายการกลุ่มสิทธิ (hipdata_code) ที่ถูกติ๊กเลือกไว้
+        function getSelectedHipdataGroups() {
+            const checkboxes = document.querySelectorAll('#hipdata-group-dropdown-menu input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        // checkbox OPD/IPD — ไม่ติ๊กไว้ทั้งคู่เป็นค่าเริ่มต้น (=แสดงทั้ง OPD+IPD เหมือนเดิม)
+        // ติ๊กข้างใดข้างหนึ่ง = กรองให้เหลือเฉพาะข้างนั้น, ติ๊กทั้งคู่ = แสดงทั้งสองข้างเช่นกัน
+        function getOpdIpdFilter() {
+            const opdChecked = document.getElementById('filter-opd')?.checked || false;
+            const ipdChecked = document.getElementById('filter-ipd')?.checked || false;
+            if (opdChecked && !ipdChecked) return { includeOpd: true, includeIpd: false };
+            if (ipdChecked && !opdChecked) return { includeOpd: false, includeIpd: true };
+            return { includeOpd: true, includeIpd: true };
+        }
+
+        // Update selected text ของ dropdown กลุ่มสิทธิ
+        function updateGroupSelectedText() {
+            const checkboxes = document.querySelectorAll('#hipdata-group-dropdown-menu input[type="checkbox"]:checked');
+            const selectedText = document.getElementById('hipdata-group-selected-text');
+
+            if (checkboxes.length === 0) {
+                selectedText.textContent = 'เลือกกลุ่มสิทธิ';
+            } else if (checkboxes.length === 1) {
+                selectedText.textContent = checkboxes[0].nextElementSibling.textContent;
+            } else {
+                selectedText.textContent = `เลือกแล้ว ${checkboxes.length} กลุ่ม`;
+            }
+        }
+
+        // เมื่อติ๊ก/ไม่ติ๊กกลุ่มสิทธิ ให้สิทธิการรักษาที่ตรงกับ hipdata_code ติ๊ก/ไม่ติ๊กตามอัตโนมัติ
+        function onGroupCheckboxToggle(code, checked) {
+            document.querySelectorAll(`#pttype-dropdown-menu input[type="checkbox"][data-hipdata-code="${code}"]`)
+                .forEach(cb => { cb.checked = checked; });
+            updateSelectedText();
+            updateGroupSelectedText();
+        }
+
+        // โหลด checkbox กลุ่มสิทธิ (hipdata_code) จากฐานข้อมูล
+        async function loadHipdataGroupCheckboxes() {
+            try {
+                const config = getDatabaseConfig();
+                if (!config) {
+                    console.error('No database configuration found');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/get-fdh-hipdata-groups`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host,
+                        port: config.port,
+                        database: config.database,
+                        user: config.user,
+                        password: config.password,
+                        type: config.type
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const container = document.getElementById('hipdata-group-dropdown-menu');
+                    container.innerHTML = '';
+
+                    result.data.forEach(row => {
+                        const code = row.hipdata_code;
+                        const checkboxWrapper = document.createElement('div');
+                        checkboxWrapper.style.cssText = 'padding: 10px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s;';
+                        checkboxWrapper.addEventListener('mouseenter', function() { this.style.background = '#f5f9ff'; });
+                        checkboxWrapper.addEventListener('mouseleave', function() { this.style.background = 'white'; });
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `hipdata-group-${code}`;
+                        checkbox.value = code;
+                        checkbox.name = 'hipdata-group';
+                        checkbox.style.cssText = 'cursor: pointer; width: 16px; height: 16px;';
+                        checkbox.addEventListener('change', function() { onGroupCheckboxToggle(code, checkbox.checked); });
+
+                        const label = document.createElement('label');
+                        label.htmlFor = `hipdata-group-${code}`;
+                        label.textContent = code;
+                        label.style.cssText = 'cursor: pointer; font-size: 14px; color: #546e7a; flex: 1;';
+
+                        checkboxWrapper.appendChild(checkbox);
+                        checkboxWrapper.appendChild(label);
+
+                        checkboxWrapper.addEventListener('click', function(e) {
+                            if (e.target !== checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                                onGroupCheckboxToggle(code, checkbox.checked);
+                            }
+                        });
+
+                        container.appendChild(checkboxWrapper);
+                    });
+                } else {
+                    console.error('Failed to load hipdata groups:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading hipdata group checkboxes:', error);
+            }
+        }
+
+        // จำค่ากลุ่มสิทธิ + สิทธิการรักษาที่เลือก ไว้ใน localStorage
+        function saveFilterMemory() {
+            const selectedGroups = Array.from(document.querySelectorAll('#hipdata-group-dropdown-menu input[type="checkbox"]:checked')).map(cb => cb.value);
+            const selectedPttypes = getSelectedPttypes();
+            localStorage.setItem('eclaim_filter_memory', JSON.stringify({ selectedGroups, selectedPttypes }));
+            alert('💾 บันทึกค่ากลุ่มสิทธิและสิทธิการรักษาที่เลือกแล้ว');
+        }
+
+        // คืนค่ากลุ่มสิทธิ + สิทธิการรักษาที่จำไว้ (เรียกหลังโหลด checkbox ทั้งหมดเสร็จแล้ว)
+        function restoreFilterMemory() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('eclaim_filter_memory') || 'null');
+                if (!saved) return;
+
+                (saved.selectedGroups || []).forEach(code => {
+                    const cb = document.querySelector(`#hipdata-group-dropdown-menu input[type="checkbox"][value="${code}"]`);
+                    if (cb) cb.checked = true;
+                });
+                (saved.selectedPttypes || []).forEach(pt => {
+                    const cb = document.querySelector(`#pttype-dropdown-menu input[type="checkbox"][value="${pt}"]`);
+                    if (cb) cb.checked = true;
+                });
+
+                updateSelectedText();
+                updateGroupSelectedText();
+            } catch (error) {
+                console.error('Error restoring filter memory:', error);
+            }
+        }
+
         // Setup file menu click handlers
         function showBilltranHeaders() {
             const contentArea = document.getElementById('content-area');
@@ -570,6 +735,8 @@
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
                         <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
                         <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPage(this.value)">
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
                             <option value="100">100</option>
                             <option value="200">200</option>
                             <option value="500">500</option>
@@ -621,6 +788,8 @@
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
                         <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
                         <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageBI(this.value)">
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
                             <option value="100">100</option>
                             <option value="200">200</option>
                             <option value="500">500</option>
@@ -675,6 +844,8 @@
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
                         <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
                         <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOX(this.value)">
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
                             <option value="100">100</option>
                             <option value="200">200</option>
                             <option value="500">500</option>
@@ -867,6 +1038,25 @@
             }
         }
 
+        // ตัวเลือกจำนวนเรคคอร์ด/หน้า + ปุ่มก่อนหน้า/ถัดไป (ใช้ร่วมกันทุกเมนูในหน้านี้)
+        function renderFundPagerControls(changeFnName, goToFnName, page, totalPages, rpp, total) {
+            const btnStyle = (disabled) => `padding:6px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${disabled?'#f5f5f5':'linear-gradient(135deg,#42a5f5,#2196f3)'};color:${disabled?'#ccc':'white'};cursor:${disabled?'not-allowed':'pointer'};font-weight:600;font-size:13px;white-space:nowrap;`;
+            return `
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <label style="color:#546e7a;font-size:14px;font-weight:600;">แสดง:</label>
+                    <select style="padding:6px 10px;border:2px solid #e3f2fd;border-radius:6px;font-size:13px;cursor:pointer;" onchange="${changeFnName}(this.value)">
+                        ${[20,50,100,200,500,1000].map(n => `<option value="${n}" ${rpp===n?'selected':''}>${n}</option>`).join('')}
+                    </select>
+                    <span style="color:#546e7a;font-size:13px;">รายการ/หน้า</span>
+                    ${totalPages > 1 ? `
+                    <button onclick="${goToFnName}(${page-1})" ${page<=1?'disabled':''} style="${btnStyle(page<=1)}">◀ ก่อนหน้า</button>
+                    <span style="font-size:13px;color:#546e7a;">หน้า ${page}/${totalPages} (${total.toLocaleString()} รายการ)</span>
+                    <button onclick="${goToFnName}(${page+1})" ${page>=totalPages?'disabled':''} style="${btnStyle(page>=totalPages)}">ถัดไป ▶</button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
         // Pagination state
         let currentPage = 1;
         let rowsPerPage = 20;
@@ -914,19 +1104,12 @@
 
             let tableHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                    <h3 style="color: #1565c0; margin: 0;">📊 Billtran - บิลทั่วไป (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBilltranData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color: #1565c0; margin: 0;">📊 Billtran - บิลทั่วไป (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBilltranData.length.toLocaleString() : ''} รายการ)</h3>
+                        ${renderFundPagerControls('changeRowsPerPage', 'goToPage', currentPage, totalPages, rowsPerPage, filteredData.length)}
+                    </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color: #546e7a; font-size: 14px; font-weight: 600;">แสดง:</label>
-                        <select id="rows-per-page" style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 8px; font-size: 14px; cursor: pointer;" onchange="changeRowsPerPage(this.value)">
-                            <option value="20" ${rowsPerPage === 20 ? 'selected' : ''}>20</option>
-                            <option value="50" ${rowsPerPage === 50 ? 'selected' : ''}>50</option>
-                            <option value="100" ${rowsPerPage === 100 ? 'selected' : ''}>100</option>
-                            <option value="200" ${rowsPerPage === 200 ? 'selected' : ''}>200</option>
-                            <option value="500" ${rowsPerPage === 500 ? 'selected' : ''}>500</option>
-                            <option value="1000" ${rowsPerPage === 1000 ? 'selected' : ''}>1000</option>
-                        </select>
-                        <span style="color: #546e7a; font-size: 14px;">รายการ/หน้า</span>
                     </div>
                 </div>
 
@@ -1014,82 +1197,6 @@
             tableHTML += `
                         </tbody>
                     </table>
-                </div>
-
-                <!-- Pagination Controls -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 15px;">
-                    <div style="color: #546e7a; font-size: 14px;">
-                        แสดง ${startIndex + 1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ
-                    </div>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-            `;
-
-            // Generate pagination buttons
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-
-            if (endPage - startPage < maxButtons - 1) {
-                startPage = Math.max(1, endPage - maxButtons + 1);
-            }
-
-            // Previous button
-            tableHTML += `
-                <button onclick="goToPage(${currentPage - 1})"
-                    style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${currentPage === 1 ? '#f5f5f5' : 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)'}; color: ${currentPage === 1 ? '#ccc' : 'white'}; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'}; font-weight: 600; transition: all 0.3s;"
-                    ${currentPage === 1 ? 'disabled' : ''}>
-                    ← ก่อนหน้า
-                </button>
-            `;
-
-            // First page
-            if (startPage > 1) {
-                tableHTML += `
-                    <button onclick="goToPage(1)"
-                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: white; color: #1565c0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                        1
-                    </button>
-                `;
-                if (startPage > 2) {
-                    tableHTML += `<span style="padding: 8px; color: #546e7a;">...</span>`;
-                }
-            }
-
-            // Page numbers
-            for (let i = startPage; i <= endPage; i++) {
-                const isActive = i === currentPage;
-                tableHTML += `
-                    <button onclick="goToPage(${i})"
-                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${isActive ? 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)' : 'white'}; color: ${isActive ? 'white' : '#1565c0'}; cursor: pointer; font-weight: 600; transition: all 0.3s; ${isActive ? 'box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);' : ''}">
-                        ${i}
-                    </button>
-                `;
-            }
-
-            // Last page
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    tableHTML += `<span style="padding: 8px; color: #546e7a;">...</span>`;
-                }
-                tableHTML += `
-                    <button onclick="goToPage(${totalPages})"
-                        style="padding: 8px 14px; border: 2px solid #e3f2fd; border-radius: 6px; background: white; color: #1565c0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                        ${totalPages}
-                    </button>
-                `;
-            }
-
-            // Next button
-            tableHTML += `
-                <button onclick="goToPage(${currentPage + 1})"
-                    style="padding: 8px 12px; border: 2px solid #e3f2fd; border-radius: 6px; background: ${currentPage === totalPages ? '#f5f5f5' : 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)'}; color: ${currentPage === totalPages ? '#ccc' : 'white'}; cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'}; font-weight: 600; transition: all 0.3s;"
-                    ${currentPage === totalPages ? 'disabled' : ''}>
-                    ถัดไป →
-                </button>
-            `;
-
-            tableHTML += `
-                    </div>
                 </div>
             `;
 
@@ -1183,19 +1290,12 @@
 
             let tableHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#1565c0; margin:0;">💊 DispensedItem - รายการยาที่จ่าย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispenseditemData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color:#1565c0; margin:0;">💊 DispensedItem - รายการยาที่จ่าย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispenseditemData.length.toLocaleString() : ''} รายการ)</h3>
+                        ${renderFundPagerControls('changeRowsPerPageDT', 'goToPageDT', currentPageDT, totalPages, rowsPerPageDT, filteredData.length)}
+                    </div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageDT(this.value)">
-                            <option value="20" ${rowsPerPageDT===20?'selected':''}>20</option>
-                            <option value="50" ${rowsPerPageDT===50?'selected':''}>50</option>
-                            <option value="100" ${rowsPerPageDT===100?'selected':''}>100</option>
-                            <option value="200" ${rowsPerPageDT===200?'selected':''}>200</option>
-                            <option value="500" ${rowsPerPageDT===500?'selected':''}>500</option>
-                            <option value="1000" ${rowsPerPageDT===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -1284,24 +1384,7 @@
                 `;
             });
 
-            tableHTML += `</tbody></table></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
-                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
-                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-            `;
-
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPageDT - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-
-            tableHTML += `<button onclick="goToPageDT(${currentPageDT-1})" style="${btnStyle(false)} ${currentPageDT===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDT===1?'disabled':''}>← ก่อนหน้า</button>`;
-            if (startPage > 1) { tableHTML += `<button onclick="goToPageDT(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
-            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageDT(${i})" style="${btnStyle(i===currentPageDT)}">${i}</button>`;
-            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageDT(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
-            tableHTML += `<button onclick="goToPageDT(${currentPageDT+1})" style="${btnStyle(false)} ${currentPageDT===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDT===totalPages?'disabled':''}>ถัดไป →</button>`;
-
-            tableHTML += `</div></div>`;
+            tableHTML += `</tbody></table></div>`;
             contentArea.innerHTML = tableHTML;
         }
 
@@ -1387,19 +1470,12 @@
 
             let tableHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#1565c0; margin:0;">💊 Dispensing - จ่ายยา (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispensingData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color:#1565c0; margin:0;">💊 Dispensing - จ่ายยา (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allDispensingData.length.toLocaleString() : ''} รายการ)</h3>
+                        ${renderFundPagerControls('changeRowsPerPageDI', 'goToPageDI', currentPageDI, totalPages, rowsPerPageDI, filteredData.length)}
+                    </div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageDI(this.value)">
-                            <option value="20" ${rowsPerPageDI===20?'selected':''}>20</option>
-                            <option value="50" ${rowsPerPageDI===50?'selected':''}>50</option>
-                            <option value="100" ${rowsPerPageDI===100?'selected':''}>100</option>
-                            <option value="200" ${rowsPerPageDI===200?'selected':''}>200</option>
-                            <option value="500" ${rowsPerPageDI===500?'selected':''}>500</option>
-                            <option value="1000" ${rowsPerPageDI===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -1485,24 +1561,7 @@
                 `;
             });
 
-            tableHTML += `</tbody></table></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
-                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
-                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-            `;
-
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPageDI - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-
-            tableHTML += `<button onclick="goToPageDI(${currentPageDI-1})" style="${btnStyle(false)} ${currentPageDI===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDI===1?'disabled':''}>← ก่อนหน้า</button>`;
-            if (startPage > 1) { tableHTML += `<button onclick="goToPageDI(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
-            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageDI(${i})" style="${btnStyle(i===currentPageDI)}">${i}</button>`;
-            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageDI(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
-            tableHTML += `<button onclick="goToPageDI(${currentPageDI+1})" style="${btnStyle(false)} ${currentPageDI===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageDI===totalPages?'disabled':''}>ถัดไป →</button>`;
-
-            tableHTML += `</div></div>`;
+            tableHTML += `</tbody></table></div>`;
             contentArea.innerHTML = tableHTML;
         }
 
@@ -1591,19 +1650,12 @@
 
             let tableHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#1565c0; margin:0;">🏥 OPService - บริการผู้ป่วยนอก (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpserviceData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color:#1565c0; margin:0;">🏥 OPService - บริการผู้ป่วยนอก (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpserviceData.length.toLocaleString() : ''} รายการ)</h3>
+                        ${renderFundPagerControls('changeRowsPerPageOS', 'goToPageOS', currentPageOS, totalPages, rowsPerPageOS, filteredData.length)}
+                    </div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOS(this.value)">
-                            <option value="20" ${rowsPerPageOS===20?'selected':''}>20</option>
-                            <option value="50" ${rowsPerPageOS===50?'selected':''}>50</option>
-                            <option value="100" ${rowsPerPageOS===100?'selected':''}>100</option>
-                            <option value="200" ${rowsPerPageOS===200?'selected':''}>200</option>
-                            <option value="500" ${rowsPerPageOS===500?'selected':''}>500</option>
-                            <option value="1000" ${rowsPerPageOS===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -1689,25 +1741,7 @@
                 `;
             });
 
-            tableHTML += `</tbody></table></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
-                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
-                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-            `;
-
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPageOS - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
-
-            tableHTML += `<button onclick="goToPageOS(${currentPageOS-1})" style="${btnStyle(false)} ${currentPageOS===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOS===1?'disabled':''}>← ก่อนหน้า</button>`;
-            if (startPage > 1) { tableHTML += `<button onclick="goToPageOS(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
-            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageOS(${i})" style="${btnStyle(i===currentPageOS)}">${i}</button>`;
-            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageOS(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
-            tableHTML += `<button onclick="goToPageOS(${currentPageOS+1})" style="${btnStyle(false)} ${currentPageOS===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOS===totalPages?'disabled':''}>ถัดไป →</button>`;
-
-            tableHTML += `</div></div>`;
+            tableHTML += `</tbody></table></div>`;
             contentArea.innerHTML = tableHTML;
         }
 
@@ -1808,19 +1842,12 @@
 
             let tableHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#1565c0; margin:0;">📋 BillItems - รายการในบิล (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBillitemsData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color:#1565c0; margin:0;">📋 BillItems - รายการในบิล (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allBillitemsData.length.toLocaleString() : ''} รายการ)</h3>
+                        ${renderFundPagerControls('changeRowsPerPageBI', 'goToPageBI', currentPageBI, totalPages, rowsPerPageBI, filteredData.length)}
+                    </div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageBI(this.value)">
-                            <option value="20" ${rowsPerPageBI===20?'selected':''}>20</option>
-                            <option value="50" ${rowsPerPageBI===50?'selected':''}>50</option>
-                            <option value="100" ${rowsPerPageBI===100?'selected':''}>100</option>
-                            <option value="200" ${rowsPerPageBI===200?'selected':''}>200</option>
-                            <option value="500" ${rowsPerPageBI===500?'selected':''}>500</option>
-                            <option value="1000" ${rowsPerPageBI===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -1888,26 +1915,7 @@
                 `;
             });
 
-            tableHTML += `</tbody></table></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
-                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
-                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-            `;
-
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPageBI - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-
-            const btnStyle = (active) => `padding:8px 14px; border:2px solid #e3f2fd; border-radius:6px; background:${active ? 'linear-gradient(135deg,#42a5f5 0%,#2196f3 100%)' : 'white'}; color:${active ? 'white' : '#1565c0'}; cursor:pointer; font-weight:600;`;
-
-            tableHTML += `<button onclick="goToPageBI(${currentPageBI-1})" style="${btnStyle(false)} ${currentPageBI===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===1?'disabled':''}>← ก่อนหน้า</button>`;
-            if (startPage > 1) { tableHTML += `<button onclick="goToPageBI(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
-            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageBI(${i})" style="${btnStyle(i===currentPageBI)}">${i}</button>`;
-            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageBI(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
-            tableHTML += `<button onclick="goToPageBI(${currentPageBI+1})" style="${btnStyle(false)} ${currentPageBI===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageBI===totalPages?'disabled':''}>ถัดไป →</button>`;
-
-            tableHTML += `</div></div>`;
+            tableHTML += `</tbody></table></div>`;
             contentArea.innerHTML = tableHTML;
         }
 
@@ -1993,19 +2001,12 @@
 
             let tableHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#1565c0; margin:0;">🩺 OPDx - การวินิจฉัย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpdxData.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color:#1565c0; margin:0;">🩺 OPDx - การวินิจฉัย (${filteredData.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + allOpdxData.length.toLocaleString() : ''} รายการ)</h3>
+                        ${renderFundPagerControls('changeRowsPerPageOX', 'goToPageOX', currentPageOX, totalPages, rowsPerPageOX, filteredData.length)}
+                    </div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px; cursor:pointer;" onchange="changeRowsPerPageOX(this.value)">
-                            <option value="20" ${rowsPerPageOX===20?'selected':''}>20</option>
-                            <option value="50" ${rowsPerPageOX===50?'selected':''}>50</option>
-                            <option value="100" ${rowsPerPageOX===100?'selected':''}>100</option>
-                            <option value="200" ${rowsPerPageOX===200?'selected':''}>200</option>
-                            <option value="500" ${rowsPerPageOX===500?'selected':''}>500</option>
-                            <option value="1000" ${rowsPerPageOX===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -2060,24 +2061,7 @@
                 `;
             });
 
-            tableHTML += `</tbody></table></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
-                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filteredData.length.toLocaleString()} รายการ</div>
-                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-            `;
-
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPageOX - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-
-            tableHTML += `<button onclick="goToPageOX(${currentPageOX-1})" style="${btnStyle(false)} ${currentPageOX===1?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOX===1?'disabled':''}>← ก่อนหน้า</button>`;
-            if (startPage > 1) { tableHTML += `<button onclick="goToPageOX(1)" style="${btnStyle(false)}">1</button>`; if (startPage > 2) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; }
-            for (let i = startPage; i <= endPage; i++) tableHTML += `<button onclick="goToPageOX(${i})" style="${btnStyle(i===currentPageOX)}">${i}</button>`;
-            if (endPage < totalPages) { if (endPage < totalPages-1) tableHTML += `<span style="padding:8px; color:#546e7a;">...</span>`; tableHTML += `<button onclick="goToPageOX(${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
-            tableHTML += `<button onclick="goToPageOX(${currentPageOX+1})" style="${btnStyle(false)} ${currentPageOX===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${currentPageOX===totalPages?'disabled':''}>ถัดไป →</button>`;
-
-            tableHTML += `</div></div>`;
+            tableHTML += `</tbody></table></div>`;
             contentArea.innerHTML = tableHTML;
         }
 
@@ -2088,6 +2072,8 @@
             const dateTo = document.getElementById('dateTo').value;
             if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
             const selectedPttypes = getSelectedPttypes();
+            const selectedGroups = getSelectedHipdataGroups();
+            const { includeOpd, includeIpd } = getOpdIpdFilter();
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด INS...</h2><p>กรุณารอสักครู่</p></div>`;
             try {
@@ -2100,8 +2086,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes, selectedGroups, includeOpd, includeIpd
                     })
                 });
                 const result = await response.json();
@@ -2112,7 +2097,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['ins'] = result.data;
                     fdhPage['ins'] = 1;
-                    fdhRowsPerPage['ins'] = fdhRowsPerPage['ins'] || 100;
+                    fdhRowsPerPage['ins'] = fdhRowsPerPage['ins'] || 20;
                     renderFdhTable('ins');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2140,8 +2125,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2150,7 +2134,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['pat'] = result.data;
                     fdhPage['pat'] = 1;
-                    fdhRowsPerPage['pat'] = fdhRowsPerPage['pat'] || 100;
+                    fdhRowsPerPage['pat'] = fdhRowsPerPage['pat'] || 20;
                     renderFdhTable('pat');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2178,8 +2162,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2188,7 +2171,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['opd'] = result.data;
                     fdhPage['opd'] = 1;
-                    fdhRowsPerPage['opd'] = fdhRowsPerPage['opd'] || 100;
+                    fdhRowsPerPage['opd'] = fdhRowsPerPage['opd'] || 20;
                     renderFdhTable('opd');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2216,8 +2199,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2226,7 +2208,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['orf'] = result.data;
                     fdhPage['orf'] = 1;
-                    fdhRowsPerPage['orf'] = fdhRowsPerPage['orf'] || 100;
+                    fdhRowsPerPage['orf'] = fdhRowsPerPage['orf'] || 20;
                     renderFdhTable('orf');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2254,8 +2236,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2264,7 +2245,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['odx'] = result.data;
                     fdhPage['odx'] = 1;
-                    fdhRowsPerPage['odx'] = fdhRowsPerPage['odx'] || 100;
+                    fdhRowsPerPage['odx'] = fdhRowsPerPage['odx'] || 20;
                     renderFdhTable('odx');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2292,8 +2273,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2302,7 +2282,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['oop'] = result.data;
                     fdhPage['oop'] = 1;
-                    fdhRowsPerPage['oop'] = fdhRowsPerPage['oop'] || 100;
+                    fdhRowsPerPage['oop'] = fdhRowsPerPage['oop'] || 20;
                     renderFdhTable('oop');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2330,8 +2310,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2340,7 +2319,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['irf'] = result.data;
                     fdhPage['irf'] = 1;
-                    fdhRowsPerPage['irf'] = fdhRowsPerPage['irf'] || 100;
+                    fdhRowsPerPage['irf'] = fdhRowsPerPage['irf'] || 20;
                     renderFdhTable('irf');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2368,8 +2347,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2378,7 +2356,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['ipd'] = result.data;
                     fdhPage['ipd'] = 1;
-                    fdhRowsPerPage['ipd'] = fdhRowsPerPage['ipd'] || 100;
+                    fdhRowsPerPage['ipd'] = fdhRowsPerPage['ipd'] || 20;
                     renderFdhTable('ipd');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2406,8 +2384,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2416,7 +2393,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['iop'] = result.data;
                     fdhPage['iop'] = 1;
-                    fdhRowsPerPage['iop'] = fdhRowsPerPage['iop'] || 100;
+                    fdhRowsPerPage['iop'] = fdhRowsPerPage['iop'] || 20;
                     renderFdhTable('iop');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2444,8 +2421,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2454,7 +2430,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['cht'] = result.data;
                     fdhPage['cht'] = 1;
-                    fdhRowsPerPage['cht'] = fdhRowsPerPage['cht'] || 100;
+                    fdhRowsPerPage['cht'] = fdhRowsPerPage['cht'] || 20;
                     renderFdhTable('cht');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2482,8 +2458,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2492,7 +2467,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['cha'] = result.data;
                     fdhPage['cha'] = 1;
-                    fdhRowsPerPage['cha'] = fdhRowsPerPage['cha'] || 100;
+                    fdhRowsPerPage['cha'] = fdhRowsPerPage['cha'] || 20;
                     renderFdhTable('cha');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2507,41 +2482,8 @@
         const FDH_ALL_KEYS = ['ins','pat','opd','orf','odx','oop','irf','ipd','iop','cht','cha','idx','aer','adp','lvd','dru','labfu','phdb'];
 
         async function searchFdhAllErrors() {
-            const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
-            const selectedPttypes = getSelectedPttypes();
-            const config = getDatabaseConfig();
-            if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
-
             const contentArea = document.getElementById('content-area');
-            contentArea.innerHTML = `<div class="welcome-message"><h2>⏳ กำลังดึงข้อมูลทุกแฟ้ม...</h2><p>กรุณารอสักครู่</p></div>`;
-
-            const endpointMap = {
-                ins:'get-fdh-ins', pat:'get-fdh-pat', opd:'get-fdh-opd',
-                orf:'get-fdh-orf', odx:'get-fdh-odx', oop:'get-fdh-oop',
-                irf:'get-fdh-irf', ipd:'get-fdh-ipd', iop:'get-fdh-iop',
-                cht:'get-fdh-cht', cha:'get-fdh-cha', idx:'get-fdh-idx',
-                lvd:'get-fdh-lvd', dru:'get-fdh-dru', labfu:'get-fdh-labfu', phdb:'get-fdh-phdb'
-            };
-
-            const body = {
-                host: config.host, port: config.port, database: config.database,
-                user: config.user, password: config.password, type: config.type,
-                dateFrom, dateTo, selectedPttypes, hipdata_code: window.hipdataCode
-            };
-
-            await Promise.all(Object.entries(endpointMap).map(async ([ft, ep]) => {
-                try {
-                    const resp = await fetch(`${API_BASE}/api/${ep}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
-                    });
-                    const result = await resp.json();
-                    if (result.success && result.data) fdhData[ft] = result.data;
-                } catch (e) { console.error(`Error fetching ${ft}:`, e); }
-            }));
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังรวบรวมข้อมูล...</h2><p>กรุณารอสักครู่</p></div>`;
 
             const allErrors = [];
             for (const ft of FDH_ALL_KEYS) {
@@ -2554,15 +2496,19 @@
             }
 
             if (allErrors.length === 0) {
-                contentArea.innerHTML = `<div class="welcome-message"><h2>✅ ไม่มีรายการที่ต้องแก้ไข</h2><p>ข้อมูลทุกแฟ้มผ่านการตรวจสอบ</p></div>`;
+                const loaded = FDH_ALL_KEYS.filter(ft => fdhData[ft] && fdhData[ft].length > 0);
+                const msg = loaded.length === 0
+                    ? 'ยังไม่มีข้อมูล กรุณาค้นหาแต่ละแฟ้มก่อน แล้วกลับมาดูรายการที่ต้องแก้ไข'
+                    : `ไม่พบรายการที่ต้องแก้ไขในแฟ้ม: ${loaded.join(', ').toUpperCase()}`;
+                contentArea.innerHTML = `<div class="welcome-message"><h2>✅ ไม่มีรายการที่ต้องแก้ไข</h2><p>${msg}</p></div>`;
                 updateStatistics(0, 0, 0);
                 return;
             }
 
             // Sort by HN then file
             allErrors.sort((a, b) => {
-                const hnA = String(a.hn || a.HN || '');
-                const hnB = String(b.hn || b.HN || '');
+                const hnA = String(a.hn || '');
+                const hnB = String(b.hn || '');
                 if (hnA !== hnB) return hnA.localeCompare(hnB);
                 return String(a._file).localeCompare(String(b._file));
             });
@@ -2570,7 +2516,7 @@
             updateStatistics(allErrors.length, 0, allErrors.length);
             fdhData['all'] = allErrors;
             fdhPage['all'] = 1;
-            fdhRowsPerPage['all'] = fdhRowsPerPage['all'] || 100;
+            fdhRowsPerPage['all'] = fdhRowsPerPage['all'] || 20;
             renderFdhAllTable();
         }
 
@@ -2580,7 +2526,7 @@
                 document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>ไม่มีรายการที่ต้องแก้ไข</h2></div>`;
                 return;
             }
-            const rpp = fdhRowsPerPage['all'] || 100;
+            const rpp = fdhRowsPerPage['all'] || 20;
             const pg  = fdhPage['all'] || 1;
             const totalPages = Math.ceil(data.length / rpp);
             const startIndex = (pg - 1) * rpp;
@@ -2590,12 +2536,8 @@
             // Helper: get display name from row
             const getName = (row) => row.ptname || row.name ||
                 ((row.fname || row.pname) ? ((row.pname||'') + (row.fname||'') + ' ' + (row.lname||'')) : '') || '-';
-            // Helper: get HN
-            const getHN = (row) => row.hn || row.HN || row.patient_hn || '-';
-            // Helper: get VN
-            const getVN = (row) => row.vn || row.VN || '-';
-            // Helper: get AN
-            const getAN = (row) => row.an || row.AN || '-';
+            // Helper: get VN/AN
+            const getSeq = (row) => row.vn || row.an || row.svid || row.seq || '-';
             // Helper: list problem fields (without check_ prefix)
             const getProblems = (row) => Object.keys(row)
                 .filter(k => k.startsWith('check_') && row[k] === 'N')
@@ -2604,17 +2546,12 @@
 
             let tableHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#c62828; margin:0;">🔴 รายการที่ต้องแก้ไขทั้งหมด (${data.length.toLocaleString()} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color:#c62828; margin:0;">🔴 รายการที่ต้องแก้ไขทั้งหมด (${data.length.toLocaleString()} รายการ)</h3>
+                        ${renderFundPagerControls('changeFdhAllRowsPerPage', 'goToFdhAllPage', pg, totalPages, rpp, data.length)}
+                    </div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="fdhRowsPerPage['all']=parseInt(this.value); fdhPage['all']=1; renderFdhAllTable()">
-                            <option value="100" ${rpp===100?'selected':''}>100</option>
-                            <option value="200" ${rpp===200?'selected':''}>200</option>
-                            <option value="500" ${rpp===500?'selected':''}>500</option>
-                            <option value="1000" ${rpp===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -2624,8 +2561,7 @@
                             <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">#</th>
                             <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">แฟ้ม</th>
                             <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">HN</th>
-                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">VN</th>
-                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">AN</th>
+                            <th style="padding:10px 8px; border:1px solid #ef9a9a; white-space:nowrap;">VN/AN</th>
                             <th style="padding:10px 8px; border:1px solid #ef9a9a;">ชื่อ-สกุล</th>
                             <th style="padding:10px 8px; border:1px solid #ef9a9a;">ฟิลด์ที่มีปัญหา</th>
                             <th style="padding:10px 8px; border:1px solid #ef9a9a; text-align:center;">จำนวนปัญหา</th>
@@ -2644,9 +2580,8 @@
                         <td style="padding:8px; border:1px solid #ffcdd2; text-align:center; font-weight:700; color:#c62828;">
                             <span style="background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:2px 8px;">${row._file || '-'}</span>
                         </td>
-                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap;">${getHN(row)}</td>
-                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap; font-size:12px;">${getVN(row)}</td>
-                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap; font-size:12px;">${getAN(row)}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap;">${row.hn || '-'}</td>
+                        <td style="padding:8px; border:1px solid #ffcdd2; white-space:nowrap; font-size:12px;">${getSeq(row)}</td>
                         <td style="padding:8px; border:1px solid #ffcdd2;">${getName(row)}</td>
                         <td style="padding:8px; border:1px solid #ffcdd2; color:#c62828; font-weight:600;">${problems || '-'}</td>
                         <td style="padding:8px; border:1px solid #ffcdd2; text-align:center;">
@@ -2658,24 +2593,16 @@
 
             tableHTML += `</tbody></table></div>`;
 
-            // Pagination
-            if (totalPages > 1) {
-                tableHTML += `<div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:20px; flex-wrap:wrap;">`;
-                tableHTML += `<button onclick="fdhPage['all']=1; renderFdhAllTable()" ${pg===1?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">«</button>`;
-                tableHTML += `<button onclick="fdhPage['all']=${pg-1}; renderFdhAllTable()" ${pg===1?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">‹</button>`;
-                const startP = Math.max(1, pg - 2), endP = Math.min(totalPages, pg + 2);
-                for (let p = startP; p <= endP; p++) {
-                    tableHTML += `<button onclick="fdhPage['all']=${p}; renderFdhAllTable()" style="padding:6px 12px; border:${p===pg?'2px solid #c62828':'1px solid #ddd'}; border-radius:6px; cursor:pointer; ${p===pg?'background:#ffebee; font-weight:700; color:#c62828;':''}">${p}</button>`;
-                }
-                tableHTML += `<button onclick="fdhPage['all']=${pg+1}; renderFdhAllTable()" ${pg===totalPages?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">›</button>`;
-                tableHTML += `<button onclick="fdhPage['all']=${totalPages}; renderFdhAllTable()" ${pg===totalPages?'disabled':''} style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer;">»</button>`;
-                tableHTML += `<span style="color:#546e7a; font-size:14px; margin-left:8px;">หน้า ${pg}/${totalPages} | แสดง ${startIndex+1}-${endIndex} จาก ${data.length.toLocaleString()} รายการ</span>`;
-                tableHTML += `</div>`;
-            } else {
-                tableHTML += `<div style="text-align:center; color:#546e7a; font-size:14px; margin-top:12px;">แสดง ${startIndex+1}-${endIndex} จาก ${data.length.toLocaleString()} รายการ</div>`;
-            }
-
             document.getElementById('content-area').innerHTML = tableHTML;
+        }
+
+        function changeFdhAllRowsPerPage(value) { fdhRowsPerPage['all'] = parseInt(value); fdhPage['all'] = 1; renderFdhAllTable(); }
+        function goToFdhAllPage(page) {
+            const totalPages = Math.ceil((fdhData['all'] || []).length / (fdhRowsPerPage['all'] || 20));
+            if (page < 1 || page > totalPages) return;
+            fdhPage['all'] = page;
+            renderFdhAllTable();
+            document.getElementById('content-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // ==================== FDH IDX ====================
@@ -2696,8 +2623,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2706,7 +2632,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['idx'] = result.data;
                     fdhPage['idx'] = 1;
-                    fdhRowsPerPage['idx'] = fdhRowsPerPage['idx'] || 100;
+                    fdhRowsPerPage['idx'] = fdhRowsPerPage['idx'] || 20;
                     renderFdhTable('idx');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2734,8 +2660,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2744,7 +2669,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['lvd'] = result.data;
                     fdhPage['lvd'] = 1;
-                    fdhRowsPerPage['lvd'] = fdhRowsPerPage['lvd'] || 100;
+                    fdhRowsPerPage['lvd'] = fdhRowsPerPage['lvd'] || 20;
                     renderFdhTable('lvd');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2772,8 +2697,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2782,7 +2706,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['dru'] = result.data;
                     fdhPage['dru'] = 1;
-                    fdhRowsPerPage['dru'] = fdhRowsPerPage['dru'] || 100;
+                    fdhRowsPerPage['dru'] = fdhRowsPerPage['dru'] || 20;
                     renderFdhTable('dru');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2810,8 +2734,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2820,7 +2743,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['labfu'] = result.data;
                     fdhPage['labfu'] = 1;
-                    fdhRowsPerPage['labfu'] = fdhRowsPerPage['labfu'] || 100;
+                    fdhRowsPerPage['labfu'] = fdhRowsPerPage['labfu'] || 20;
                     renderFdhTable('labfu');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2848,8 +2771,7 @@
                     body: JSON.stringify({
                         host: config.host, port: config.port, database: config.database,
                         user: config.user, password: config.password, type: config.type,
-                        dateFrom, dateTo, selectedPttypes,
-                        hipdata_code: window.hipdataCode
+                        dateFrom, dateTo, selectedPttypes
                     })
                 });
                 const result = await response.json();
@@ -2858,7 +2780,7 @@
                     updateStatistics(result.data.length, result.data.length - errCount, errCount);
                     fdhData['phdb'] = result.data;
                     fdhPage['phdb'] = 1;
-                    fdhRowsPerPage['phdb'] = fdhRowsPerPage['phdb'] || 100;
+                    fdhRowsPerPage['phdb'] = fdhRowsPerPage['phdb'] || 20;
                     renderFdhTable('phdb');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
@@ -2893,6 +2815,7 @@
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
                         <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
                         <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="fdhRowsPerPage['${ft}']=parseInt(this.value); fdhPage['${ft}']=1; renderFdhTable('${ft}')">
+                            <option value="20">20</option><option value="50">50</option>
                             <option value="100">100</option><option value="200">200</option>
                             <option value="500">500</option><option value="1000">1000</option>
                         </select>
@@ -2909,14 +2832,14 @@
             updateStatistics(0, 0, 0);
             fdhData[ft] = [];
             fdhPage[ft] = 1;
-            fdhRowsPerPage[ft] = fdhRowsPerPage[ft] || 100;
+            fdhRowsPerPage[ft] = fdhRowsPerPage[ft] || 20;
             showFdhMenuPlaceholder(ft);
         }
 
         function renderFdhTable(ft) {
             // Generic render for FDH menus — will be replaced per-menu when SQL is added
             const data = fdhData[ft] || [];
-            const rpp = fdhRowsPerPage[ft] || 100;
+            const rpp = fdhRowsPerPage[ft] || 20;
             const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
             const hasRed = (row) => Object.keys(row).some(k => k.startsWith('check_') && row[k] === 'N');
             const filtered = showErrorsOnly ? data.filter(hasRed) : data;
@@ -2941,25 +2864,35 @@
             if (filtered.length === 0) { showFdhMenuPlaceholder(ft); return; }
 
             const cols = Object.keys(pageData[0] || {});
+            const pagerHtml = `
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <label style="color:#546e7a;font-size:14px;font-weight:600;">แสดง:</label>
+                    <select style="padding:6px 10px;border:2px solid #e3f2fd;border-radius:6px;font-size:13px;cursor:pointer;" onchange="fdhRowsPerPage['${ft}']=parseInt(this.value); fdhPage['${ft}']=1; renderFdhTable('${ft}')">
+                        ${[20,50,100,200,500,1000].map(n => `<option value="${n}" ${rpp===n?'selected':''}>${n}</option>`).join('')}
+                    </select>
+                    <span style="color:#546e7a;font-size:13px;">รายการ/หน้า</span>
+                    ${totalPages > 1 ? `
+                    <button onclick="goToPageFdh('${ft}',${pg-1})" ${pg<=1?'disabled':''} style="padding:6px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${pg<=1?'#f5f5f5':'linear-gradient(135deg,#42a5f5,#2196f3)'};color:${pg<=1?'#ccc':'white'};cursor:${pg<=1?'not-allowed':'pointer'};font-weight:600;font-size:13px;white-space:nowrap;">◀ ก่อนหน้า</button>
+                    <span style="font-size:13px;color:#546e7a;">หน้า ${pg}/${totalPages} (${filtered.length.toLocaleString()} รายการ)</span>
+                    <button onclick="goToPageFdh('${ft}',${pg+1})" ${pg>=totalPages?'disabled':''} style="padding:6px 12px;border:2px solid #e3f2fd;border-radius:6px;background:${pg>=totalPages?'#f5f5f5':'linear-gradient(135deg,#42a5f5,#2196f3)'};color:${pg>=totalPages?'#ccc':'white'};cursor:${pg>=totalPages?'not-allowed':'pointer'};font-weight:600;font-size:13px;white-space:nowrap;">ถัดไป ▶</button>
+                    ` : ''}
+                </div>
+            `;
             let html = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
-                    <h3 style="color:#1565c0; margin:0;">📋 ${ft.toUpperCase()} - ${label} (${filtered.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + data.length.toLocaleString() : ''} รายการ)</h3>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <h3 style="color:#1565c0; margin:0;">📋 ${ft.toUpperCase()} - ${label} (${filtered.length.toLocaleString()}${showErrorsOnly ? ' / ทั้งหมด ' + data.length.toLocaleString() : ''} รายการ)</h3>
+                        ${pagerHtml}
+                    </div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="exportCurrentToExcel()" style="padding:8px 16px; background:linear-gradient(135deg,#43a047,#2e7d32); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;">📥 Export Excel</button>
-                        <label style="color:#546e7a; font-size:14px; font-weight:600;">แสดง:</label>
-                        <select style="padding:8px 12px; border:2px solid #e3f2fd; border-radius:8px; font-size:14px;" onchange="fdhRowsPerPage['${ft}']=parseInt(this.value); fdhPage['${ft}']=1; renderFdhTable('${ft}')">
-                            <option value="100" ${rpp===100?'selected':''}>100</option>
-                            <option value="200" ${rpp===200?'selected':''}>200</option>
-                            <option value="500" ${rpp===500?'selected':''}>500</option>
-                            <option value="1000" ${rpp===1000?'selected':''}>1000</option>
-                        </select>
-                        <span style="color:#546e7a; font-size:14px;">รายการ/หน้า</span>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:13px;">
-                        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">
-                            <th style="padding:10px 8px; border:1px solid #e3f2fd;">ลำดับ</th>`;
+                        <thead><tr style="background:linear-gradient(135deg,#42a5f5 0%,#2196f3 100%); color:white;">`;
+            if (ft === 'ins') html += `<th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap; text-align:center;">จัดการ</th>`;
+            html += `<th style="padding:10px 8px; border:1px solid #e3f2fd;">ลำดับ</th>`;
             cols.forEach(c => {
                 const label = c.startsWith('check_') ? '✓' : c.toUpperCase();
                 const align = c.startsWith('check_') ? 'text-align:center;' : '';
@@ -2969,7 +2902,12 @@
 
             pageData.forEach((row, idx) => {
                 const bg = (startIndex + idx) % 2 === 0 ? '#f5f9ff' : 'white';
-                html += `<tr style="background:${bg};"><td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${startIndex + idx + 1}</td>`;
+                html += `<tr style="background:${bg};">`;
+                if (ft === 'ins') {
+                    const absIdx = data.indexOf(row);
+                    html += `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;"><button onclick="openEditHospModal(${absIdx})" style="padding:6px 12px; background:linear-gradient(135deg,#42a5f5,#1565c0); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; white-space:nowrap;">✏️ แก้ไข</button></td>`;
+                }
+                html += `<td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${startIndex + idx + 1}</td>`;
                 cols.forEach((c, ci) => {
                     if (c.startsWith('check_')) html += checkCell(row[c]);
                     else {
@@ -2981,27 +2919,13 @@
                 html += `</tr>`;
             });
 
-            html += `</tbody></table></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
-                    <div style="color:#546e7a; font-size:14px;">แสดง ${startIndex+1}-${endIndex} จาก ${filtered.length.toLocaleString()} รายการ</div>
-                    <div style="display:flex; gap:5px; flex-wrap:wrap;">`;
-
-            const maxBtn = 7;
-            let sp = Math.max(1, pg - Math.floor(maxBtn/2));
-            let ep = Math.min(totalPages, sp + maxBtn - 1);
-            if (ep - sp < maxBtn - 1) sp = Math.max(1, ep - maxBtn + 1);
-            html += `<button onclick="goToPageFdh('${ft}',${pg-1})" style="${btnStyle(false)} ${pg===1?'opacity:0.4;cursor:not-allowed;':''}" ${pg===1?'disabled':''}>← ก่อนหน้า</button>`;
-            if (sp > 1) { html += `<button onclick="goToPageFdh('${ft}',1)" style="${btnStyle(false)}">1</button>`; if (sp > 2) html += `<span style="padding:8px; color:#546e7a;">...</span>`; }
-            for (let i = sp; i <= ep; i++) html += `<button onclick="goToPageFdh('${ft}',${i})" style="${btnStyle(i===pg)}">${i}</button>`;
-            if (ep < totalPages) { if (ep < totalPages-1) html += `<span style="padding:8px; color:#546e7a;">...</span>`; html += `<button onclick="goToPageFdh('${ft}',${totalPages})" style="${btnStyle(false)}">${totalPages}</button>`; }
-            html += `<button onclick="goToPageFdh('${ft}',${pg+1})" style="${btnStyle(false)} ${pg===totalPages?'opacity:0.4;cursor:not-allowed;':''}" ${pg===totalPages?'disabled':''}>ถัดไป →</button>`;
-            html += `</div></div>`;
+            html += `</tbody></table></div>`;
             document.getElementById('content-area').innerHTML = html;
         }
 
         function goToPageFdh(ft, page) {
             const data = fdhData[ft] || [];
-            const rpp = fdhRowsPerPage[ft] || 100;
+            const rpp = fdhRowsPerPage[ft] || 20;
             const showErrorsOnly = document.getElementById('show-errors-only')?.checked;
             const hasRed = (row) => Object.keys(row).some(k => k.startsWith('check_') && row[k] === 'N');
             const filtered = showErrorsOnly ? data.filter(hasRed) : data;
@@ -3133,7 +3057,114 @@
             XLSX.utils.book_append_sheet(wb, ws, filename.slice(0, 31));
             XLSX.writeFile(wb, `${filename}_${dateStr}.xlsx`);
         }
+
+        // ==================== แก้ไข HOSPMAIN/HOSPSUB (เมนู INS) ====================
+
+        // หา key จริงในแถวข้อมูล แบบไม่สนตัวพิมพ์ใหญ่-เล็ก (pg คืนชื่อคอลัมน์เป็นตัวเล็ก, mysql คงตัวพิมพ์ตามที่เขียนใน query)
+        function fdhFieldKey(row, name) {
+            if (Object.prototype.hasOwnProperty.call(row, name)) return name;
+            return Object.keys(row).find(k => k.toLowerCase() === name.toLowerCase()) || name;
+        }
+
+        let _editHospIdx = null;
+
+        function openEditHospModal(idx) {
+            const row = (fdhData['ins'] || [])[idx];
+            if (!row) { alert('⚠️ ไม่พบข้อมูล'); return; }
+            _editHospIdx = idx;
+            const vn = row[fdhFieldKey(row, 'SEQ')] ?? row[fdhFieldKey(row, 'an')];
+            document.getElementById('edit-hosp-vn').textContent = vn || '-';
+            document.getElementById('edit-hosp-pttype').textContent = row[fdhFieldKey(row, 'SUBTYPE')] || '-';
+            document.getElementById('edit-hosp-hospmain').value = row[fdhFieldKey(row, 'HOSPMAIN')] || '';
+            document.getElementById('edit-hosp-hospsub').value = row[fdhFieldKey(row, 'HOSPSUB')] || '';
+            document.getElementById('edit-hosp-modal').style.display = 'flex';
+        }
+
+        function closeEditHospModal() {
+            document.getElementById('edit-hosp-modal').style.display = 'none';
+            _editHospIdx = null;
+        }
+
+        async function saveEditHosp() {
+            if (_editHospIdx === null) return;
+            const row = (fdhData['ins'] || [])[_editHospIdx];
+            if (!row) { alert('⚠️ ไม่พบข้อมูล'); return; }
+            const vn = row[fdhFieldKey(row, 'SEQ')] ?? row[fdhFieldKey(row, 'an')];
+            const pttype = row[fdhFieldKey(row, 'SUBTYPE')];
+            if (!vn || !pttype) { alert('⚠️ ไม่พบ VN หรือสิทธิของรายการนี้'); return; }
+
+            const hospmain = document.getElementById('edit-hosp-hospmain').value.trim();
+            const hospsub = document.getElementById('edit-hosp-hospsub').value.trim();
+            const cfg = getDatabaseConfig();
+            if (!cfg) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+            const btn = document.getElementById('edit-hosp-save-btn');
+            btn.textContent = '⏳ กำลังบันทึก...'; btn.disabled = true;
+            try {
+                const response = await fetch(`${API_BASE}/api/update-fdh-ins-hospital`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: cfg.host, port: cfg.port, database: cfg.database,
+                        user: cfg.user, password: cfg.password, type: cfg.type,
+                        vn, pttype, hospmain, hospsub
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    row[fdhFieldKey(row, 'HOSPMAIN')] = hospmain;
+                    row[fdhFieldKey(row, 'check_HOSPMAIN')] = hospmain ? 'Y' : 'N';
+                    row[fdhFieldKey(row, 'HOSPSUB')] = hospsub;
+                    row[fdhFieldKey(row, 'check_HOSPSUB')] = hospsub ? 'Y' : 'N';
+
+                    // รีเฟรชสถิติ (ทั้งหมด/ผ่าน/ต้องแก้ไข) ให้ตรงกับข้อมูลล่าสุดทันที
+                    const insData = fdhData['ins'] || [];
+                    const hasIssue = (r) => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N');
+                    const needfix = insData.filter(hasIssue).length;
+                    updateStatistics(insData.length, insData.length - needfix, needfix);
+
+                    // ถ้าติ๊ก "แสดงเฉพาะที่ต้องแก้ไข" อยู่ และรายการนี้ไม่มีปัญหาแล้ว ให้กลับไปหน้า 1 เผื่อรายการที่เหลือน้อยกว่าหน้าปัจจุบัน
+                    if (document.getElementById('show-errors-only')?.checked) fdhPage['ins'] = 1;
+
+                    closeEditHospModal();
+                    renderFdhTable('ins');
+                } else {
+                    alert('❌ เกิดข้อผิดพลาด: ' + (result.error || 'บันทึกไม่สำเร็จ'));
+                }
+            } catch (err) {
+                alert('❌ ' + err.message);
+            } finally {
+                btn.textContent = '💾 บันทึก'; btn.disabled = false;
+            }
+        }
     </script>
+
+    <div id="edit-hosp-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+        <div style="background:white; border-radius:16px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="padding:16px 24px; border-bottom:2px solid #e3f2fd; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:16px 16px 0 0;">
+                <div style="font-size:20px; font-weight:800; color:#1565c0;">✏️ แก้ไข HOSPMAIN / HOSPSUB</div>
+                <button onclick="closeEditHospModal()" style="background:none;border:none;font-size:28px;cursor:pointer;color:#9e9e9e;">✕</button>
+            </div>
+            <div style="padding:24px;">
+                <div style="margin-bottom:16px; color:#546e7a; font-size:14px;">
+                    VN: <b id="edit-hosp-vn" style="color:#1565c0;"></b> &nbsp; สิทธิ: <b id="edit-hosp-pttype" style="color:#1565c0;"></b>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; margin-bottom:6px; font-weight:600; color:#37474f;">HOSPMAIN</label>
+                    <input id="edit-hosp-hospmain" type="text" placeholder="ใส่รหัสสถานพยาบาล" style="width:100%; padding:10px 12px; border:2px solid #90a4ae; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; font-weight:600; color:#37474f;">HOSPSUB</label>
+                    <input id="edit-hosp-hospsub" type="text" placeholder="ใส่รหัสสถานพยาบาล" style="width:100%; padding:10px 12px; border:2px solid #90a4ae; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                </div>
+            </div>
+            <div style="padding:16px 24px; border-top:1px solid #f5f5f5; display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="closeEditHospModal()" style="padding:10px 24px; background:#eceff1; color:#37474f; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">ยกเลิก</button>
+                <button id="edit-hosp-save-btn" onclick="saveEditHosp()" style="padding:10px 24px; background:linear-gradient(135deg,#42a5f5,#1565c0); color:white; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;">💾 บันทึก</button>
+            </div>
+        </div>
+    </div>
+
 <script src="zoom_control.js"></script>
 </body>
 </html>

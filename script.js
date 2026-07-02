@@ -4,10 +4,14 @@ let connectionConfig = null;
 
 // Get API base URL from localStorage (set by user in connection form)
 function getApiBase() {
-    const saved = localStorage.getItem('dbConnection');
-    if (saved) {
-        const config = JSON.parse(saved);
-        if (config.apiUrl) return config.apiUrl.replace(/\/$/, '');
+    try {
+        const saved = localStorage.getItem('dbConnection');
+        if (saved) {
+            const config = JSON.parse(saved);
+            if (config.apiUrl) return config.apiUrl.replace(/\/$/, '');
+        }
+    } catch (e) {
+        console.error('Invalid dbConnection in localStorage:', e);
     }
     return window.location.origin;
 }

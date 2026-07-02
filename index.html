@@ -120,7 +120,7 @@
 
         /* Cards */
         .cards-section {
-            max-width: 1100px;
+            max-width: 1400px;
             margin: -28px auto 0;
             padding: 0 24px 48px;
             position: relative;
@@ -250,6 +250,14 @@
                 <div class="card-title">ตรวจสอบป้องกันการติด C</div>
                 <div class="card-desc">ตรวจสอบและป้องกันปัญหาข้อมูลที่อาจทำให้การส่งออกได้รับการประเมินระดับ C</div>
                 <span class="card-badge badge-notready">🔧 กำลังพัฒนา</span>
+            </div>
+
+            <div class="app-card" style="--card-color:#7b1fa2; --card-bg:#f3e5f5;" onclick="window.location.href='check_edit.html'">
+                <div class="card-icon-wrap">📝</div>
+                <div class="card-title">แก้ไขข้อมูลให้ถูกต้องก่อนส่ง</div>
+                <div class="card-desc">แก้ไขข้อมูลที่ตรวจพบปัญหาให้ถูกต้องก่อนส่งออกข้อมูล</div>
+                <span class="card-badge badge-ready">✅ พร้อมใช้งาน</span>
+                <span class="card-arrow">›</span>
             </div>
 
         </div>
@@ -390,7 +398,8 @@
             position_check:                    'ตาราง position_check',
             lab_items_no_lab_catalog:           'ฟิล lab_items.no_lab_catalog (CHAR 1)',
             lab_items_sub_group_no_lab_catalog: 'ฟิล lab_items_sub_group.no_lab_catalog (CHAR 1)',
-            sks_icd10tm_check:                  'ตาราง sks_icd10tm_check'
+            sks_icd10tm_check:                  'ตาราง sks_icd10tm_check',
+            drug_morphine:                      'ตาราง drug_morphine'
         };
 
         async function checkRequiredTables() {

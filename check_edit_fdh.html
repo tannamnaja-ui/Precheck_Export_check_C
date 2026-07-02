@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตรวจสอบป้องกันการติด C - กองทุนทดแทน (FDH)</title>
+    <title>แก้ไขข้อมูลที่ไม่ถูกต้อง - กองทุนทดแทน (FDH)</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         * {
@@ -280,8 +280,8 @@
     <div class="full-width-container">
         <!-- Top Bar -->
         <div class="top-bar">
-            <h1>🏛️ ตรวจสอบป้องกันการติด C - กองทุนทดแทน (FDH)</h1>
-            <button class="btn-home" onclick="window.location.href='check_c.html'">← กลับหน้าตรวจสอบป้องกันการติด C</button>
+            <h1>🏛️ แก้ไขข้อมูลที่ไม่ถูกต้อง - กองทุนทดแทน (FDH)</h1>
+            <button class="btn-home" onclick="window.location.href='check_edit.html'">← กลับหน้าแก้ไขข้อมูลให้ถูกต้องก่อนส่ง</button>
         </div>
 
         <!-- Main Layout: Sidebar + Content -->
@@ -299,9 +299,13 @@
                 </div>
 
                 <div id="menu-list">
-                    <div class="file-menu-item active" data-name="C566">
-                        <div class="file-menu-item-title">C566</div>
-                        <div class="file-menu-item-code">ตรวจสอบ C566</div>
+                    <div class="file-menu-item active" data-name="WALKIN_CA">
+                        <div class="file-menu-item-title">ตัด walkin คู่ CA</div>
+                        <div class="file-menu-item-code">Walk-in คู่กับ CANCER</div>
+                    </div>
+                    <div class="file-menu-item" data-name="ADP30001_MORPHINE">
+                        <div class="file-menu-item-title">ตัด ADP30001 ที่รับยา Morphine</div>
+                        <div class="file-menu-item-code">ADP30001 คู่กับยา Morphine</div>
                     </div>
                 </div>
             </div>
@@ -360,7 +364,7 @@
     <script src="script_check_c_detail.js"></script>
     <script>
         window.checkType = 'fdh';
-        window.currentMenu = 'C566';
+        window.currentMenu = 'WALKIN_CA';
 
         // ตั้งวันที่เป็นวันนี้เมื่อโหลดหน้า
         document.addEventListener('DOMContentLoaded', () => {
