@@ -6181,6 +6181,118 @@ app.post('/api/delete-fdh-walkin-items', async (req, res) => {
     }
 });
 
+// FDH - ตัด Refer ที่มี WALKIN หรือ CANCER (visit มี nhso_adp_code='WALKIN' หรือ 'CANCER' และมีรายการใน referout หรือ referin)
+app.post('/api/get-fdh-refer-walkin-ca', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo } = req.body;
+        const isPg = type === 'postgresql';
+        const [ph1, ph2] = isPg ? ['$1', '$2'] : ['?', '?'];
+
+        const aggFn = isPg
+            ? `(SELECT STRING_AGG(DISTINCT n.nhso_adp_code, ', ') FROM opitemrece o JOIN nondrugitems n ON n.icode = o.icode WHERE o.vn = op.vn AND n.nhso_adp_code IN ('WALKIN','CANCER'))`
+            : `(SELECT GROUP_CONCAT(DISTINCT n.nhso_adp_code ORDER BY n.nhso_adp_code SEPARATOR ', ') FROM opitemrece o JOIN nondrugitems n ON n.icode = o.icode WHERE o.vn = op.vn AND n.nhso_adp_code IN ('WALKIN','CANCER'))`;
+
+        const buildQuery = () => `
+            SELECT DISTINCT
+                op.vstdate AS "วันที่รับบริการ",
+                op.hn AS "HN",
+                CONCAT(p.pname, p.fname, ' ', p.lname) AS "ชื่อ-นามสกุล",
+                op.vn AS "VN",
+                ${aggFn} AS "nhso_adp_code",
+                CASE WHEN EXISTS (SELECT 1 FROM referout ro WHERE ro.vn = op.vn) THEN 'มี' ELSE '-' END AS "referout",
+                CASE WHEN EXISTS (SELECT 1 FROM referin ri WHERE ri.vn = op.vn)  THEN 'มี' ELSE '-' END AS "referin"
+            FROM opitemrece op
+            INNER JOIN patient p ON p.hn = op.hn
+            WHERE op.vstdate BETWEEN ${ph1} AND ${ph2}
+                AND (
+                    EXISTS (
+                        SELECT 1
+                        FROM opitemrece o2
+                        JOIN nondrugitems n2 ON n2.icode = o2.icode
+                        WHERE o2.vn = op.vn
+                            AND o2.vstdate BETWEEN ${ph1} AND ${ph2}
+                            AND n2.nhso_adp_code = 'WALKIN'
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM opitemrece o3
+                        JOIN nondrugitems n3 ON n3.icode = o3.icode
+                        WHERE o3.vn = op.vn
+                            AND o3.vstdate BETWEEN ${ph1} AND ${ph2}
+                            AND n3.nhso_adp_code = 'CANCER'
+                    )
+                )
+                AND (
+                    EXISTS (SELECT 1 FROM referout ro WHERE ro.vn = op.vn)
+                    OR EXISTS  (SELECT 1 FROM referin  ri WHERE ri.vn = op.vn)
+                )
+            ORDER BY op.vstdate, op.vn
+        `;
+
+        let rows;
+        if (isPg) {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            const result = await client.query(buildQuery(), [dateFrom, dateTo]);
+            await client.end();
+            rows = result.rows;
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            const [r] = await connection.execute(buildQuery().replace(/\$1/g,'?').replace(/\$2/g,'?'), [dateFrom, dateTo, dateFrom, dateTo, dateFrom, dateTo]);
+            await connection.end();
+            rows = r;
+        }
+        const normVal = v => {
+            if (v instanceof Date) {
+                const y = v.getFullYear();
+                const m = String(v.getMonth()+1).padStart(2,'0');
+                const d = String(v.getDate()).padStart(2,'0');
+                return `${y}-${m}-${d}`;
+            }
+            return v;
+        };
+        const normalized = rows.map(r => { const o={}; Object.keys(r).forEach(k=>{ o[k]=normVal(r[k]); }); return o; });
+        res.json({ success: true, data: normalized, count: normalized.length });
+    } catch (error) {
+        console.error('FDH refer-walkin-ca error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// FDH - ลบรายการ referout สำหรับ VN ที่เลือก (ใช้กับเมนู ตัด Refer ที่มี WALKIN หรือ CANCER)
+app.post('/api/delete-fdh-refer-items', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, vns } = req.body;
+        if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+
+        let deleted = 0, failed = 0, errors = [];
+        if (type === 'postgresql') {
+            const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 30000 });
+            await client.connect();
+            for (const vn of vns) {
+                try {
+                    await client.query(`DELETE FROM referout WHERE vn = $1`, [vn]);
+                    deleted++;
+                } catch(e) { failed++; errors.push(`${vn}: ${e.message}`); }
+            }
+            await client.end();
+        } else {
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 30000 });
+            for (const vn of vns) {
+                try {
+                    await connection.execute(`DELETE FROM referout WHERE vn = ?`, [vn]);
+                    deleted++;
+                } catch(e) { failed++; errors.push(`${vn}: ${e.message}`); }
+            }
+            await connection.end();
+        }
+        res.json({ success: true, deleted, failed, errors });
+    } catch (error) {
+        console.error('FDH delete refer items error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // FDH - หา VN ที่มีทั้ง project code ADP30001 และมีรายการยาที่ icode อยู่ในตาราง drug_morphine (ใช้กับเมนู ตัด ADP30001 ที่รับยา Morphine)
 app.post('/api/get-fdh-adp-morphine', async (req, res) => {
     try {

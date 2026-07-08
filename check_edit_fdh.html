@@ -288,7 +288,7 @@
         <div class="main-layout">
             <!-- Left Sidebar (20%) -->
             <div class="left-sidebar">
-                <div class="sidebar-title">📋 C ที่ตรวจสอบ</div>
+                <div class="sidebar-title">📋 ข้อมูลที่ตรวจสอบ</div>
 
                 <!-- ช่องค้นหา -->
                 <div style="margin-bottom:12px;">
@@ -306,6 +306,10 @@
                     <div class="file-menu-item" data-name="ADP30001_MORPHINE">
                         <div class="file-menu-item-title">ตัด ADP30001 ที่รับยา Morphine</div>
                         <div class="file-menu-item-code">ADP30001 คู่กับยา Morphine</div>
+                    </div>
+                    <div class="file-menu-item" data-name="REFER_WALKIN_CA">
+                        <div class="file-menu-item-title">ตัด Refer ที่มี WALKIN หรือ CANCER</div>
+                        <div class="file-menu-item-code">Refer คู่กับ WALKIN/CANCER</div>
                     </div>
                 </div>
             </div>
@@ -404,6 +408,8 @@
                 searchC566(dateFrom, dateTo);
             } else if (window.currentMenu === 'WALKIN_CA') {
                 searchWalkinCA(dateFrom, dateTo);
+            } else if (window.currentMenu === 'REFER_WALKIN_CA') {
+                searchReferWalkinCa(dateFrom, dateTo);
             } else {
                 // default original behavior
                 const orig = window._origSearch;
@@ -697,6 +703,163 @@
             XLSX.writeFile(wb, `WalkinCA_${dateFrom}_${dateTo}.xlsx`);
         }
 
+        // ==================== ตัด Refer ที่มี WALKIN หรือ CANCER ====================
+
+        function renderReferWalkinCaBanner() {
+            return `
+                <div style="background:#fce4ec; border-left:4px solid #e91e63; border-radius:8px; padding:14px 18px; margin-bottom:14px; color:#880e4f; line-height:1.8;">
+                    <div style="font-size:17px; font-weight:700; margin-bottom:6px;">📋 รายชื่อผู้รับบริการที่มี Project code WALKIN หรือ CANCER และมีรายการ Refer (referout หรือ referin) ด้วย — การจัดการ จะลบรายการ Refer (referout) ออก</div>
+                    <div style="font-size:15px; font-weight:600; margin-bottom:2px;">ขั้นตอน</div>
+                    <ol style="margin:0; padding-left:22px; font-size:15px; font-weight:500; line-height:2;">
+                        <li>เลือกวันที่ ที่ต้องการลบ ให้ตรงกับ FDH ที่ส่ง แล้วกดค้นหา</li>
+                        <li>นำเข้าไฟล์ DBF แฟ้ม ORF และ AER</li>
+                        <li>กดจัดการข้อมูล</li>
+                        <li>เลือกคนที่จะลบ refer ออก</li>
+                        <li>กดลบรายการ refer</li>
+                    </ol>
+                    <div style="margin-top:6px; font-size:14px; font-weight:700; color:#c62828;">** ถ้าลบผิดให้ส่งออก FDH ใหม่แล้วทำตามตั้งแต่ข้อ 1 ใหม่</div>
+                </div>`;
+        }
+
+        async function searchReferWalkinCa(dateFrom, dateTo) {
+            const cfg = JSON.parse(localStorage.getItem('dbConnection') || 'null');
+            if (!cfg) { alert('⚠️ ยังไม่ได้เชื่อมต่อฐานข้อมูล'); return; }
+
+            window._referWalkinCaData     = null;
+            window._referWalkinCaDateFrom = null;
+            window._referWalkinCaDateTo   = null;
+            window._referWalkinCaPage     = 1;
+            window._referDbfFiles         = [];
+            window._referDbfSectionOpen   = false;
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `${renderReferWalkinCaBanner()}<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูล...</h2><p>กรุณารอสักครู่</p></div>`;
+
+            try {
+                const res = await fetch(`${window.location.origin}/api/get-fdh-refer-walkin-ca`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: cfg.host, port: cfg.port, database: cfg.database,
+                        user: cfg.user, password: cfg.password, type: cfg.type,
+                        dateFrom, dateTo
+                    })
+                });
+                const result = await res.json();
+
+                if (!result.success) {
+                    contentArea.innerHTML = `${renderReferWalkinCaBanner()}<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${result.error}</p></div>`;
+                    return;
+                }
+
+                const data = result.data;
+                document.getElementById('stat-total').textContent   = data.length.toLocaleString();
+                document.getElementById('stat-correct').textContent = '-';
+                document.getElementById('stat-needfix').textContent = data.length.toLocaleString();
+
+                if (!data.length) {
+                    contentArea.innerHTML = `${renderReferWalkinCaBanner()}<div class="welcome-message"><h2>✅ ไม่พบรายการ</h2><p>ไม่มี visit ที่มี WALKIN/CANCER และ Refer ในช่วงวันที่นี้</p></div>`;
+                    return;
+                }
+
+                window._referWalkinCaData     = data;
+                window._referWalkinCaDateFrom = dateFrom;
+                window._referWalkinCaDateTo   = dateTo;
+                window._referWalkinCaPage     = 1;
+                window._referWalkinCaPageSize = window._referWalkinCaPageSize || 20;
+                renderReferWalkinCaTable();
+
+            } catch(err) {
+                contentArea.innerHTML = `${renderReferWalkinCaBanner()}<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${err.message}</p></div>`;
+            }
+        }
+
+        function renderReferWalkinCaTable() {
+            const data = window._referWalkinCaData || [];
+            if (!data.length) return;
+            const total = data.length;
+            const page  = window._referWalkinCaPage || 1;
+            const pageSize = window._referWalkinCaPageSize || 20;
+            const totalPages = Math.ceil(total / pageSize);
+            const startIdx   = (page - 1) * pageSize;
+            const pageData   = data.slice(startIdx, startIdx + pageSize);
+            const cols = Object.keys(data[0]);
+
+            const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const fmtDate = v => {
+                if (!v) return '';
+                const s = String(v);
+                if (s.includes('T')) return s.split('T')[0];
+                if (s.includes(' ')) return s.split(' ')[0];
+                return s.slice(0, 10);
+            };
+            const DATE_COLS = ['วันที่รับบริการ'];
+
+            let html = `
+                ${renderReferWalkinCaBanner()}
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:14px;">
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <div style="font-size:16px; font-weight:700; color:#1565c0;">
+                            🚫 ตัด Refer ที่มี WALKIN หรือ CANCER (${total.toLocaleString()} รายการ)
+                            &nbsp;<span style="font-size:13px; color:#546e7a;">${window._referWalkinCaDateFrom} ถึง ${window._referWalkinCaDateTo}</span>
+                        </div>
+                        ${renderPagerControls('referWalkinCa', 'renderReferWalkinCaTable', page, totalPages, pageSize, total, startIdx)}
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button onclick="openReferWalkinCaManageModal()" style="padding:10px 20px; background:linear-gradient(135deg,#c62828,#8e0000); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                            🗂️ จัดการข้อมูล
+                        </button>
+                        <button onclick="exportReferWalkinCaExcel()" style="padding:10px 20px; background:linear-gradient(135deg,#2e7d32,#1b5e20); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                            📊 ส่งออก Excel
+                        </button>
+                        <button onclick="toggleReferDbfSection()" id="refer-dbf-toggle-btn" style="padding:10px 20px; background:linear-gradient(135deg,#6a1b9a,#4a148c); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                            📂 นำเข้าไฟล์ ORF/AER
+                        </button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto; padding-bottom:19px;">
+                <table style="width:100%; border-collapse:collapse; font-size:17px;">
+                <thead><tr style="background:linear-gradient(135deg,#42a5f5,#2196f3); color:white;">
+                    <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap; text-align:center;">ลำดับ</th>
+                    ${cols.map(c => `<th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">${e(c)}</th>`).join('')}
+                </tr></thead><tbody>`;
+
+            pageData.forEach((row, idx) => {
+                const bg = idx % 2 === 0 ? '#f5f9ff' : 'white';
+                html += `<tr style="background:${bg};">
+                    <td style="padding:8px; border:1px solid #e3f2fd; text-align:center;">${startIdx+idx+1}</td>`;
+                cols.forEach(col => {
+                    const raw = row[col];
+                    const val = DATE_COLS.includes(col) ? fmtDate(raw) : raw;
+                    html += `<td style="padding:8px; border:1px solid #e3f2fd; white-space:nowrap;">${e(val)}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            document.getElementById('content-area').innerHTML = html;
+        }
+
+        function exportReferWalkinCaExcel() {
+            const data = window._referWalkinCaData || [];
+            if (!data.length) { alert('⚠️ ไม่มีข้อมูลสำหรับส่งออก'); return; }
+
+            const dateFrom = window._referWalkinCaDateFrom || '';
+            const dateTo   = window._referWalkinCaDateTo   || '';
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+
+            const cols = Object.keys(data[0]);
+            ws['!cols'] = cols.map(col => {
+                const maxLen = Math.max(col.length, ...data.slice(0, 100).map(r => String(r[col] ?? '').length));
+                return { wch: Math.min(Math.max(maxLen + 2, 10), 60) };
+            });
+
+            XLSX.utils.book_append_sheet(wb, ws, 'ReferWalkinCA');
+            XLSX.writeFile(wb, `ReferWalkinCA_${dateFrom}_${dateTo}.xlsx`);
+        }
+
         // เมนูนี้ไม่ใช้คิวรี่ฐานข้อมูล — ทำงานจากไฟล์ ADP (.dbf) ที่นำเข้าเท่านั้น
         // เกณฑ์: VN เดียวกัน ต้องมีทั้งเรคคอร์ดที่ icode อยู่ในตาราง drug_morphine และเรคคอร์ดที่ code = '30001'
         function searchAdpMorphine() {
@@ -964,6 +1127,245 @@
                     📋 ข้อมูลยา Morphine (drug_morphine)
                 </button>
             `;
+        }
+
+        // ==================== นำเข้าไฟล์ ORF/AER DBF — สำหรับเมนู ตัด Refer ที่มี WALKIN/CANCER ====================
+
+        function findVnFieldInDbf(fields) {
+            const candidates = ['VN', 'VISITNO', 'VISIT_NO', 'VISITID'];
+            for (const n of candidates) {
+                const f = (fields || []).find(f => f.name.toUpperCase() === n);
+                if (f) return f.name;
+            }
+            return null;
+        }
+
+        function renderReferDbfSection() {
+            const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const files = window._referDbfFiles || [];
+            const vnSet = (window._referWalkinCaData && window._referWalkinCaData.length)
+                ? new Set(window._referWalkinCaData.map(r => String(r['VN'] || '').trim()))
+                : null;
+
+            let html = `
+                <div style="margin-top:22px; border-top:2px dashed #e91e63; padding-top:16px;">
+                    <div style="font-size:17px; font-weight:700; color:#880e4f; margin-bottom:10px;">📂 นำเข้าไฟล์ ORF / AER (DBF) — แก้ไขไฟล์ส่งออกโดยตรง</div>
+                    <div id="refer-dbf-drop-zone"
+                         ondragover="event.preventDefault(); this.style.background='#fce4ec'; this.style.borderColor='#ad1457'; this.style.transform='scale(1.01)';"
+                         ondragleave="this.style.background=''; this.style.borderColor='#e91e63'; this.style.transform='';"
+                         ondrop="handleReferDbfDrop(event)"
+                         onclick="document.getElementById('refer-dbf-file-input').click()"
+                         style="border:3px dashed #e91e63; border-radius:12px; padding:22px 16px; text-align:center; cursor:pointer; user-select:none; transition:all 0.2s; background:transparent;">
+                        <div style="font-size:36px; margin-bottom:8px;">🗂️</div>
+                        <div style="font-size:16px; font-weight:700; color:#880e4f; margin-bottom:4px;">ลากไฟล์ ORF.dbf และ AER.dbf มาวางที่นี่ <span style="font-weight:400;">(วางหลายไฟล์พร้อมกันได้)</span></div>
+                        <div style="font-size:13px; color:#ad1457;">หรือคลิกเพื่อเลือกไฟล์</div>
+                    </div>
+                    <input type="file" id="refer-dbf-file-input" accept="*" multiple style="display:none;" onchange="handleReferDbfFallbackInput(event)">`;
+
+            if (files.length) {
+                html += `<div style="margin-top:14px; display:flex; flex-direction:column; gap:14px;">`;
+                files.forEach((f, fileIdx) => {
+                    const total = (f.records || []).length;
+                    const matchedCount = vnSet
+                        ? (f.records || []).filter(r => vnSet.has(String(r['SEQ'] || '').trim())).length
+                        : 0;
+
+                    html += `
+                        <div style="border:1px solid #fce4ec; border-radius:10px; overflow:hidden;">
+                            <div style="background:linear-gradient(135deg,#fce4ec,#f8bbd9); padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <div style="font-weight:700; color:#880e4f; font-size:16px;">
+                                    📄 ${e(f.name)}
+                                    <span style="font-weight:400; font-size:14px; color:#ad1457;">
+                                        — ${total.toLocaleString()} เรคคอร์ด
+                                        ${vnSet !== null
+                                            ? `, SEQ ตรงกับ WALKIN/CANCER: <strong style="color:#c62828;">${matchedCount}</strong>`
+                                            : ' <span style="font-size:12px; color:#9e9e9e;">(ค้นหาข้อมูลก่อนเพื่อดูรายการที่ตรง)</span>'}
+                                    </span>
+                                </div>
+                                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    ${vnSet !== null && matchedCount ? `<button onclick="referDbfSelectMatchedOnly(${fileIdx})" style="padding:6px 12px;background:#e91e63;color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">🎯 เลือกเฉพาะที่ตรง (${matchedCount})</button>` : ''}
+                                    <button onclick="referDbfSelectAll(${fileIdx},true)"  style="padding:6px 12px;background:#1565c0;color:white;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">☑️ ทั้งหมด</button>
+                                    <button onclick="referDbfSelectAll(${fileIdx},false)" style="padding:6px 12px;background:#9e9e9e;color:white;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">⬜ ไม่เลือก</button>
+                                    <button onclick="doDeleteReferDbfRecords(${fileIdx})" style="padding:6px 14px;background:linear-gradient(135deg,#c62828,#8e0000);color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">🗑️ ลบที่เลือก &amp; บันทึก</button>
+                                    <button onclick="removeReferDbfFile(${fileIdx})" title="ลบไฟล์ออกจากรายการ" style="padding:6px 10px;background:#616161;color:white;border:none;border-radius:6px;font-size:13px;cursor:pointer;">✕</button>
+                                </div>
+                            </div>
+                            <div style="overflow-x:auto; max-height:340px; overflow-y:auto;">
+                                ${renderReferDbfFileTable(fileIdx, vnSet)}
+                            </div>
+                        </div>`;
+                });
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function renderReferDbfFileTable(fileIdx, vnSet) {
+            const f = (window._referDbfFiles || [])[fileIdx];
+            if (!f || !f.records || !f.records.length) return '<div style="text-align:center;padding:20px;color:#9e9e9e;">ไม่มีข้อมูล</div>';
+            const records = f.records;
+            const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const fields = f.parsed ? f.parsed.fields.map(fd => fd.name) : Object.keys(records[0]).filter(k => k !== '_deleted');
+
+            let html = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:linear-gradient(135deg,#880e4f,#ad1457);color:white;position:sticky;top:0;z-index:1;">
+                <th style="padding:7px 6px;border:1px solid #fce4ec;text-align:center;white-space:nowrap;">ลำดับ</th>
+                <th style="padding:7px 6px;border:1px solid #fce4ec;text-align:center;white-space:nowrap;">เลือก</th>
+                ${fields.map(fd => `<th style="padding:7px 6px;border:1px solid #fce4ec;white-space:nowrap;${fd === 'SEQ' ? 'background:#f06292;' : ''}">${e(fd)}</th>`).join('')}
+            </tr></thead><tbody>`;
+
+            records.forEach((rec, idx) => {
+                const seqVal = String(rec['SEQ'] || '').trim();
+                const isMatch = !!(vnSet && seqVal && vnSet.has(seqVal));
+                const bg = isMatch ? '#fce4ec' : (idx % 2 === 0 ? '#fafafa' : 'white');
+                html += `<tr style="background:${bg};">
+                    <td style="padding:5px;border:1px solid #fce4ec;text-align:center;color:#9e9e9e;">${idx+1}</td>
+                    <td style="padding:5px;border:1px solid #fce4ec;text-align:center;">
+                        <input type="checkbox" class="refer-dbf-cb-${fileIdx}" data-ridx="${idx}" ${isMatch ? 'checked' : ''} style="width:14px;height:14px;cursor:pointer;accent-color:#c62828;">
+                    </td>
+                    ${fields.map(fd => `<td style="padding:5px;border:1px solid #fce4ec;white-space:nowrap;${fd === 'SEQ' ? 'font-weight:700;' : ''}${isMatch && fd === 'SEQ' ? 'color:#c62828;' : ''}">${e(rec[fd])}</td>`).join('')}
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function handleReferDbfDrop(ev) {
+            ev.preventDefault();
+            const zone = document.getElementById('refer-dbf-drop-zone');
+            if (zone) { zone.style.background = ''; zone.style.borderColor = '#e91e63'; zone.style.transform = ''; }
+            const files = [...ev.dataTransfer.files].filter(f => f.name.toLowerCase().endsWith('.dbf'));
+            if (!files.length) { alert('⚠️ กรุณาลากเฉพาะไฟล์ .dbf'); return; }
+            processReferDbfFiles(files);
+        }
+
+        function handleReferDbfFallbackInput(ev) {
+            const files = [...ev.target.files].filter(f => f.name.toLowerCase().endsWith('.dbf'));
+            ev.target.value = '';
+            if (!files.length) { alert('⚠️ กรุณาเลือกเฉพาะไฟล์ .dbf'); return; }
+            processReferDbfFiles(files);
+        }
+
+        async function processReferDbfFiles(files) {
+            if (!window._referDbfFiles) window._referDbfFiles = [];
+            for (const file of files) {
+                const existIdx = window._referDbfFiles.findIndex(f => f.name.toLowerCase() === file.name.toLowerCase());
+                if (existIdx >= 0) window._referDbfFiles.splice(existIdx, 1);
+                try {
+                    const buffer = await file.arrayBuffer();
+                    const parsed = parseDBF(buffer);
+                    const records = [], origIndices = [];
+                    parsed.records.forEach((r, i) => {
+                        if (!r._deleted) { records.push(r); origIndices.push(i); }
+                    });
+                    window._referDbfFiles.push({ name: file.name, parsed, records, origIndices });
+                } catch(err) {
+                    alert(`❌ อ่านไฟล์ "${file.name}" ไม่สำเร็จ: ${err.message}`);
+                }
+            }
+            window._referDbfSectionOpen = true;
+            // อัปเดตเฉพาะ section DBF ไม่ต้อง re-render ทั้งหน้า
+            const existing = document.getElementById('refer-dbf-section');
+            if (existing) {
+                existing.innerHTML = renderReferDbfSection();
+            } else {
+                appendReferDbfSection();
+            }
+        }
+
+        function rerenderReferWalkinCa() {
+            const contentArea = document.getElementById('content-area');
+            if (!contentArea) return;
+            if (window._referWalkinCaData && window._referWalkinCaData.length) {
+                renderReferWalkinCaTable();
+                // คง section DBF ไว้ถ้าเปิดอยู่
+                if (window._referDbfSectionOpen) appendReferDbfSection();
+            } else {
+                const msg = window._referWalkinCaDateFrom
+                    ? `<h2>✅ ไม่พบรายการ</h2><p>ไม่มี visit ที่มี WALKIN/CANCER และ Refer ในช่วงวันที่นี้</p>`
+                    : `<h2>📋 กรุณาเลือกช่วงวันที่แล้วกดค้นหา</h2>`;
+                contentArea.innerHTML = `${renderReferWalkinCaBanner()}<div class="welcome-message">${msg}</div>`;
+            }
+        }
+
+        function toggleReferDbfSection() {
+            window._referDbfSectionOpen = !window._referDbfSectionOpen;
+            const existing = document.getElementById('refer-dbf-section');
+            if (window._referDbfSectionOpen) {
+                if (!existing) appendReferDbfSection();
+            } else {
+                if (existing) existing.remove();
+            }
+            const btn = document.getElementById('refer-dbf-toggle-btn');
+            if (btn) btn.style.background = window._referDbfSectionOpen
+                ? 'linear-gradient(135deg,#4a148c,#311b92)'
+                : 'linear-gradient(135deg,#6a1b9a,#4a148c)';
+        }
+
+        function appendReferDbfSection() {
+            const contentArea = document.getElementById('content-area');
+            if (!contentArea) return;
+            const div = document.createElement('div');
+            div.id = 'refer-dbf-section';
+            div.innerHTML = renderReferDbfSection();
+            contentArea.appendChild(div);
+        }
+
+        function referDbfSelectAll(fileIdx, val) {
+            document.querySelectorAll(`.refer-dbf-cb-${fileIdx}`).forEach(cb => cb.checked = val);
+        }
+
+        function referDbfSelectMatchedOnly(fileIdx) {
+            const f = (window._referDbfFiles || [])[fileIdx];
+            if (!f) return;
+            const vnSet = (window._referWalkinCaData && window._referWalkinCaData.length)
+                ? new Set(window._referWalkinCaData.map(r => String(r['VN'] || '').trim()))
+                : null;
+            document.querySelectorAll(`.refer-dbf-cb-${fileIdx}`).forEach(cb => {
+                const ridx = parseInt(cb.getAttribute('data-ridx'));
+                const rec = f.records[ridx];
+                const seqVal = rec ? String(rec['SEQ'] || '').trim() : '';
+                cb.checked = !!(vnSet && seqVal && vnSet.has(seqVal));
+            });
+        }
+
+        async function doDeleteReferDbfRecords(fileIdx) {
+            const f = (window._referDbfFiles || [])[fileIdx];
+            if (!f) return;
+            const selectedLocalSet = new Set(
+                [...document.querySelectorAll(`.refer-dbf-cb-${fileIdx}:checked`)]
+                .map(cb => parseInt(cb.getAttribute('data-ridx')))
+            );
+            if (!selectedLocalSet.size) { alert('⚠️ กรุณาเลือกอย่างน้อย 1 เรคคอร์ด'); return; }
+            if (!confirm(`ยืนยันลบ ${selectedLocalSet.size} เรคคอร์ดที่เลือกออกจากไฟล์ "${f.name}" หรือไม่?\n\nไฟล์ที่แก้ไขจะดาวน์โหลดให้นำไปทับไฟล์เดิมที่โฟลเดอร์ต้นทาง`)) return;
+            try {
+                const keepOriginalIndices = f.origIndices.filter((_, localIdx) => !selectedLocalSet.has(localIdx));
+                const newBuf = rebuildDBF(f.parsed, keepOriginalIndices);
+                const blob = new Blob([newBuf], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = f.name;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                const removed = selectedLocalSet.size;
+                f.records = f.records.filter((_, i) => !selectedLocalSet.has(i));
+                f.origIndices = f.origIndices.filter((_, i) => !selectedLocalSet.has(i));
+
+                alert(`✅ ดาวน์โหลดไฟล์สำเร็จ: ${f.name}\nลบ ${removed} เรคคอร์ด — เหลือ ${f.records.length} เรคคอร์ด\nนำไฟล์นี้ไปทับไฟล์เดิมที่โฟลเดอร์ต้นทาง`);
+                const sec = document.getElementById('refer-dbf-section');
+                if (sec) sec.innerHTML = renderReferDbfSection();
+            } catch(err) {
+                alert('❌ บันทึกไม่สำเร็จ: ' + err.message);
+            }
+        }
+
+        function removeReferDbfFile(fileIdx) {
+            if (!confirm('ลบไฟล์นี้ออกจากรายการหรือไม่?')) return;
+            (window._referDbfFiles || []).splice(fileIdx, 1);
+            const sec = document.getElementById('refer-dbf-section');
+            if (sec) sec.innerHTML = renderReferDbfSection();
         }
 
         // ==================== อ่าน/เขียนไฟล์ DBF (dBASE) แบบพื้นฐาน — รองรับฟิลชนิด Character/Numeric ====================
@@ -1773,6 +2175,34 @@ document.getElementById('cancer-view-modal').addEventListener('click', function(
 });
 </script>
 
+<!-- ==================== Modal: จัดการข้อมูล ตัด Refer ที่มี WALKIN หรือ CANCER ==================== -->
+<div id="refer-walkin-ca-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto;">
+    <div style="background:white; border-radius:16px; width:98vw; max-width:1800px; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); margin:auto;">
+        <!-- Header -->
+        <div style="padding:16px 24px; border-bottom:2px solid #fce4ec; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#fce4ec,#f8bbd9); border-radius:16px 16px 0 0;">
+            <div>
+                <div style="font-size:22px; font-weight:800; color:#880e4f;">🗂️ จัดการข้อมูล — ตัด Refer ที่มี WALKIN หรือ CANCER</div>
+                <div style="font-size:15px; color:#ad1457; margin-top:4px;">เลือกรายการที่ต้องการลบออกจากไฟล์ ORF/AER แล้วกด "ลบออกจากไฟล์ DBF"</div>
+            </div>
+            <button onclick="closeReferWalkinCaManageModal()" style="background:none;border:none;font-size:31px;cursor:pointer;color:#9e9e9e;">✕</button>
+        </div>
+        <!-- Toolbar -->
+        <div style="padding:12px 24px; border-bottom:1px solid #f5f5f5; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <button onclick="referWalkinCaSelectAll(true)"  style="padding:9px 22px; background:#1565c0; color:white; border:none; border-radius:8px; font-size:16px; font-weight:600; cursor:pointer;">☑️ เลือกทั้งหมด</button>
+            <button onclick="referWalkinCaSelectAll(false)" style="padding:9px 22px; background:#9e9e9e; color:white; border:none; border-radius:8px; font-size:16px; font-weight:600; cursor:pointer;">⬜ ไม่เลือกทั้งหมด</button>
+            <span id="refer-walkin-ca-selected-count" style="font-size:16px; color:#546e7a; font-weight:600;"></span>
+            <div style="flex:1;"></div>
+            <button onclick="doDeleteReferItems()" style="padding:12px 32px; background:linear-gradient(135deg,#c62828,#8e0000); color:white; border:none; border-radius:8px; font-size:18px; font-weight:700; cursor:pointer;">
+                🗑️ ลบออกจากไฟล์ DBF
+            </button>
+        </div>
+        <!-- Table -->
+        <div id="refer-walkin-ca-modal-body" style="padding:16px 24px; overflow-x:auto;">
+            <div style="text-align:center; color:#9e9e9e; padding:40px;">⏳ กำลังโหลด...</div>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== Modal: จัดการข้อมูล ตัด walkin คู่ CA ==================== -->
 <div id="walkinca-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto;">
     <div style="background:white; border-radius:16px; width:98vw; max-width:1800px; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); margin:auto;">
@@ -1800,6 +2230,190 @@ document.getElementById('cancer-view-modal').addEventListener('click', function(
         </div>
     </div>
 </div>
+
+<script>
+function openReferWalkinCaManageModal() {
+    const data = window._referWalkinCaData || [];
+    if (!data.length) { alert('⚠️ กรุณาค้นหาข้อมูลก่อน'); return; }
+
+    // รวม SEQ ทุกไฟล์ DBF ที่นำเข้า
+    const dbfFiles = window._referDbfFiles || [];
+    const seqSet = new Set();
+    dbfFiles.forEach(f => {
+        (f.records || []).forEach(r => {
+            const seq = String(r['SEQ'] || '').trim();
+            if (seq) seqSet.add(seq);
+        });
+    });
+
+    // ถ้ามีไฟล์ DBF → filter เฉพาะ VN ที่ตรงกับ SEQ ในไฟล์
+    // ถ้ายังไม่มีไฟล์ DBF → แสดงทั้งหมด
+    window._referWalkinCaModalData = seqSet.size > 0
+        ? data.filter(r => seqSet.has(String(r['VN'] || '').trim()))
+        : data;
+
+    if (seqSet.size > 0 && !window._referWalkinCaModalData.length) {
+        alert('⚠️ ไม่พบ VN ที่ตรงกับ SEQ ในไฟล์ DBF ที่นำเข้า');
+        return;
+    }
+
+    document.getElementById('refer-walkin-ca-modal').style.display = 'flex';
+    renderReferWalkinCaModalTable();
+}
+
+function closeReferWalkinCaManageModal() {
+    document.getElementById('refer-walkin-ca-modal').style.display = 'none';
+}
+
+function renderReferWalkinCaModalTable() {
+    const data = window._referWalkinCaModalData || window._referWalkinCaData || [];
+    const dbfFiles = window._referDbfFiles || [];
+    const hasDbf = dbfFiles.length > 0;
+    const e = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const fmtDate = v => {
+        if (!v) return '';
+        const s = String(v);
+        if (s.includes('T')) return s.split('T')[0];
+        if (s.includes(' ')) return s.split(' ')[0];
+        return s.slice(0, 10);
+    };
+
+    if (!data.length) {
+        document.getElementById('refer-walkin-ca-modal-body').innerHTML = '<div style="text-align:center;color:#4caf50;padding:40px;font-size:16px;">✅ ไม่มีรายการ</div>';
+        return;
+    }
+
+    const subtitle = hasDbf
+        ? `<div style="font-size:13px;color:#ad1457;margin-top:2px;">แสดงเฉพาะรายการที่ SEQ ตรงกับ VN ในไฟล์ DBF (${data.length} รายการ)</div>`
+        : `<div style="font-size:13px;color:#9e9e9e;margin-top:2px;">แสดงทั้งหมด — นำเข้าไฟล์ DBF เพื่อกรองเฉพาะรายการที่มีใน ORF/AER</div>`;
+
+    let html = `<div style="padding:0 0 10px 0;">${subtitle}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:17px;">
+    <thead><tr style="background:linear-gradient(135deg,#880e4f,#ad1457);color:white;position:sticky;top:0;">
+        <th style="padding:10px 8px;border:1px solid #fce4ec;text-align:center;white-space:nowrap;">ลำดับ</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;text-align:center;white-space:nowrap;">เลือก</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;white-space:nowrap;">วันที่รับบริการ</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;white-space:nowrap;">HN</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;white-space:nowrap;">ชื่อ-นามสกุล</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;white-space:nowrap;">VN</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;white-space:nowrap;">nhso_adp_code</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;white-space:nowrap;">referout</th>
+        <th style="padding:10px 8px;border:1px solid #fce4ec;white-space:nowrap;">referin</th>
+    </tr></thead><tbody>`;
+
+    data.forEach((row, idx) => {
+        const bg = idx % 2 === 0 ? '#fce4ec30' : 'white';
+        html += `<tr style="background:${bg};">
+            <td style="padding:8px;border:1px solid #fce4ec;text-align:center;">${idx+1}</td>
+            <td style="padding:8px;border:1px solid #fce4ec;text-align:center;">
+                <input type="checkbox" class="refer-walkin-ca-cb" data-idx="${idx}" checked onchange="updateReferWalkinCaCount()" style="width:16px;height:16px;cursor:pointer;accent-color:#c62828;">
+            </td>
+            <td style="padding:8px;border:1px solid #fce4ec;white-space:nowrap;">${e(fmtDate(row['วันที่รับบริการ']))}</td>
+            <td style="padding:8px;border:1px solid #fce4ec;white-space:nowrap;">${e(row['HN'])}</td>
+            <td style="padding:8px;border:1px solid #fce4ec;white-space:nowrap;">${e(row['ชื่อ-นามสกุล'])}</td>
+            <td style="padding:8px;border:1px solid #fce4ec;white-space:nowrap;">${e(row['VN'])}</td>
+            <td style="padding:8px;border:1px solid #fce4ec;white-space:nowrap;font-weight:700;color:#c62828;">${e(row['nhso_adp_code'])}</td>
+            <td style="padding:8px;border:1px solid #fce4ec;text-align:center;white-space:nowrap;">${e(row['referout'])}</td>
+            <td style="padding:8px;border:1px solid #fce4ec;text-align:center;white-space:nowrap;">${e(row['referin'])}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('refer-walkin-ca-modal-body').innerHTML = html;
+    updateReferWalkinCaCount();
+}
+
+function referWalkinCaSelectAll(val) {
+    document.querySelectorAll('.refer-walkin-ca-cb').forEach(cb => cb.checked = val);
+    updateReferWalkinCaCount();
+}
+
+function updateReferWalkinCaCount() {
+    const total = document.querySelectorAll('.refer-walkin-ca-cb').length;
+    const checked = document.querySelectorAll('.refer-walkin-ca-cb:checked').length;
+    document.getElementById('refer-walkin-ca-selected-count').textContent = `เลือก ${checked} / ${total} รายการ`;
+}
+
+async function doDeleteReferItems() {
+    const modalData = window._referWalkinCaModalData || window._referWalkinCaData || [];
+    const selected = [...document.querySelectorAll('.refer-walkin-ca-cb:checked')].map(cb => modalData[parseInt(cb.getAttribute('data-idx'))]);
+    if (!selected.length) { alert('⚠️ กรุณาเลือกอย่างน้อย 1 รายการ'); return; }
+
+    const dbfFiles = window._referDbfFiles || [];
+    if (!dbfFiles.length) { alert('⚠️ ยังไม่ได้นำเข้าไฟล์ DBF'); return; }
+
+    const selectedVns = new Set(selected.map(r => String(r['VN'] || '').trim()));
+    if (!confirm(`ยืนยันลบ ${selectedVns.size} VN ที่เลือกออกจากไฟล์ ORF/AER หรือไม่?\n\nไฟล์ที่แก้ไขจะดาวน์โหลดให้นำไปทับไฟล์เดิมที่โฟลเดอร์ต้นทาง`)) return;
+
+    const btn = document.querySelector('#refer-walkin-ca-modal button[onclick="doDeleteReferItems()"]');
+    btn.textContent = '⏳ กำลังดาวน์โหลด...';
+    btn.disabled = true;
+
+    try {
+        let totalRemoved = 0;
+        let filesModified = 0;
+
+        for (const f of dbfFiles) {
+            const toRemoveLocalSet = new Set();
+            (f.records || []).forEach((rec, localIdx) => {
+                const seq = String(rec['SEQ'] || '').trim();
+                if (seq && selectedVns.has(seq)) toRemoveLocalSet.add(localIdx);
+            });
+            if (!toRemoveLocalSet.size) continue;
+
+            const keepOriginalIndices = f.origIndices.filter((_, localIdx) => !toRemoveLocalSet.has(localIdx));
+            const newBuf = rebuildDBF(f.parsed, keepOriginalIndices);
+            const blob = new Blob([newBuf], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = f.name;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            totalRemoved += toRemoveLocalSet.size;
+            filesModified++;
+            f.records     = f.records.filter((_, i) => !toRemoveLocalSet.has(i));
+            f.origIndices = f.origIndices.filter((_, i) => !toRemoveLocalSet.has(i));
+        }
+
+        if (!filesModified) {
+            alert('⚠️ ไม่พบ SEQ ที่ตรงกับ VN ที่เลือกในไฟล์ DBF');
+            return;
+        }
+
+        // อัปเดต modal data และ main data ให้แสดงว่าลบแล้ว (ไม่ลบจาก DB)
+        window._referWalkinCaModalData = (window._referWalkinCaModalData || []).filter(r => !selectedVns.has(String(r['VN'] || '').trim()));
+        window._referWalkinCaData      = (window._referWalkinCaData || []).filter(r => !selectedVns.has(String(r['VN'] || '').trim()));
+
+        // อัปเดต stat บนหน้าหลัก
+        const statTotal   = document.getElementById('stat-total');
+        const statNeedfix = document.getElementById('stat-needfix');
+        if (statTotal)   statTotal.textContent   = window._referWalkinCaData.length.toLocaleString();
+        if (statNeedfix) statNeedfix.textContent = window._referWalkinCaData.length.toLocaleString();
+
+        alert(`✅ ดาวน์โหลดสำเร็จ ${filesModified} ไฟล์\nลบ ${totalRemoved} เรคคอร์ดจากไฟล์ DBF\nนำไฟล์ไปทับไฟล์เดิมที่โฟลเดอร์ต้นทาง`);
+
+        // อัปเดต DBF section ถ้าเปิดอยู่
+        const sec = document.getElementById('refer-dbf-section');
+        if (sec) sec.innerHTML = renderReferDbfSection();
+
+        if (window._referWalkinCaModalData.length) {
+            renderReferWalkinCaModalTable();
+        } else {
+            closeReferWalkinCaManageModal();
+        }
+        window._referWalkinCaPage = 1;
+        renderReferWalkinCaTable();
+    } catch(err) {
+        alert('❌ ' + err.message);
+    } finally {
+        btn.textContent = '🗑️ ลบออกจากไฟล์ DBF';
+        btn.disabled = false;
+    }
+}
+
+document.getElementById('refer-walkin-ca-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeReferWalkinCaManageModal();
+});
+</script>
 
 <script>
 function openWalkinCaManageModal() {
