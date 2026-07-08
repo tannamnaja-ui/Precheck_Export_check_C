@@ -585,12 +585,13 @@
                                 <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">BILLNO</th>
                                 <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">✓</th>
                                 <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PAID</th>
+                                <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">PRICE</th>
                                 <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">AMOUNT</th>
                                 <th style="padding:10px 8px; border:1px solid #e3f2fd; white-space:nowrap;">CLAIMAMT</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td colspan="21" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
+                            <tr><td colspan="22" style="padding:20px; text-align:center; color:#546e7a;">กรุณาเลือกวันที่แล้วกด "🔍 ค้นหา" เพื่อแสดงข้อมูล</td></tr>
                         </tbody>
                     </table>
                 </div>`;
@@ -909,6 +910,7 @@
                                 <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">BILLNO</th>
                                 <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">HN</th>
                                 <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">MEMBERNO</th>
+                                <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">PRICE</th>
                                 <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">AMOUNT</th>
                                 <th style="padding: 10px 8px; text-align: right; border: 1px solid #e3f2fd; white-space: nowrap;">PAID</th>
                                 <th style="padding: 10px 8px; text-align: left; border: 1px solid #e3f2fd; white-space: nowrap;">VERCODE</th>
@@ -965,6 +967,7 @@
                         <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.billno || '-'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.hn || '-'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; white-space: nowrap;">${row.memberno || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.price ? parseFloat(row.price).toFixed(2) : '0.00'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.amount ? parseFloat(row.amount).toFixed(2) : '0.00'}</td>
                         <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: right;">${row.paid ? parseFloat(row.paid).toFixed(2) : '0.00'}</td>
                         <td style="padding: 6px 8px; border: 1px solid #e3f2fd; background: ${vercodeBg}; white-space: nowrap;">

@@ -426,7 +426,9 @@ app.post('/api/get-billtran', async (req, res) => {
                     rd.debt_id AS invno,
                     (CASE WHEN rd.debt_id IS NOT NULL THEN 'Y' ELSE 'N' END) AS check_invno,
                     rc.rcpno AS billno, p.hn,
-                    p.cid AS memberno, rd.amount, rc.bill_amount AS paid,
+                    p.cid AS memberno,
+                    (SELECT SUM(op2.sum_price) FROM opitemrece op2 WHERE op2.vn = ov.vn AND op2.paidst = '02') AS price,
+                    rd.amount, rc.bill_amount AS paid,
                     rd.sss_approval_code AS vercode,
                     (CASE WHEN (rd.sss_approval_code IS NOT NULL AND rd.sss_approval_code <> '') THEN 'Y' ELSE 'N' END) AS check_vercode,
                     'A' AS tflag, p.cid AS pid,
@@ -496,7 +498,9 @@ app.post('/api/get-billtran', async (req, res) => {
                     rd.debt_id AS invno,
                     (CASE WHEN rd.debt_id IS NOT NULL THEN 'Y' ELSE 'N' END) AS check_invno,
                     rc.rcpno AS billno, p.hn,
-                    p.cid AS memberno, rd.amount, rc.bill_amount AS paid,
+                    p.cid AS memberno,
+                    (SELECT SUM(op2.sum_price) FROM opitemrece op2 WHERE op2.vn = ov.vn AND op2.paidst = '02') AS price,
+                    rd.amount, rc.bill_amount AS paid,
                     rd.sss_approval_code AS vercode,
                     (CASE WHEN (rd.sss_approval_code IS NOT NULL AND rd.sss_approval_code <> '') THEN 'Y' ELSE 'N' END) AS check_vercode,
                     'A' AS tflag, p.cid AS pid,
@@ -594,7 +598,9 @@ app.post('/api/get-ssop-billtran', async (req, res) => {
                     rd.debt_id AS invno,
                     (CASE WHEN rd.debt_id IS NOT NULL THEN 'Y' ELSE 'N' END) AS check_invno,
                     rc.rcpno AS billno, p.hn,
-                    p.cid AS memberno, rd.amount, rc.bill_amount AS paid,
+                    p.cid AS memberno,
+                    (SELECT SUM(op2.sum_price) FROM opitemrece op2 WHERE op2.vn = ov.vn AND op2.paidst = '02') AS price,
+                    rd.amount, rc.bill_amount AS paid,
                     p.cid AS vercode,
                     (CASE WHEN (p.cid IS NOT NULL AND p.cid <> '') THEN 'Y' ELSE 'N' END) AS check_vercode,
                     'A' AS tflag, p.cid AS pid,
@@ -665,7 +671,9 @@ app.post('/api/get-ssop-billtran', async (req, res) => {
                     rd.debt_id AS invno,
                     (CASE WHEN rd.debt_id IS NOT NULL THEN 'Y' ELSE 'N' END) AS check_invno,
                     rc.rcpno AS billno, p.hn,
-                    p.cid AS memberno, rd.amount, rc.bill_amount AS paid,
+                    p.cid AS memberno,
+                    (SELECT SUM(op2.sum_price) FROM opitemrece op2 WHERE op2.vn = ov.vn AND op2.paidst = '02') AS price,
+                    rd.amount, rc.bill_amount AS paid,
                     p.cid AS vercode,
                     (CASE WHEN (p.cid IS NOT NULL AND p.cid <> '') THEN 'Y' ELSE 'N' END) AS check_vercode,
                     'A' AS tflag, p.cid AS pid,
@@ -916,17 +924,17 @@ app.post('/api/create-rcpt-debt', async (req, res) => {
             `, [vn, newCrListId]);
             console.log(`[create-rcpt-debt] Step 6 done`);
 
-            // Step 7: rcpt_debt (+ vercode) — debt_time = NOW()::time (เวลาปัจจุบัน)
+            // Step 7: rcpt_debt (+ vercode) — ใบเดียวต่อ vn (ไม่แยกตาม pttype) ใช้วันที่/เวลาปัจจุบัน (NOW()) แทนวันที่เปิด visit
             await client.query(`
                 INSERT INTO rcpt_debt(debt_id, vn, hn, debt_date, debt_time, staff, amount, pt_type, computer, finance_number, pttype, discount_amount, total_amount, debt_date_time, debt_doc_id, department, special_discount_amount, ofc_paid_amount, sss_approval_code)
-                SELECT get_serialnumber('rcpt_debt_id'),op.vn,op.hn,op.vstdate,NOW()::time,op.staff,
-                    SUM(CASE WHEN op.paidst='02' THEN op.sum_price ELSE 0 END),'OPD','App precheck export',$2,op.pttype,SUM(op.discount),
-                    SUM(CASE WHEN op.paidst='02' THEN op.sum_price ELSE 0 END),(CONCAT(op.vstdate::text,' ',op.vsttime::text))::timestamp,
-                    CONCAT(op.pttype,'/',ROW_NUMBER() OVER (ORDER BY op.pttype)),
+                SELECT get_serialnumber('rcpt_debt_id'),op.vn,MAX(op.hn),CURRENT_DATE,NOW()::time,MAX(op.staff),
+                    SUM(CASE WHEN op.paidst='02' THEN op.sum_price ELSE 0 END),'OPD','App precheck export',$2,MAX(op.pttype),SUM(op.discount),
+                    SUM(CASE WHEN op.paidst='02' THEN op.sum_price ELSE 0 END),NOW(),
+                    MAX(op.pttype) || '/1',
                     'OPD','0','0',$3
                 FROM opitemrece op
                 WHERE op.vn=$1
-                GROUP BY op.vn,op.hn,op.vstdate,op.vsttime,op.staff,op.pttype
+                GROUP BY op.vn
             `, [vn, newFinanceNumber, vercode || '']);
             console.log(`[create-rcpt-debt] Step 7 done`);
 
