@@ -1075,7 +1075,7 @@ const IC_ROWS = 20;
 let icEditCode = null;
 let icDropdowns = { report2:[], drgGroup:[], sss:[], stdGroup:[], csmbs:[], nk2:[], chrgitem:[], rvsp:[] };
 
-async function loadIncomeCatMenu() {
+async function loadIncomeCatMenu(preservePage) {
     const config = getDatabaseConfig();
     if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
     document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดหมวดค่ารักษาพยาบาล...</h2><p>กรุณารอสักครู่</p></div>`;
@@ -1108,7 +1108,7 @@ async function loadIncomeCatMenu() {
             currentCheckFields = IC_CHECK;
             const needfix = main.data.filter(r => IC_CHECK.some(k => r[k]==='N')).length;
             updateStats(main.data.length, main.data.length-needfix, needfix);
-            icPage = 1;
+            if (!preservePage) icPage = 1;
             renderIncomeCatTable();
         } else {
             document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
@@ -1272,20 +1272,20 @@ async function saveIncomeCat(income) {
             if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
         } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
     }
-    if (!hasError) { icEditCode = null; await loadIncomeCatMenu(); }
+    if (!hasError) { icEditCode = null; await loadIncomeCatMenu(true); }
 }
 
 // ====================================================================================
 // ==================== NONDRUG MENU =================================================
 // ====================================================================================
-const ND_CHECK = ['name_check','sks_product_category_check'];
+const ND_CHECK = ['name_check','sks_product_category_check','sks_coverage_price_check'];
 let ndPage = 1;
 let ndIncomeFilter = '';
 const ND_ROWS = 20;
 let ndEditCode = null;
 let ndDropdowns = { income:[], adpType:[], adpCode:[], sksCat:[] };
 
-async function loadNondrugMenu() {
+async function loadNondrugMenu(preservePage) {
     const config = getDatabaseConfig();
     if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
     document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดรายการค่ารักษาพยาบาล...</h2><p>กรุณารอสักครู่</p></div>`;
@@ -1310,7 +1310,7 @@ async function loadNondrugMenu() {
             currentCheckFields = ND_CHECK;
             const needfix = main.data.filter(r => ND_CHECK.some(k=>r[k]==='N')).length;
             updateStats(main.data.length, main.data.length-needfix, needfix);
-            ndPage = 1;
+            if (!preservePage) ndPage = 1;
             renderNondrugTable();
         } else {
             document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
@@ -1378,7 +1378,7 @@ function renderNondrugTable() {
             ${th('ADP_TYPE',false)}
             ${th('ADP_Code',false)}
             ${th('sks_product_category',false)}${th('✓',true)}
-            ${th('ราคาเบิก',false)}
+            ${th('ราคาเบิก',false)}${th('✓',true)}
             ${th('ติ๊กส่งเบิก',false)}
         </tr></thead><tbody>`;
 
@@ -1443,7 +1443,7 @@ function renderNondrugRow(row, idx, editMode) {
         ${sel('nhso_adp_type_id', row.nhso_adp_type_id, ndDropdowns.adpType, 'nhso_adp_type_id', 'nhso_adp_type_name')}
         ${sel('nhso_adp_code', row.nhso_adp_code, ndDropdowns.adpCode, 'nhso_adp_code', 'nhso_adp_code_name')}
         ${sel('sks_product_category_id', row.sks_product_category_id, ndDropdowns.sksCat, 'sks_product_category_id', 'sks_product_category_name')}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
-        ${inp('sks_coverage_price', row.sks_coverage_price, 'number')}
+        ${inp('sks_coverage_price', row.sks_coverage_price, 'number')}<td style="padding:8px;border:1px solid #e3f2fd;text-align:center;"></td>
         ${inp('enable_sks_opd', row.enable_sks_opd)}
     </tr>`;
 
@@ -1461,7 +1461,7 @@ function renderNondrugRow(row, idx, editMode) {
         ${td(row.nhso_adp_type_name)}
         ${td(row.nhso_adp_code)}
         ${td(row.sks_product_category_name, row.sks_product_category_check==='N')}${tdc(row.sks_product_category_check)}
-        ${td(row.sks_coverage_price)}
+        ${td(row.sks_coverage_price, row.sks_coverage_price_check==='N')}${tdc(row.sks_coverage_price_check)}
         ${td(row.enable_sks_opd)}
     </tr>`;
 }
@@ -1503,7 +1503,7 @@ async function saveNondrug(icode) {
             if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
         } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
     }
-    if (!hasError) { ndEditCode = null; await loadNondrugMenu(); }
+    if (!hasError) { ndEditCode = null; await loadNondrugMenu(true); }
 }
 
 // ====================================================================================
@@ -1516,10 +1516,13 @@ const LAB_ROWS = 20;
 async function loadLabMenu() {
     const config = getDatabaseConfig();
     if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
-    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูล Lab...</h2><p>กรุณารอสักครู่</p></div>`;
+    document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูล Lab...</h2><p>กรุณารอสักครู่ (อาจใช้เวลาสักครู่)</p></div>`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 วินาที
     try {
         const body = JSON.stringify({ host:config.host, port:config.port, database:config.database, user:config.user, password:config.password, type:config.type });
-        const res = await fetch(`${window.API_BASE}/api/get-basic-lab`, { method:'POST', headers:{'Content-Type':'application/json'}, body });
+        const res = await fetch(`${window.API_BASE}/api/get-basic-lab`, { method:'POST', headers:{'Content-Type':'application/json'}, body, signal: controller.signal });
+        clearTimeout(timeoutId);
         const main = await res.json();
         if (main.success && main.data) {
             currentData = main.data;
@@ -1532,7 +1535,9 @@ async function loadLabMenu() {
             document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
         }
     } catch(e) {
-        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เชื่อมต่อ API ไม่ได้</h2><p>${e.message}</p></div>`;
+        clearTimeout(timeoutId);
+        const msg = e.name === 'AbortError' ? 'Query ใช้เวลานานเกิน 60 วินาที กรุณาตรวจสอบ index ของตาราง lab_catalog_import_detail' : e.message;
+        document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ ${e.name === 'AbortError' ? 'Timeout' : 'เชื่อมต่อ API ไม่ได้'}</h2><p>${msg}</p></div>`;
     }
 }
 
@@ -1774,7 +1779,7 @@ let xrayPage = 1;
 const XRAY_ROWS = 20;
 let xrayEditCode = null;
 
-async function loadXrayMenu() {
+async function loadXrayMenu(preservePage) {
     const config = getDatabaseConfig();
     if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
     document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูล X-Ray...</h2><p>กรุณารอสักครู่</p></div>`;
@@ -1788,7 +1793,7 @@ async function loadXrayMenu() {
             currentCheckFields = XRAY_CHECK;
             const needfix = main.data.filter(r => XRAY_CHECK.some(k=>r[k]==='N')).length;
             updateStats(main.data.length, main.data.length-needfix, needfix);
-            xrayPage = 1;
+            if (!preservePage) xrayPage = 1;
             renderXrayTable();
         } else {
             document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
@@ -1931,7 +1936,7 @@ async function saveXray(xray_code) {
             if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
         } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
     }
-    if (!hasError) { xrayEditCode = null; await loadXrayMenu(); }
+    if (!hasError) { xrayEditCode = null; await loadXrayMenu(true); }
 }
 
 // ====================================================================================
@@ -2557,7 +2562,7 @@ const PT_ROWS = 20;
 let ptEditCode = null;
 let ptDropdowns = { pcode:[], inscl:[], benefit:[], upptype:[] };
 
-async function loadPttypeMenu() {
+async function loadPttypeMenu(preservePage) {
     const config = getDatabaseConfig();
     if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
     document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>⏳ กำลังโหลดข้อมูลสิทธิการรักษา...</h2><p>กรุณารอสักครู่</p></div>`;
@@ -2581,7 +2586,7 @@ async function loadPttypeMenu() {
             currentCheckFields = PT_CHECK;
             const needfix = main.data.filter(r => PT_CHECK.some(k => r[k]==='N')).length;
             updateStats(main.data.length, main.data.length-needfix, needfix);
-            ptPage = 1;
+            if (!preservePage) ptPage = 1;
             renderPttypeTable();
         } else {
             document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>❌ เกิดข้อผิดพลาด</h2><p>${main.error||''}</p></div>`;
@@ -2760,7 +2765,7 @@ async function savePttype(pttype) {
             if (!r.success) { alert('บันทึกไม่สำเร็จ: '+(r.error||'')); hasError=true; break; }
         } catch(e) { alert('เกิดข้อผิดพลาด: '+e.message); hasError=true; break; }
     }
-    if (!hasError) { ptEditCode = null; await loadPttypeMenu(); }
+    if (!hasError) { ptEditCode = null; await loadPttypeMenu(true); }
 }
 </script>
 <script src="zoom_control.js"></script>

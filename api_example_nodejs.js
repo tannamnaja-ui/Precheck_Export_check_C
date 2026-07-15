@@ -4181,6 +4181,10 @@ app.post('/api/get-basic-nondrug', async (req, res) => {
         const catCheck = isPg
             ? `(CASE WHEN n.sks_product_category_id::text IN ('6','7') THEN 'Y' ELSE 'N' END)`
             : `(CASE WHEN CAST(n.sks_product_category_id AS CHAR) IN ('6','7') THEN 'Y' ELSE 'N' END)`;
+        // ติ๊กส่งเบิก (enable_sks_opd='Y') แล้ว ราคาเบิก (sks_coverage_price) ต้องมีค่ามากกว่า -1
+        const priceCheck = `(CASE WHEN n.enable_sks_opd = 'Y' AND (n.sks_coverage_price IS NULL OR n.sks_coverage_price <= -1) THEN 'N'
+                                  WHEN n.enable_sks_opd = 'Y' THEN 'Y'
+                                  ELSE '' END)`;
         const buildQuery = () => `
             SELECT n.icode, n.name,
             ${nameCheck} AS name_check,
@@ -4188,7 +4192,8 @@ app.post('/api/get-basic-nondrug', async (req, res) => {
             n.nhso_adp_type_id, nat.nhso_adp_type_name, nac.nhso_adp_code,
             n.sks_product_category_id, spc.sks_product_category_name,
             ${catCheck} AS sks_product_category_check,
-            n.sks_coverage_price, n.enable_sks_opd
+            n.sks_coverage_price, n.enable_sks_opd,
+            ${priceCheck} AS sks_coverage_price_check
             FROM nondrugitems n
             LEFT OUTER JOIN income i ON i.income = n.income
             LEFT OUTER JOIN nhso_adp_type nat ON nat.nhso_adp_type_id = n.nhso_adp_type_id
@@ -4258,11 +4263,14 @@ app.post('/api/get-basic-lab', async (req, res) => {
     try {
         const { host, port, database, user, password, type } = req.body;
 
-        // เพิ่มฟิล no_lab_catalog อัตโนมัติถ้ายังไม่มี
+        // เพิ่มฟิล no_lab_catalog อัตโนมัติถ้ายังไม่มี + เพิ่ม index บนคอลัมน์ที่ query นี้ join ด้วย (lab_catalog_import_detail ไม่มี index ทำให้ query ช้ามาก/timeout)
         const addCols = async (client, isPg) => {
             if (isPg) {
                 await client.query(`ALTER TABLE lab_items           ADD COLUMN IF NOT EXISTS no_lab_catalog CHAR(1)`).catch(()=>{});
                 await client.query(`ALTER TABLE lab_items_sub_group ADD COLUMN IF NOT EXISTS no_lab_catalog CHAR(1)`).catch(()=>{});
+                await client.query(`CREATE INDEX IF NOT EXISTS idx_lab_catalog_import_detail_lc_code ON lab_catalog_import_detail(lab_catalog_lc_code)`).catch(()=>{});
+                await client.query(`CREATE INDEX IF NOT EXISTS idx_lab_items_sub_group_icode ON lab_items_sub_group(group_icode)`).catch(()=>{});
+                await client.query(`CREATE INDEX IF NOT EXISTS idx_lab_items_icode ON lab_items(icode)`).catch(()=>{});
             } else {
                 // MySQL: ตรวจสอบก่อนเพิ่ม เพราะ IF NOT EXISTS รองรับแค่ MySQL 8.0.3+
                 const checkCol = async (conn, tbl) => {
@@ -4276,6 +4284,20 @@ app.post('/api/get-basic-lab', async (req, res) => {
                     await client.execute(`ALTER TABLE \`lab_items\` ADD COLUMN \`no_lab_catalog\` CHAR(1) NULL`).catch(()=>{});
                 if (!await checkCol(client, 'lab_items_sub_group'))
                     await client.execute(`ALTER TABLE \`lab_items_sub_group\` ADD COLUMN \`no_lab_catalog\` CHAR(1) NULL`).catch(()=>{});
+
+                const checkIndex = async (conn, tbl, idx) => {
+                    const [rows] = await conn.execute(
+                        `SELECT COUNT(*) AS cnt FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME=?`,
+                        [tbl, idx]
+                    );
+                    return rows[0].cnt > 0;
+                };
+                if (!await checkIndex(client, 'lab_catalog_import_detail', 'idx_lab_catalog_import_detail_lc_code'))
+                    await client.execute(`CREATE INDEX \`idx_lab_catalog_import_detail_lc_code\` ON \`lab_catalog_import_detail\`(\`lab_catalog_lc_code\`)`).catch(()=>{});
+                if (!await checkIndex(client, 'lab_items_sub_group', 'idx_lab_items_sub_group_icode'))
+                    await client.execute(`CREATE INDEX \`idx_lab_items_sub_group_icode\` ON \`lab_items_sub_group\`(\`group_icode\`)`).catch(()=>{});
+                if (!await checkIndex(client, 'lab_items', 'idx_lab_items_icode'))
+                    await client.execute(`CREATE INDEX \`idx_lab_items_icode\` ON \`lab_items\`(\`icode\`)`).catch(()=>{});
             }
         };
 
@@ -4337,12 +4359,14 @@ app.post('/api/get-basic-lab', async (req, res) => {
             const client = new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 20000 });
             await client.connect();
             await addCols(client, true);
+            await client.query(`SET statement_timeout = 55000`); // 55 วินาที
             const result = await client.query(buildQuery());
             await client.end();
             rows = result.rows;
         } else {
             const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 20000 });
             await addCols(connection, false);
+            await connection.execute(`SET SESSION max_execution_time = 55000`); // 55 วินาที (MySQL 5.7.8+)
             const [r] = await connection.execute(buildQuery());
             await connection.end();
             rows = r;
@@ -4362,9 +4386,12 @@ app.post('/api/get-basic-bloodbank', async (req, res) => {
         const addCols = async (client, isPg) => {
             if (isPg) {
                 await client.query(`ALTER TABLE lab_items ADD COLUMN IF NOT EXISTS no_lab_catalog CHAR(1)`).catch(()=>{});
+                await client.query(`CREATE INDEX IF NOT EXISTS idx_lab_catalog_import_detail_lc_code ON lab_catalog_import_detail(lab_catalog_lc_code)`).catch(()=>{});
             } else {
                 const [rows] = await client.execute(`SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='lab_items' AND COLUMN_NAME='no_lab_catalog'`);
                 if (!rows[0].cnt) await client.execute(`ALTER TABLE \`lab_items\` ADD COLUMN \`no_lab_catalog\` CHAR(1) NULL`).catch(()=>{});
+                const [idxRows] = await client.execute(`SELECT COUNT(*) AS cnt FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='lab_catalog_import_detail' AND INDEX_NAME='idx_lab_catalog_import_detail_lc_code'`);
+                if (!idxRows[0].cnt) await client.execute(`CREATE INDEX \`idx_lab_catalog_import_detail_lc_code\` ON \`lab_catalog_import_detail\`(\`lab_catalog_lc_code\`)`).catch(()=>{});
             }
         };
 
