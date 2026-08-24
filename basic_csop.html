@@ -2335,7 +2335,7 @@ function renderGenericErrorTable(data, checkFields) {
 
 // ==================== Export all menus (multi-sheet) ====================
 function exportCurrentToExcel() {
-    const isAllMode = document.getElementById('show-errors-menu').checked;
+    const isAllMode = document.getElementById('show-errors-only').checked;
     if (isAllMode && Object.keys(allMenusCache).length > 0) {
         exportAllMenusToExcel();
         return;
@@ -2371,10 +2371,7 @@ function exportAllMenusToExcel() {
             cols.forEach((col, c) => {
                 const isCheck = cache.checkFields.includes(col);
                 if (isCheck && row[col] === 'N') {
-                    const ck = XLSX.utils.encode_cell({r:r+1,c});
-                    if (!ws[ck]) ws[ck]={v:'N'};
-                    ws[ck].s = { fill:{patternType:'solid',fgColor:{rgb:'F44336'}}, font:{bold:true,color:{rgb:'FFFFFF'}} };
-                    // data cell
+                    // เฉพาะฟิลด์ข้อมูลที่แดง ไม่ต้องแดงฟิลด์ check เอง
                     const dataKey = col.replace(/_check\d*$/, '').replace(/_check$/, '');
                     const dc = cols.indexOf(dataKey);
                     if (dc >= 0) {
@@ -2432,11 +2429,11 @@ function exportSingleMenuToExcel() {
     data.forEach((row, r) => {
         cols.forEach((col, c) => {
             if (isDoctorCheck(col) && row[col]==='N') {
-                const ck = XLSX.utils.encode_cell({r:r+1,c});
-                if (!ws[ck]) ws[ck]={v:'N'};
-                ws[ck].s = { fill:{patternType:'solid',fgColor:{rgb:'F44336'}}, font:{bold:true,color:{rgb:'FFFFFF'}} };
-                if (c>0) {
-                    const dk = XLSX.utils.encode_cell({r:r+1,c:c-1});
+                // หา column ข้อมูลจริงจากชื่อ (ไม่ใช้ c-1 เพราะบาง check field เรียงติดกัน เช่น licenseno_check, licenseno_check2)
+                const dataKey = col.replace(/_check\d*$/, '').replace(/_check$/, '');
+                const dc = cols.indexOf(dataKey);
+                if (dc >= 0) {
+                    const dk = XLSX.utils.encode_cell({r:r+1,c:dc});
                     if (!ws[dk]) ws[dk]={v:''};
                     ws[dk].s = { fill:{patternType:'solid',fgColor:{rgb:'F44336'}}, font:{color:{rgb:'FFFFFF'}} };
                 }

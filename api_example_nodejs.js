@@ -2800,6 +2800,78 @@ app.post('/api/get-fdh-idx', async (req, res) => {
     }
 });
 
+// ==================== FDH ADP ====================
+app.post('/api/get-fdh-adp', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, dateFrom, dateTo, selectedPttypes, hipdata_code } = req.body;
+
+        let pttypeCond;
+        if (selectedPttypes && selectedPttypes.length > 0) {
+            const list = selectedPttypes.map(p => `'${p}'`).join(',');
+            pttypeCond = `AND vst.pttype IN (${list})`;
+        } else {
+            pttypeCond = `AND vst.pttype IN (SELECT p.pttype FROM pttype p WHERE p.isuse='Y' AND ${hipdataFilter(hipdata_code || 'FDH')})`;
+        }
+
+        const ph1 = type === 'postgresql' ? '$1' : '?';
+        const ph2 = type === 'postgresql' ? '$2' : '?';
+        const queryStr = `
+            SELECT
+              (SELECT hospitalcode FROM opdconfig LIMIT 1) AS hcode,
+              vst.hn,
+              ip.an,
+              vst.vn,
+              vst.spclty AS clinic,
+              v.cid AS person_id,
+              vst.vstdate AS date_serv,
+              n.nhso_adp_type_id AS adp_type,
+              nat.nhso_adp_type_name AS adp_type_name,
+              n.nhso_adp_code AS adp_code,
+              CASE WHEN n.nhso_adp_code IS NOT NULL AND n.nhso_adp_code <> '' THEN 'Y' ELSE 'N' END AS check_adp_code,
+              n.name AS adp_name,
+              op.qty AS amount,
+              CASE WHEN op.qty IS NOT NULL THEN 'Y' ELSE 'N' END AS check_amount,
+              op.unitprice AS adp_price,
+              CASE WHEN op.unitprice IS NOT NULL THEN 'Y' ELSE 'N' END AS check_adp_price,
+              op.paidst AS use_status,
+              SUM(CASE WHEN op.paidst IN ('01','03') THEN op.qty * op.unitprice ELSE 0 END) AS totcopay,
+              SUM(CASE WHEN op.paidst IN ('02') THEN op.qty * op.unitprice ELSE 0 END) AS total,
+              op.doctor AS provider
+            FROM ovst vst
+              INNER JOIN opitemrece op ON op.vn = vst.vn AND op.qty > 0 AND op.sum_price > 0 AND op.paidst IN ('01','02','03')
+              INNER JOIN nondrugitems n ON n.icode = op.icode AND n.nhso_adp_type_id IS NOT NULL AND n.nhso_adp_type_id <> ''
+              LEFT JOIN nhso_adp_type nat ON nat.nhso_adp_type_id = n.nhso_adp_type_id
+              LEFT JOIN vn_stat v ON v.vn = vst.vn
+              LEFT JOIN ipt ip ON ip.an = vst.an
+            WHERE vst.vstdate BETWEEN ${ph1} AND ${ph2}
+            ${pttypeCond}
+            GROUP BY
+              vst.hn, ip.an, vst.vn, vst.spclty, v.cid, vst.vstdate,
+              n.nhso_adp_type_id, nat.nhso_adp_type_name, n.nhso_adp_code, n.name,
+              op.qty, op.unitprice, op.paidst, op.doctor
+            ORDER BY vst.vn
+        `;
+
+        if (type === 'postgresql') {
+            const { Client } = require('pg');
+            const client = new Client({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 10000 });
+            await client.connect();
+            const result = await client.query(queryStr, [dateFrom, dateTo]);
+            await client.end();
+            res.json({ success: true, data: result.rows, count: result.rows.length });
+        } else {
+            const mysql = require('mysql2/promise');
+            const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 10000 });
+            const [rows] = await connection.execute(queryStr, [dateFrom, dateTo]);
+            await connection.end();
+            res.json({ success: true, data: rows, count: rows.length });
+        }
+    } catch (error) {
+        console.error('FDH ADP query error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // ==================== FDH LVD ====================
 app.post('/api/get-fdh-lvd', async (req, res) => {
     try {

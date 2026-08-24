@@ -965,7 +965,9 @@
                 await searchFdhLabfu();
             } else if (fileType === 'phdb') {
                 await searchFdhPhdb();
-            } else if (['aer','adp'].includes(fileType)) {
+            } else if (fileType === 'adp') {
+                await searchFdhAdp();
+            } else if (['aer'].includes(fileType)) {
                 await searchFdhMenu(fileType);
             } else {
                 document.getElementById('content-area').innerHTML = `<div class="welcome-message"><h2>🚧 กำลังพัฒนา</h2><p>${fileType.toUpperCase()} จะพร้อมใช้งานเร็วๆ นี้</p></div>`;
@@ -2635,6 +2637,43 @@
                     fdhPage['idx'] = 1;
                     fdhRowsPerPage['idx'] = fdhRowsPerPage['idx'] || 20;
                     renderFdhTable('idx');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ API: ' + error.message);
+            }
+        }
+
+        // ==================== FDH ADP ====================
+
+        async function searchFdhAdp() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            if (!dateFrom || !dateTo) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+            const selectedPttypes = getSelectedPttypes();
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="welcome-message"><h2>กำลังโหลด ADP...</h2><p>กรุณารอสักครู่</p></div>`;
+            try {
+                const config = getDatabaseConfig();
+                if (!config) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+                const response = await fetch(`${API_BASE}/api/get-fdh-adp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: config.host, port: config.port, database: config.database,
+                        user: config.user, password: config.password, type: config.type,
+                        dateFrom, dateTo, selectedPttypes
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const errCount = result.data.filter(r => Object.keys(r).some(k => k.startsWith('check_') && r[k] === 'N')).length;
+                    updateStatistics(result.data.length, result.data.length - errCount, errCount);
+                    fdhData['adp'] = result.data;
+                    fdhPage['adp'] = 1;
+                    fdhRowsPerPage['adp'] = fdhRowsPerPage['adp'] || 20;
+                    renderFdhTable('adp');
                 } else {
                     alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
                 }
