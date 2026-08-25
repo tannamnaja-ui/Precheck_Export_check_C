@@ -5941,13 +5941,15 @@ app.post('/api/get-c566-z-preview', async (req, res) => {
         // MySQL: ? ต้องส่ง 4 params
         const buildQueryPg = () => `
             SELECT o.vn,
-                (CASE WHEN dot.icd9='9224' THEN 'Z510' WHEN dot.icd9='9925' THEN 'Z511' ELSE '' END) AS icd10_add,
-                dot.icd9, e.name AS er_oper_name, o.hn, o.vsttime, o.vstdate,
+                (CASE WHEN dot.icd9='9224' OR od2.icd10='9224' THEN 'Z510'
+                      WHEN dot.icd9='9925' OR od2.icd10='9925' THEN 'Z511' ELSE '' END) AS icd10_add,
+                dot.icd9, od2.icd10 AS icd9_from_ovstdiag, e.name AS er_oper_name, o.hn, o.vsttime, o.vstdate,
                 '4' AS diagtype, od1.doctor AS doctor_code, d.name AS doctor
             FROM ovst o
             LEFT OUTER JOIN ovstdiag od1 ON o.vn = od1.vn AND od1.diagtype = '1'
             LEFT OUTER JOIN icd101 icd ON od1.icd10 = icd.code
             LEFT OUTER JOIN doctor_operation dot ON dot.vn = o.vn AND dot.icd9 IN ('9925','9224')
+            LEFT OUTER JOIN ovstdiag od2 ON od2.vn = o.vn AND od2.icd10 IN ('9925','9224')
             LEFT OUTER JOIN er_oper_code e ON e.er_oper_code = dot.er_oper_code
             LEFT OUTER JOIN doctor d ON d.code = od1.doctor
             LEFT OUTER JOIN pttype p ON p.pttype = o.pttype
@@ -5959,18 +5961,20 @@ app.post('/api/get-c566-z-preview', async (req, res) => {
                     WHERE icd10 IN ('Z510','Z511')
                     AND vstdate BETWEEN $1 AND $2
                 )
-                AND dot.icd9 IS NOT NULL
+                AND (dot.icd9 IS NOT NULL OR od2.icd10 IS NOT NULL)
             ORDER BY o.vstdate, o.vn
         `;
         const buildQueryMy = () => `
             SELECT o.vn,
-                (CASE WHEN dot.icd9='9224' THEN 'Z510' WHEN dot.icd9='9925' THEN 'Z511' ELSE '' END) AS icd10_add,
-                dot.icd9, e.name AS er_oper_name, o.hn, o.vsttime, o.vstdate,
+                (CASE WHEN dot.icd9='9224' OR od2.icd10='9224' THEN 'Z510'
+                      WHEN dot.icd9='9925' OR od2.icd10='9925' THEN 'Z511' ELSE '' END) AS icd10_add,
+                dot.icd9, od2.icd10 AS icd9_from_ovstdiag, e.name AS er_oper_name, o.hn, o.vsttime, o.vstdate,
                 '4' AS diagtype, od1.doctor AS doctor_code, d.name AS doctor
             FROM ovst o
             LEFT OUTER JOIN ovstdiag od1 ON o.vn = od1.vn AND od1.diagtype = '1'
             LEFT OUTER JOIN icd101 icd ON od1.icd10 = icd.code
             LEFT OUTER JOIN doctor_operation dot ON dot.vn = o.vn AND dot.icd9 IN ('9925','9224')
+            LEFT OUTER JOIN ovstdiag od2 ON od2.vn = o.vn AND od2.icd10 IN ('9925','9224')
             LEFT OUTER JOIN er_oper_code e ON e.er_oper_code = dot.er_oper_code
             LEFT OUTER JOIN doctor d ON d.code = od1.doctor
             LEFT OUTER JOIN pttype p ON p.pttype = o.pttype
@@ -5982,7 +5986,7 @@ app.post('/api/get-c566-z-preview', async (req, res) => {
                     WHERE icd10 IN ('Z510','Z511')
                     AND vstdate BETWEEN ? AND ?
                 )
-                AND dot.icd9 IS NOT NULL
+                AND (dot.icd9 IS NOT NULL OR od2.icd10 IS NOT NULL)
             ORDER BY o.vstdate, o.vn
         `;
         let rows;
@@ -6139,7 +6143,6 @@ app.post('/api/get-c566', async (req, res) => {
             WHERE o.vstdate BETWEEN ${ph1} AND ${ph2}
                 AND UPPER(od1.icd10) LIKE 'C%'
                 AND ptt.hipdata_code = 'UCS'
-                AND o.vn IN (SELECT vn FROM opitemrece WHERE icode IN (SELECT icode FROM drugitems_cancer))
                 AND od1.vn NOT IN (
                     SELECT vn FROM ovstdiag
                     WHERE icd10 IN ('Z510','Z511')
