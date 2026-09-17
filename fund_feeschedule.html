@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <script src="api_guard.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fee Schedule</title>
     <link rel="stylesheet" href="styles.css">
@@ -12,15 +13,19 @@
 
         .full-width-container {
             width: 100%;
-            min-height: 100vh;
+            height: 100vh;
             background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;          /* ทั้งหน้าไม่เลื่อน ให้ไปเลื่อนข้างในแต่ละฝั่งแทน */
         }
 
         .main-layout {
             display: flex;
             gap: 20px;
-            min-height: calc(100vh - 140px);
+            flex: 1;
+            min-height: 0;             /* ถ้าไม่ใส่ flex item จะไม่ยอมหด overflow ข้างในจะไม่ทำงาน */
         }
 
         /* Left Sidebar - 20% */
@@ -33,6 +38,7 @@
             box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
             border: 1px solid #e3f2fd;
             overflow-y: auto;
+            min-height: 0;
         }
 
         .sidebar-title {
@@ -70,11 +76,48 @@
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 4px;
+            line-height: 1.45;
         }
 
         .file-menu-item-code {
             font-size: 12px;
             opacity: 0.8;
+        }
+
+        /* หัวข้อกลุ่มของเมนูย่อย (คลิกไม่ได้) */
+        .file-menu-group {
+            margin: 14px 0 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #5e35b1;
+            background: #ede7f6;
+            border-radius: 6px;
+            letter-spacing: .2px;
+        }
+
+        /* รายการย่อยใต้กลุ่ม — เยื้องเข้า + มีเส้นบอกระดับ */
+        .file-menu-item.sub {
+            margin-left: 12px;
+            padding: 9px 12px;
+            border-left: 3px solid #d1c4e9;
+            background: #fafafa;
+            position: relative;
+        }
+        .file-menu-item.sub .file-menu-item-title {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .file-menu-item.sub .file-menu-item-code {
+            font-size: 11px;
+        }
+        .file-menu-item.sub:hover {
+            border-left-color: #7e57c2;
+            background: #f3e5f5;
+        }
+        .file-menu-item.sub.active {
+            background: linear-gradient(135deg, #7e57c2 0%, #5e35b1 100%);
+            border-left-color: #4527a0;
         }
 
         /* Right Content - 80% */
@@ -84,6 +127,7 @@
             flex-direction: column;
             gap: 20px;
             overflow-y: auto;
+            min-height: 0;
         }
 
         .top-bar {
@@ -96,6 +140,7 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 16px rgba(66, 165, 245, 0.15);
             border: 1px solid #e3f2fd;
+            flex-shrink: 0;
         }
 
         .top-bar h1 {
@@ -281,9 +326,82 @@
             <!-- Left Sidebar (20%) -->
             <div class="left-sidebar">
                 <div class="sidebar-title">📁 แฟ้มกองทุน</div>
-                <div class="file-menu-item active">
+                <div class="file-menu-item active" data-file="all">
                     <div class="file-menu-item-title">แฟ้มทั้งหมด</div>
                     <div class="file-menu-item-code">All Files</div>
+                </div>
+                <div class="file-menu-item" data-file="mammogram">
+                    <div class="file-menu-item-title">กองทุนบริการตรวจคัดกรองมะเร็งเต้านมด้วยเครื่องแมมโมแกรมและอัลตราซาวด์</div>
+                    <div class="file-menu-item-code">Mammogram / Ultrasound</div>
+                </div>
+                <div class="file-menu-item" data-file="dental-anc">
+                    <div class="file-menu-item-title">กองทุนทันตกรรมในหญิงตั้งครรภ์</div>
+                    <div class="file-menu-item-code">Dental ANC</div>
+                </div>
+                <div class="file-menu-item" data-file="iron-supplement">
+                    <div class="file-menu-item-title">กองทุนบริการยาเม็ดเสริมธาตุเหล็ก</div>
+                    <div class="file-menu-item-code">Iron Supplement</div>
+                </div>
+                <div class="file-menu-item" data-file="fp-all">
+                    <div class="file-menu-item-title">กองทุนวางแผนครอบครัวและป้องกันการตั้งครรภ์ไม่พึงประสงค์</div>
+                    <div class="file-menu-item-code">Family Planning — แสดงทั้งหมด (เงื่อนไขร่วม)</div>
+                </div>
+
+                <div class="file-menu-group">ส่วนที่ 1 · ยาคุมกำเนิด</div>
+                <div class="file-menu-item sub" data-file="fp-combined">
+                    <div class="file-menu-item-title">ยาเม็ดคุมกำเนิดชนิดฮอร์โมนรวม</div>
+                    <div class="file-menu-item-code">FP003_1 · QTY ≤ 13/ปี</div>
+                </div>
+                <div class="file-menu-item sub" data-file="fp-single">
+                    <div class="file-menu-item-title">ยาเม็ดคุมกำเนิดชนิดฮอร์โมนเดี่ยว</div>
+                    <div class="file-menu-item-code">FP003_2</div>
+                </div>
+                <div class="file-menu-item sub" data-file="fp-emergency">
+                    <div class="file-menu-item-title">ยาเม็ดคุมกำเนิดฉุกเฉิน</div>
+                    <div class="file-menu-item-code">FP003_3 · ≤ 2 ครั้ง/ปี</div>
+                </div>
+                <div class="file-menu-item sub" data-file="fp-injection">
+                    <div class="file-menu-item-title">ยาฉีดคุมกำเนิดฉุกเฉิน</div>
+                    <div class="file-menu-item-code">FP003_4 · ≤ 5 ครั้ง/ปี</div>
+                </div>
+
+                <div class="file-menu-group">ส่วนที่ 2 · ใส่ห่วง/ฝังยา</div>
+                <div class="file-menu-item sub" data-file="fp-iud">
+                    <div class="file-menu-item-title">ใส่ห่วงอนามัย</div>
+                    <div class="file-menu-item-code">FP001 · ICD9 697 · ≤ 1 ครั้ง/ปี</div>
+                </div>
+                <div class="file-menu-item sub" data-file="fp-implant-insert">
+                    <div class="file-menu-item-title">ฝังยาคุมกำเนิด</div>
+                    <div class="file-menu-item-code">FP002_1 · ICD9 9923 · ≤ 1 ครั้ง/3 ปี</div>
+                </div>
+                <div class="file-menu-item sub" data-file="fp-implant-remove">
+                    <div class="file-menu-item-title">ถอดยาฝังคุมกำเนิด</div>
+                    <div class="file-menu-item-code">FP002_2 · ICD9 9923 · ≤ 1 ครั้ง/3 ปี</div>
+                </div>
+
+                <div class="file-menu-item" data-file="postal-drug">
+                    <div class="file-menu-item-title">กองทุนส่งยาทางไปรษณีย์</div>
+                    <div class="file-menu-item-code">Postal Drug Delivery</div>
+                </div>
+                <div class="file-menu-item" data-file="er-quality">
+                    <div class="file-menu-item-title">กองทุน ER คุณภาพ (สำหรับ รพ. ที่ไม่ได้ใช้หน้าจอ ER)</div>
+                    <div class="file-menu-item-code">ER Quality</div>
+                </div>
+                <div class="file-menu-item" data-file="opa-in-province">
+                    <div class="file-menu-item-title">กองทุน OP Anywhere ในจังหวัด (นอก CUPs)</div>
+                    <div class="file-menu-item-code">OP Anywhere · ในจังหวัด</div>
+                </div>
+                <div class="file-menu-item" data-file="opa-out-province">
+                    <div class="file-menu-item-title">กองทุน OP Anywhere ต่างจังหวัด</div>
+                    <div class="file-menu-item-code">OP Anywhere · ต่างจังหวัด</div>
+                </div>
+                <div class="file-menu-item" data-file="dm-remission">
+                    <div class="file-menu-item-title">กองทุน DM REMISSION</div>
+                    <div class="file-menu-item-code">E110-E119 · ADP 32401 · LABTEST 05</div>
+                </div>
+                <div class="file-menu-item" data-file="hd-dialysis">
+                    <div class="file-menu-item-title">กองทุนฟอกเลือดด้วยเครื่องไตเทียม (HD)</div>
+                    <div class="file-menu-item-code">Hemodialysis</div>
                 </div>
             </div>
 
@@ -342,7 +460,1235 @@
     <script>
         // Set fund type
         window.fundType = 'feeschedule';
+
+        // ---------- กองทุนที่เชื่อมข้อมูลแล้ว ----------
+        // เพิ่มกองทุนใหม่ = เพิ่มอีก 1 รายการตรงนี้ ไม่ต้องแก้ที่อื่น
+        var FUND_ENDPOINTS = {
+            'mammogram': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 42333 (nondrugitems.nhso_adp_code)', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 40 ปีขึ้นไป (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 ต้องเป็นคนไข้กลุ่มสิทธิ UC, ข้าราชการ, ประกันสังคม (pttype.hipdata_code in UCS,WEL,OFC,SSS)', 'ลำดับที่ 5 ต้องมีวินิจฉัย Z123 — ถ้าไม่มี Tools เติมลง ovstdiag ให้ได้', 'ลำดับที่ 6 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับ 5-6 แก้ไขได้ จึงดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้'],
+                endpoint: '/api/get-feeschedule-mammogram',
+                title: '🎗️ กองทุนบริการตรวจคัดกรองมะเร็งเต้านมด้วยเครื่องแมมโมแกรมและอัลตราซาวด์',
+                cond: 'ลำดับ 1: ADP 42333 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ ≥ 40 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี Z123 (ถ้าไม่มี Tools เติมได้) · ลำดับ 6: ต้องไม่มี WALKIN/ER-EXT (ถ้ามี Tools ตัดได้)',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-mammogram-dx',
+                fixNoun: 'วินิจฉัย Z123 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'dental-anc': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 30008 หรือ 30009 อย่างน้อยหนึ่งตัว จึงจะถูกดึงมาแสดง แล้วเช็คต่อว่ามีครบทั้งคู่ไหม ขาดตัวไหน Tools เพิ่มลง opitemrece ให้ได้', 'ลำดับที่ 2 ต้องเป็นผู้หญิง (patient.sex = 2)', 'ลำดับที่ 3 คนไทยเท่านั้น (patient.nationality = 99)', 'ลำดับที่ 4 ต้องเป็นคนไข้กลุ่มสิทธิ UC, ข้าราชการ (UCS, WEL, OFC) — ติ๊ก checkbox "รวมสิทธิประกันสังคม" ด้านบนเพื่อเพิ่ม SSS เข้าไปด้วย', 'ลำดับที่ 5 ต้องมีวินิจฉัย Z0519 — ถ้าไม่มี Tools เติมลง ovstdiag ให้ได้', 'ลำดับที่ 6 ต้องมี ICD10TM ครบทั้ง 2330011 และ 2277310 — อ่านจากหัตถการทันตกรรมที่ผูก ICD10TM ไว้ (opitemrece → dttm)', 'ลำดับที่ 7 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับ 5 และ 7 Tools แก้ให้ได้ · ลำดับ 6 แจ้งอย่างเดียว ต้องไปลงหัตถการทันตกรรมในโปรแกรมหลักเอง'],
+                endpoint: '/api/get-feeschedule-dental-anc',
+                title: '🦷 กองทุนทันตกรรมในหญิงตั้งครรภ์',
+                cond: 'ลำดับ 1: ADP 30008 หรือ 30009 (ขาดตัวไหน Tools เพิ่มได้) · ลำดับ 2: เพศหญิง (2) · ลำดับ 3: สัญชาติไทย (99) · ลำดับ 4: สิทธิ UCS/WEL/OFC · ลำดับ 5: ต้องมี Z0519 (ถ้าไม่มี Tools เติมได้) · ลำดับ 6: ต้องมี ICD10TM 2330011 + 2277310 · ลำดับ 7: ต้องไม่มี WALKIN/ER-EXT (ถ้ามี Tools ตัดได้)',
+                canFilter: true,
+                options: [{
+                    key: 'includeSss',
+                    label: 'รวมสิทธิประกันสังคม',
+                    hint: 'ลำดับที่ 4 เพิ่ม pttype.hipdata_code = SSS เข้าไปด้วย (ปกตินับเฉพาะ UCS, WEL, OFC)'
+                }],
+                fixEndpoint: '/api/add-feeschedule-dental-anc-missing',
+                fixNoun: 'วินิจฉัย Z0519 ลง ovstdiag และ ADP 30008/30009 ลง opitemrece',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'iron-supplement': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 14001 (nondrugitems.nhso_adp_code)', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 13 - 45 ปี (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 ต้องเป็นคนไข้กลุ่มสิทธิ UC, ข้าราชการ, ประกันสังคม (pttype.hipdata_code in UCS,WEL,OFC,SSS)', 'ลำดับที่ 5 ต้องมีวินิจฉัย D500 หรือ D508 หรือ D509 อย่างน้อยหนึ่งตัว — ถ้าไม่มีเลย Tools เติมให้ได้ เลือกรหัสที่จะลงจาก dropdown ข้างปุ่มเพิ่ม', 'ลำดับที่ 6 ต้องมีวินิจฉัย Z130 — ถ้าไม่มี Tools เติมลง ovstdiag ให้ได้', 'ลำดับที่ 7 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับ 5-7 แก้ไขได้ จึงดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้'],
+                endpoint: '/api/get-feeschedule-iron',
+                title: '💊 กองทุนบริการยาเม็ดเสริมธาตุเหล็ก',
+                cond: 'ลำดับ 1: ADP 14001 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ 13-45 ปี · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี D500/D508/D509 (ถ้าไม่มี Tools เติมได้) · ลำดับ 6: ต้องมี Z130 (ถ้าไม่มี Tools เติมได้) · ลำดับ 7: ต้องไม่มี WALKIN/ER-EXT (ถ้ามี Tools ตัดได้)',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-iron-missing',
+                fixNoun: 'วินิจฉัย D50x และ Z130 ลง ovstdiag',
+                fixChoice: {
+                    key: 'anemiaCode',
+                    label: 'ลำดับ 5 ลงรหัส:',
+                    options: [
+                        { value: 'D509', label: 'D509 — ไม่ระบุชนิด' },
+                        { value: 'D500', label: 'D500 — จากเสียเลือดเรื้อรัง' },
+                        { value: 'D508', label: 'D508 — ชนิดอื่น' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'fp-all': {
+                about: ['เงื่อนไขร่วมของกองทุนวางแผนครอบครัวและป้องกันการตั้งครรภ์ไม่พึงประสงค์', 'คนไข้กลุ่มคนไข้ทุกสิทธิ (UC, ข้าราชการ, ประกันสังคม) pttype.hipdata_code in(UCS,WEL,OFC,SSS)', 'คนไทยเท่านั้น national=99', 'ผู้หญิงเท่านั้น sex=2', 'ต้องเป็นคนไข้อายุ 15 - 49 ปี'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'all',
+                title: '👪 กองทุนวางแผนครอบครัวและป้องกันการตั้งครรภ์ไม่พึงประสงค์ — ทั้งหมด',
+                cond: 'สิทธิ UCS/WEL/OFC/SSS · สัญชาติไทย (99) · เพศหญิง (2) · อายุ 15-49 ปี',
+                canFilter: true
+            },
+            'fp-combined': {
+                about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP003_1 (QTY ไม่เกิน 13/HN/ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z304 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-combined',
+                title: '💊 ยาเม็ดคุมกำเนิดชนิดฮอร์โมนรวม',
+                cond: 'ลำดับ 1: ADP FP003_1 (QTY ≤ 13/ปี) · ลำดับ 2: ต้องมี Z304 · ลำดับ 3: ต้องไม่มี WALKIN/ER-EXT',
+                fixEndpoint: '/api/add-feeschedule-fp-missing',
+                fixNoun: 'วินิจฉัย/ICD9 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-fp-adp',
+                cutNoun: 'ADP WALKIN/ER-EXT',
+                canFilter: true
+            },
+            'fp-single': {
+                about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP003_2', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z304 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-single',
+                title: '💊 ยาเม็ดคุมกำเนิดชนิดฮอร์โมนเดี่ยว',
+                cond: 'ลำดับ 1: ADP FP003_2 · ลำดับ 2: ต้องมี Z304 · ลำดับ 3: ต้องไม่มี WALKIN/ER-EXT',
+                fixEndpoint: '/api/add-feeschedule-fp-missing',
+                fixNoun: 'วินิจฉัย/ICD9 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-fp-adp',
+                cutNoun: 'ADP WALKIN/ER-EXT',
+                canFilter: true
+            },
+            'fp-emergency': {
+                about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP003_3 (ไม่เกิน 2 ครั้ง/ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z304 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-emergency',
+                title: '🚨 ยาเม็ดคุมกำเนิดฉุกเฉิน',
+                cond: 'ลำดับ 1: ADP FP003_3 (≤ 2 ครั้ง/ปี) · ลำดับ 2: ต้องมี Z304 · ลำดับ 3: ต้องไม่มี WALKIN/ER-EXT',
+                fixEndpoint: '/api/add-feeschedule-fp-missing',
+                fixNoun: 'วินิจฉัย/ICD9 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-fp-adp',
+                cutNoun: 'ADP WALKIN/ER-EXT',
+                canFilter: true
+            },
+            'fp-injection': {
+                about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP003_4 (ไม่เกิน 5 ครั้ง/ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z304 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-injection',
+                title: '💉 ยาฉีดคุมกำเนิดฉุกเฉิน',
+                cond: 'ลำดับ 1: ADP FP003_4 (≤ 5 ครั้ง/ปี) · ลำดับ 2: ต้องมี Z304 · ลำดับ 3: ต้องไม่มี WALKIN/ER-EXT',
+                fixEndpoint: '/api/add-feeschedule-fp-missing',
+                fixNoun: 'วินิจฉัย/ICD9 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-fp-adp',
+                cutNoun: 'ADP WALKIN/ER-EXT',
+                canFilter: true
+            },
+            'fp-iud': {
+                about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP001 (ไม่เกิน 1 ครั้ง/ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z301 และ ICD9 = 697 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-iud',
+                title: '⭕ ใส่ห่วงอนามัย',
+                cond: 'ลำดับ 1: ADP FP001 (≤ 1 ครั้ง/ปี) · ลำดับ 2: ต้องมี Z301 + ICD9 697 · ลำดับ 3: ต้องไม่มี WALKIN',
+                fixEndpoint: '/api/add-feeschedule-fp-missing',
+                fixNoun: 'วินิจฉัย/ICD9 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-fp-adp',
+                cutNoun: 'ADP WALKIN',
+                canFilter: true
+            },
+            'fp-implant-insert': {
+                about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP002_1 (ไม่เกิน 1 ครั้ง/3 ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z308 และ ICD9 = 9923 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-implant-insert',
+                title: '💇 ฝังยาคุมกำเนิด',
+                cond: 'ลำดับ 1: ADP FP002_1 (≤ 1 ครั้ง/3 ปี) · ลำดับ 2: ต้องมี Z308 + ICD9 9923 · ลำดับ 3: ต้องไม่มี WALKIN/ER-EXT',
+                fixEndpoint: '/api/add-feeschedule-fp-missing',
+                fixNoun: 'วินิจฉัย/ICD9 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-fp-adp',
+                cutNoun: 'ADP WALKIN/ER-EXT',
+                canFilter: true
+            },
+            'er-quality': {
+                about: ['ตั้งค่าก่อนใช้: ระบุสถานพยาบาลนอกสังกัด สธ. ที่ทำ MOU กับ รพ.', 'ตั้งค่าก่อนใช้: เลือกห้องตรวจจาก kskdepartment.department ที่ depcode_active = Y (เลือกได้มากกว่า 1 ห้อง)', 'ตั้งค่าก่อนใช้: กรองช่วงเวลาวันทำการ จ.-ศ. (ovst.vsttime ที่ ovst.vstdate <> holiday.holiday_date)', 'ตั้งค่าก่อนใช้: กรองช่วงเวลาวันหยุด ส.-อา. และวันหยุดนักขัตฤกษ์ (ovst.vstdate = holiday.holiday_date)', '---', 'แสดงเฉพาะคนไข้มารับบริการห้องตรวจที่เลือก (ovst.main_dep เทียบกับ kskdepartment.depcode)', 'คนไข้สิทธิ UCS, WEL', 'ovst.vsttime แบ่ง 2 กรณี: (1) วันทำการ จ.-ศ. ตามช่วงเวลาที่กรอง (2) วันหยุด ส.-อา. และนักขัตฤกษ์ ตามช่วงเวลาที่กรอง', 'visit_pttype.hospmain = opdconfig.hospitalcode หรือ hospmain อยู่ใน SELECT hospcode FROM hospcode WHERE chwpart = (จังหวัดเดียวกับ opdconfig.hospitalcode) and hospital_type_id IN (5,6,7)', 'ความเร่งด่วน 4, 5 (ovst.pt_priority = pt_priority.id แล้วดู pt_priority.hos_guid = 4 หรือ 5)', 'ส่งออกโครงการพิเศษที่แฟ้ม AER ฟิลด์ emtype หากไม่ระบุจะออกเป็น 3 หากระบุจะออกตามที่บันทึก', 'แฟ้ม AER ฟิลด์ UCAE ต้องออกเป็น N', 'ตัดกลุ่มคนไข้ที่มีวินิจฉัย C และ D ที่เป็นมะเร็ง (C00-C97, D00-D09, D37-D48)', 'ต้องมีค่าใช้จ่าย ADP Code = ER-EXT', 'ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN'],
+                endpoint: '/api/get-feeschedule-er-quality',
+                title: '🚑 กองทุน ER คุณภาพ (สำหรับ รพ. ที่ไม่ได้ใช้หน้าจอ ER)',
+                cond: 'กรอง: ห้องตรวจ/เวลา/MOU · ลำดับ 1: ความเร่งด่วน 4-5 · ลำดับ 2: hospmain ในสังกัด/MOU · ลำดับ 3: ต้องมี ADP ER-EXT · ลำดับ 4: ต้องไม่มี ADP WALKIN',
+                needsSetup: true,
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-er-erext',
+                fixNoun: 'ค่าใช้จ่าย ADP ER-EXT ลง opitemrece',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-er-walkin',
+                cutNoun: 'ADP WALKIN'
+            },
+            'postal-drug': {
+                about: ['เป็นคนไทยเท่านั้น', 'คนไข้กลุ่มสิทธิ UCS, WEL', 'วินิจฉัยอะไรก็ได้ ต้องไม่ว่าง', 'ต้องมี ADP CODE = DRUGP', 'ต้องไม่มี ADP code = WALKIN, ER-EXT (ถ้ามีให้ตัดออก)', 'ตัวเลือก: ติ๊ก "ตัดคนไข้มะเร็งออก" ระบบจะนำ HN ไปตรวจใน clinicmember ที่ clinicmember.clinic ตรงกับ clinic ซึ่ง hosxp_clinic_type_id = 7 ถือว่าเป็นคนไข้มะเร็ง แล้วตัดออก'],
+                endpoint: '/api/get-feeschedule-postal',
+                title: '📮 กองทุนส่งยาทางไปรษณีย์',
+                cond: 'สัญชาติไทย (99) · สิทธิ UCS/WEL · มีวินิจฉัย (ไม่ว่าง) · ADP DRUGP',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN / ER-EXT',
+                canFilter: true,
+                options: [{
+                    key: 'excludeCancerClinic',
+                    label: 'ตัดคนไข้มะเร็งออก',
+                    hint: 'ตัด HN ที่เป็นสมาชิกคลินิกซึ่ง clinic.hosxp_clinic_type_id = 7'
+                }]
+            },
+            'hd-dialysis': {
+                about: ['นำคนที่วินิจฉัย = N185 มาแสดง แล้วตรวจสอบต่อด้วยเงื่อนไขต่อไปนี้', 'เงื่อนไขที่ 1 ถ้ามีค่าใช้จ่าย ADP Code = HD0001 จะต้องมีค่าใช้จ่าย ADP Code = 4905 และ ICD9 = 3895 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 2 ถ้ามีค่าใช้จ่าย ADP Code = HD0002 จะต้องมี ICD9 = 3927 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 3 ถ้ามีค่าใช้จ่าย ADP Code = HD0003 จะต้องมี ICD9 = 3993 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 4 ถ้ามีค่าใช้จ่าย ADP Code = HD0004 จะต้องมี ICD9 = 3895 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 5 ถ้ามีค่าใช้จ่าย ADP Code = HD0005 จะต้องมี ICD9 = 3950 ถ้าไม่มีให้เพิ่ม'],
+                endpoint: '/api/get-feeschedule-hd',
+                title: '🩸 กองทุนฟอกเลือดด้วยเครื่องไตเทียม (HD)',
+                cond: 'วินิจฉัย N185 · ตรวจต่อ 5 เงื่อนไข: HD0001→ADP 4905+ICD9 3895 · HD0002→ICD9 3927 · HD0003→ICD9 3993 · HD0004→ICD9 3895 · HD0005→ICD9 3950',
+                fixEndpoint: '/api/add-feeschedule-hd-missing',
+                fixNoun: 'ICD9 ลง ovstdiag และ ADP ลง opitemrece',
+                canFilter: true
+            },
+            'dm-remission': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 32401 (nondrugitems.nhso_adp_code)', 'ลำดับที่ 2 ต้องเป็นคนไข้ที่ได้รับวินิจฉัย ICD10 = E110 – E119 (อันใดอันหนึ่งตามช่วงที่ระบุ)', 'ลำดับที่ 3 คนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 4 ต้องมีผล LAB ที่ Item Lab ผูกกับค่าใช้จ่าย ADP Code = 32401 ออกในแฟ้ม LABFU ฟิลด์ LABRESULT มีค่า และฟิลด์ LABTEST มีค่าเท่ากับ 05', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับ 4 เป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วบอกในคอลัมน์ "สิ่งที่ต้องแก้" ว่าไม่ผ่านเพราะอะไร — ไม่พบ Item Lab / LABRESULT ยังว่าง / LABTEST ไม่ใช่ 05', 'Tools ไม่แก้ลำดับ 4 ให้ เพราะผล LAB ต้องมาจากห้องแล็บจริง', 'เส้นทางข้อมูล: lab_head → lab_order → lab_items → nondrugitems (icode) และ lab_items → sys_lab_link (LABTEST)'],
+                endpoint: '/api/get-feeschedule-dm-remission',
+                title: '🩸 กองทุน DM REMISSION',
+                cond: 'ลำดับ 1: ADP 32401 · ลำดับ 2: ICD10 E110-E119 · ลำดับ 3: สิทธิ UCS/WEL · ลำดับ 4: ผล LAB ของ Item ที่ผูก ADP 32401 โดย LABRESULT มีค่า และ LABTEST = 05',
+                canFilter: true
+            },
+            'opa-out-province': {
+                about: ['คนไทยเท่านั้น', 'สิทธิ UCS, WEL', 'สถานพยาบาลของสิทธิผู้ป่วย (hospmain/hospsub) ไม่ได้ตั้งอยู่ในจังหวัดเดียวกันกับหน่วยบริการที่เข้ารับการรักษา (hospcode)', 'ต้องมีค่าใช้จ่าย ADP Code = WALKIN และ ADP type ของ WALKIN เท่ากับ 5', 'ต้องไม่มี Project code ที่ ADP type เท่ากับ 5 อื่น ๆ นอกเหนือจาก WALKIN (ถ้ามีให้ Tools ลบออก)'],
+                endpoint: '/api/get-feeschedule-opa-out-province',
+                title: '🛣️ กองทุน OP Anywhere ต่างจังหวัด',
+                cond: 'สัญชาติไทย (99) · สิทธิ UCS/WEL · hospmain/hospsub อยู่คนละจังหวัดกับ รพ. · ต้องมี WALKIN ที่ ADP type 5',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-adp-type5-items',
+                cutNoun: 'Project code ที่ ADP type 5 (ที่ไม่ใช่ WALKIN)',
+                canFilter: true
+            },
+            'opa-in-province': {
+                needsSetup: true,
+                setupKind: 'pttype',
+                about: ['คนไทยเท่านั้น', 'สิทธิ UCS, WEL', 'สถานพยาบาลของสิทธิผู้ป่วย (hospmain/hospsub) ตั้งอยู่ในจังหวัดเดียวกันกับหน่วยบริการที่เข้ารับการรักษา (hospcode)', 'ความเร่งด่วน 2 - 5 (ovst.pt_priority = pt_priority.id แล้วดู pt_priority.hos_guid = 1 หรือ 2 หรือ 3 หรือ 4)', 'ต้องมีค่าใช้จ่าย ADP Code = WALKIN และ ADP type ของ WALKIN เท่ากับ 5', 'ต้องไม่มี Project code ที่ ADP type = 5 อื่น ๆ นอกเหนือจาก WALKIN (ถ้ามีให้ Tools ลบออก)'],
+                endpoint: '/api/get-feeschedule-opa-in-province',
+                title: '🏥 กองทุน OP Anywhere ในจังหวัด (นอก CUPs)',
+                cond: 'สัญชาติไทย (99) · สิทธิ UCS/WEL · hospmain/hospsub อยู่จังหวัดเดียวกับ รพ. · ความเร่งด่วน hos_guid 1-4 · ต้องมี WALKIN ที่ ADP type 5',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-adp-type5-items',
+                cutNoun: 'Project code ที่ ADP type 5 (ที่ไม่ใช่ WALKIN)',
+                canFilter: true
+            },
+            'fp-implant-remove': {
+                about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP002_2 (ไม่เกิน 1 ครั้ง/3 ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z308 และ ICD9 = 9923 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
+                endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-implant-remove',
+                title: '💇 ถอดยาฝังคุมกำเนิด',
+                cond: 'ลำดับ 1: ADP FP002_2 (≤ 1 ครั้ง/3 ปี) · ลำดับ 2: ต้องมี Z308 + ICD9 9923 · ลำดับ 3: ต้องไม่มี WALKIN/ER-EXT',
+                fixEndpoint: '/api/add-feeschedule-fp-missing',
+                fixNoun: 'วินิจฉัย/ICD9 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-fp-adp',
+                cutNoun: 'ADP WALKIN/ER-EXT',
+                canFilter: true
+            }
+        };
+
+        // ---------- เมนูแฟ้มด้านซ้าย ----------
+        // กองทุนย่อยทั้ง 4 ยังไม่มีแหล่งข้อมูลผูกไว้ คลิกแล้วจึงขึ้นข้อความแจ้งสถานะ
+        // แทนที่จะเงียบ ๆ ไม่เกิดอะไรขึ้น
+        (function setupFileMenu() {
+            var items = document.querySelectorAll('.file-menu-item');
+            var area  = document.getElementById('content-area');
+
+            items.forEach(function (item) {
+                item.addEventListener('click', function () {
+                    items.forEach(function (i) { i.classList.remove('active'); });
+                    this.classList.add('active');
+
+                    var file = this.getAttribute('data-file');
+                    window.currentFileView = file;
+
+                    if (file === 'all') {
+                        showFundMessage('เลือกช่วงวันที่',
+                            'กรุณาเลือกช่วงวันที่แล้วคลิก "🔍 ค้นหา" เพื่อแสดงข้อมูล', 'แฟ้มทั้งหมด');
+                        return;
+                    }
+
+                    var name = this.querySelector('.file-menu-item-title').textContent;
+
+                    // กองทุนที่ต้องตั้งค่ากรองเพิ่มก่อน -> แสดงแผงตั้งค่า ไม่ค้นหาทันที
+                    if (FUND_ENDPOINTS[file] && FUND_ENDPOINTS[file].needsSetup) {
+                        if (FUND_ENDPOINTS[file].setupKind === 'pttype') renderPttypeSetup();
+                        else renderErSetup();
+                        return;
+                    }
+
+                    // กองทุนที่เชื่อมข้อมูลแล้ว -> ค้นหาให้เลยถ้าเลือกวันที่ไว้
+                    if (FUND_ENDPOINTS[file]) {
+                        var df = document.getElementById('dateFrom').value;
+                        var dt = document.getElementById('dateTo').value;
+                        if (df && dt) { searchData(); }
+                        else {
+                            showFundMessage(name, 'เลือกช่วงวันที่แล้วคลิก "🔍 ค้นหา"');
+                        }
+                        return;
+                    }
+
+                    showFundMessage(name, 'กองทุนนี้ยังไม่ได้เชื่อมแหล่งข้อมูล — อยู่ระหว่างพัฒนา');
+                });
+            });
+        })();
+
+        // ---------- ตารางผลลัพธ์แบบสร้างคอลัมน์ตามคีย์ที่ API ส่งมา ----------
+        // ---------- ตารางผลลัพธ์ + แบ่งหน้า ----------
+        // เก็บผลลัพธ์ทั้งชุดไว้ใน window.tbl แล้ววาดทีละหน้า
+        // sel เก็บ VN ที่ติ๊กไว้ข้ามหน้า จะได้ไม่หายเวลาเปลี่ยนหน้า
+        window.tbl = { rows: [], title: '', subtitle: '', opts: {}, page: 1, size: 20, sel: {}, filter: 'all' };
+
+        function tblEsc(v) {
+            if (v === null || v === undefined) return '';
+            return String(v).replace(/[&<>"]/g, function (c) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+            });
+        }
+
+        // ---------- ตัวเลือกเสริมของแต่ละกองทุน (เช่น ตัดคนไข้มะเร็งออก) ----------
+        // เก็บค่าไว้ใน localStorage แยกตามเมนู เปิดใหม่แล้วยังจำได้
+        var FUND_OPT_KEY = 'preexFundOptions';
+
+        function fundOptLoad() {
+            try { return JSON.parse(localStorage.getItem(FUND_OPT_KEY) || '{}'); } catch (e) { return {}; }
+        }
+
+        function fundOptGet(menu, key) {
+            var all = fundOptLoad();
+            return !!(all[menu] && all[menu][key]);
+        }
+
+        function fundOptSet(key, on) {
+            var menu = window.currentFileView;
+            var all = fundOptLoad();
+            all[menu] = all[menu] || {};
+            all[menu][key] = !!on;
+            try { localStorage.setItem(FUND_OPT_KEY, JSON.stringify(all)); } catch (e) {}
+
+            // ถ้ามีผลอยู่ในตารางแล้ว ค้นหาใหม่ให้เห็นผลทันที
+            var df = document.getElementById('dateFrom').value;
+            var dt = document.getElementById('dateTo').value;
+            if (df && dt && window.tbl && window.tbl.rows && window.tbl.rows.length) searchData();
+        }
+
+        // รวมค่าตัวเลือกทั้งหมดของเมนูที่เปิดอยู่ ไว้ส่งไปกับ request
+        function fundOptPayload() {
+            var fund = FUND_ENDPOINTS[window.currentFileView] || {};
+            var out = {};
+            (fund.options || []).forEach(function (o) {
+                out[o.key] = fundOptGet(window.currentFileView, o.key);
+            });
+            return out;
+        }
+
+        // ---------- ตัวเลือกแบบ dropdown ของแถบ "เพิ่มข้อมูลที่ขาด" ----------
+        // ใช้ตอนที่เงื่อนไขยอมรับหลายรหัส แต่ตอนเขียนลงฐานต้องเลือกรหัสเดียว
+        // (เช่น ธาตุเหล็ก ลำดับที่ 5 ผ่านได้ด้วย D500/D508/D509 แต่เติมได้ทีละตัว)
+        var FUND_CHOICE_KEY = 'preexFundChoices';
+
+        function fundChoiceLoad() {
+            try { return JSON.parse(localStorage.getItem(FUND_CHOICE_KEY) || '{}'); } catch (e) { return {}; }
+        }
+
+        // ค่าที่เก็บไว้ต้องยังอยู่ในรายการที่เลือกได้ ไม่งั้นถอยไปตัวแรก
+        function fundChoiceGet(menu, fc) {
+            var all = fundChoiceLoad();
+            var v = all[menu] && all[menu][fc.key];
+            var ok = fc.options.some(function (o) { return o.value === v; });
+            return ok ? v : fc.options[0].value;
+        }
+
+        function fundChoiceSet(key, v) {
+            var menu = window.currentFileView;
+            var all = fundChoiceLoad();
+            all[menu] = all[menu] || {};
+            all[menu][key] = v;
+            try { localStorage.setItem(FUND_CHOICE_KEY, JSON.stringify(all)); } catch (e) {}
+            paintTable();   // ให้ป้ายสรุปใต้ปุ่มอัปเดตตาม
+        }
+
+        function fundChoiceBar() {
+            var menu = window.currentFileView;
+            var fc = (FUND_ENDPOINTS[menu] || {}).fixChoice;
+            if (!fc) return '';
+            var cur = fundChoiceGet(menu, fc);
+            var opts = fc.options.map(function (o) {
+                return '<option value="' + tblEsc(o.value) + '"' + (o.value === cur ? ' selected' : '') + '>' +
+                       tblEsc(o.label) + '</option>';
+            }).join('');
+            return '<label style="display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#8d6e63;">' +
+                   tblEsc(fc.label) +
+                   '<select onchange="fundChoiceSet(' + String.fromCharCode(39) + fc.key + String.fromCharCode(39) + ', this.value)"' +
+                   ' style="padding:5px 8px; border:1px solid #ffcdd2; border-radius:7px; font-size:12px;">' +
+                   opts + '</select></label>';
+        }
+
+        function fundOptBar() {
+            var menu = window.currentFileView;
+            var fund = FUND_ENDPOINTS[menu] || {};
+            if (!fund.options || !fund.options.length) return '';
+            return fund.options.map(function (o) {
+                var on = fundOptGet(menu, o.key);
+                return '<label title="' + tblEsc(o.hint || '') + '"' +
+                       ' style="display:inline-flex; align-items:center; gap:7px; padding:5px 13px;' +
+                       ' border:1px solid ' + (on ? '#c62828' : '#cfd8dc') + '; border-radius:999px;' +
+                       ' background:' + (on ? '#ffebee' : 'white') + '; color:' + (on ? '#c62828' : '#546e7a') + ';' +
+                       ' font-size:13px; font-weight:600; cursor:pointer;">' +
+                       '<input type="checkbox"' + (on ? ' checked' : '') +
+                       ' onchange="fundOptSet(' + String.fromCharCode(39) + o.key + String.fromCharCode(39) + ', this.checked)">' +
+                       tblEsc(o.label) + '</label>';
+            }).join('');
+        }
+
+        // ส่วนหัวที่มีชื่อกองทุน + ปุ่ม About ใช้ร่วมกันทุกสถานะของหน้า
+        // (มีข้อมูล / ไม่พบข้อมูล / ยังไม่ได้ค้นหา / error) ปุ่ม About จึงอยู่ครบเสมอ
+        function fundHeader(titleText) {
+            var fund = FUND_ENDPOINTS[window.currentFileView] || {};
+            var title = titleText || fund.title || '';
+            return '<div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:10px;">' +
+                     '<h3 style="margin:0; color:#1565c0;">' + tblEsc(title) + '</h3>' +
+                     fundOptBar() +
+                     '<button onclick="showAbout()" title="ดูเงื่อนไขของเมนูนี้"' +
+                     ' style="margin-left:auto; padding:6px 14px; border:1px solid #1565c0; background:white;' +
+                     ' color:#1565c0; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer;">' +
+                     'ℹ️ About</button>' +
+                   '</div>';
+        }
+
+        // แสดงข้อความสถานะพร้อมหัวที่มีปุ่ม About
+        function showFundMessage(heading, detail, titleText) {
+            document.getElementById('content-area').innerHTML =
+                fundHeader(titleText) +
+                '<div class="welcome-message"><h2>' + tblEsc(heading) + '</h2>' +
+                '<p>' + tblEsc(detail || '') + '</p></div>';
+        }
+
+        function renderRowsTable(title, subtitle, rows, opts) {
+            window.tbl = {
+                rows: rows || [], title: title, subtitle: subtitle, opts: opts || {},
+                page: 1,
+                size: (window.tbl && window.tbl.size) || 20,   // จำจำนวนต่อหน้าที่เลือกไว้ข้ามการค้นหา
+                sel: {},
+                filter: 'all'
+            };
+            paintTable();
+        }
+
+        // แถวที่ผ่านตัวกรองสมบูรณ์/ไม่สมบูรณ์ — ทั้งการแบ่งหน้าและลำดับอิงชุดนี้
+        function tblRows() {
+            var t = window.tbl;
+            // ใช้เกณฑ์เดียวกับการ์ดสถิติ (rowIncomplete) ตัวเลขจะได้ไม่ขัดกัน
+            if (t.filter === 'incomplete') return t.rows.filter(rowIncomplete);
+            if (t.filter === 'complete')   return t.rows.filter(function (r) { return !rowIncomplete(r); });
+            return t.rows;
+        }
+
+        function tblSetFilter(mode) {
+            window.tbl.filter = mode;
+            window.tbl.page = 1;
+            paintTable();
+        }
+
+        function tblPages() {
+            return Math.max(1, Math.ceil(tblRows().length / window.tbl.size));
+        }
+
+        function tblGo(p) {
+            var t = window.tbl;
+            var np = Math.min(Math.max(1, p), tblPages());
+            if (np === t.page) return;
+            t.page = np;
+            paintTable();
+        }
+
+        function tblSetSize(v) {
+            var t = window.tbl;
+            var firstRow = (t.page - 1) * t.size;      // คงตำแหน่งแถวที่กำลังดูอยู่
+            t.size = parseInt(v, 10) || 20;
+            t.page = Math.floor(firstRow / t.size) + 1;
+            paintTable();
+        }
+
+        function tblSel(vn, on) {
+            if (on) { window.tbl.sel[vn] = true; } else { delete window.tbl.sel[vn]; }
+        }
+
+        function paintTable() {
+            var t = window.tbl, opts = t.opts, rows = tblRows(), esc = tblEsc;
+
+            // ไม่มีข้อมูลเลย — ยังต้องแสดงหัวและปุ่ม About
+            if (!t.rows.length) {
+                document.getElementById('content-area').innerHTML =
+                    fundHeader(t.title) +
+                    '<div style="font-size:13px; color:#607d8b; margin-bottom:14px;">' + t.subtitle + '</div>' +
+                    '<div class="welcome-message"><h2>ไม่พบข้อมูล</h2>' +
+                    '<p>ไม่มีผู้รับบริการที่เข้าเงื่อนไขในช่วงวันที่ที่เลือก</p></div>';
+                return;
+            }
+            var pages = tblPages();
+            if (t.page > pages) t.page = pages;
+            var start = (t.page - 1) * t.size;
+            var slice = rows.slice(start, start + t.size);
+            var cols = Object.keys(rows.length ? rows[0] : (t.rows[0] || {}));
+
+            var SIZES = [20, 50, 100, 200, 500, 1000];
+            var sizeOpts = SIZES.map(function (n) {
+                return '<option value="' + n + '"' + (n === t.size ? ' selected' : '') + '>' + n + '</option>';
+            }).join('');
+
+            var on  = 'padding:6px 12px; border:1px solid #90caf9; background:white; color:#1565c0;' +
+                      ' border-radius:7px; font-size:13px; font-weight:600; cursor:pointer;';
+            var off = on + ' opacity:.35; cursor:not-allowed;';
+
+            var pager =
+                '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; color:#455a64;">' +
+                  '<span>แสดง</span>' +
+                  '<select onchange="tblSetSize(this.value)" style="padding:5px 8px; border:1px solid #cfd8dc; border-radius:7px; font-size:13px;">' + sizeOpts + '</select>' +
+                  '<span>ต่อหน้า</span>' +
+                  '<button onclick="tblGo(1)" style="' + (t.page > 1 ? on : off) + '">« หน้าแรก</button>' +
+                  '<button onclick="tblGo(' + (t.page - 1) + ')" style="' + (t.page > 1 ? on : off) + '">‹ ก่อนหน้า</button>' +
+                  '<span>หน้า <b>' + t.page + '</b> / ' + pages + '</span>' +
+                  '<button onclick="tblGo(' + (t.page + 1) + ')" style="' + (t.page < pages ? on : off) + '">ถัดไป ›</button>' +
+                  '<button onclick="tblGo(' + pages + ')" style="' + (t.page < pages ? on : off) + '">หน้าสุดท้าย »</button>' +
+                  '<span style="color:#90a4ae;">(' + (start + 1).toLocaleString() + '–' +
+                    Math.min(start + t.size, rows.length).toLocaleString() + ' จาก ' + rows.length.toLocaleString() + ')</span>' +
+                '</div>';
+
+            var filterBar = '';
+            if (opts.canFilter) {
+                var fb = function (mode, label, bg) {
+                    var on = (t.filter === mode);
+                    return '<button onclick="tblSetFilter(' + String.fromCharCode(39) + mode + String.fromCharCode(39) + ')"' +
+                           ' style="padding:6px 14px; border:1px solid ' + bg + '; border-radius:7px; font-size:13px; font-weight:600;' +
+                           ' cursor:pointer; background:' + (on ? bg : 'white') + '; color:' + (on ? 'white' : bg) + ';">' + label + '</button>';
+                };
+                filterBar = '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+                    fb('all', 'ทั้งหมด (' + t.rows.length.toLocaleString() + ')', '#546e7a') +
+                    fb('incomplete', 'เฉพาะที่ไม่สมบูรณ์ (' + (opts.incomplete || 0).toLocaleString() + ')', '#c62828') +
+                    fb('complete', 'เฉพาะที่สมบูรณ์ (' + (t.rows.length - (opts.incomplete || 0)).toLocaleString() + ')', '#2e7d32') +
+                    '</div>';
+            }
+
+            var h = '<div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:6px;">' +
+                      '<h3 style="margin:0; color:#1565c0;">' + esc(t.title) + '</h3>' + fundOptBar() + filterBar + pager +
+                      '<button onclick="showAbout()" title="ดูเงื่อนไขของเมนูนี้"' +
+                      ' style="margin-left:auto; padding:6px 14px; border:1px solid #1565c0; background:white;' +
+                      ' color:#1565c0; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer;">' +
+                      'ℹ️ About</button>' +
+                    '</div>' +
+                    '<div style="font-size:13px; color:#607d8b; margin-bottom:14px;">' + t.subtitle +
+                    ' &nbsp;·&nbsp; พบ <b>' + rows.length.toLocaleString() + '</b> ราย</div>';
+
+            // แถบปุ่มตัดรายการ (เฉพาะเมนูที่เปิดโหมดนี้ และมีแถวที่ต้องตัด)
+            if (opts.cut && opts.cutCount) {
+                var picked = Object.keys(t.sel).length;
+                h += '<div style="display:flex; align-items:center; gap:12px; background:#fff3e0; border:1px solid #ffe0b2;' +
+                     ' border-radius:10px; padding:12px 14px; margin-bottom:14px; flex-wrap:wrap;">' +
+                     '<span style="font-size:13px; color:#e65100;">พบ <b>' + opts.cutCount + '</b> วิสิตที่มี ' + esc(opts.cutNoun || 'รายการที่ต้องตัด') + ' ติดอยู่</span>' +
+                     '<button onclick="cutWalkinSelected()" style="padding:8px 16px; background:#ef6c00; color:white; border:none;' +
+                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">✂️ ตัดรายการที่เลือก</button>' +
+                     '<label style="font-size:12px; color:#795548; cursor:pointer;">' +
+                     '<input type="checkbox" onclick="toggleAllCut(this)"' + (picked && picked === opts.cutCount ? ' checked' : '') + '> เลือกทั้งหมดที่ต้องตัด (ทุกหน้า)</label>' +
+                     '<span style="font-size:12px; color:#795548;">เลือกไว้ <b>' + picked + '</b> วิสิต</span>' +
+                     '</div>';
+            }
+
+            // แถบปุ่มเพิ่มข้อมูลที่ขาด (เมนู HD)
+            if (opts.fix && opts.fixCount) {
+                var picked2 = Object.keys(t.sel).length;
+                h += '<div style="display:flex; align-items:center; gap:12px; background:#ffebee; border:1px solid #ffcdd2;' +
+                     ' border-radius:10px; padding:12px 14px; margin-bottom:14px; flex-wrap:wrap;">' +
+                     '<span style="font-size:13px; color:#c62828;">พบ <b>' + opts.fixCount + '</b> วิสิตที่ต้องเพิ่มข้อมูล</span>' +
+                     '<button onclick="addMissingSelected()" style="padding:8px 16px; background:#c62828; color:white; border:none;' +
+                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">➕ เพิ่มข้อมูลที่ขาดให้วิสิตที่เลือก</button>' +
+                     '<label style="font-size:12px; color:#8d6e63; cursor:pointer;">' +
+                     '<input type="checkbox" onclick="toggleAllFix(this)"' + (picked2 && picked2 === opts.fixCount ? ' checked' : '') + '> เลือกทั้งหมดที่ต้องเพิ่ม (ทุกหน้า)</label>' +
+                     '<span style="font-size:12px; color:#8d6e63;">เลือกไว้ <b>' + picked2 + '</b> วิสิต</span>' +
+                     fundChoiceBar() +
+                     '</div>';
+            }
+
+            // ---------- ตารางที่ตรึงหัว + ตรึงคอลัมน์ติ๊ก ----------
+            // เลื่อนทั้งแนวตั้ง/แนวนอนอยู่ในกรอบนี้ หัวตารางจึงค้างไว้ได้ด้วย position:sticky
+            // ต้องใช้ border-collapse:separate เพราะ collapse จะวาดเส้นขอบที่ตัวตาราง
+            // ไม่ใช่ที่ช่อง พอ sticky แล้วเส้นขอบจะเลื่อนหลุดไปกับข้อมูล
+            // และช่องที่ sticky ต้องมีพื้นหลังทึบของตัวเอง ไม่งั้นข้อมูลจะวิ่งทะลุขึ้นมา
+            var CHK_W = 54;                                   // ความกว้างคอลัมน์ติ๊ก (คงที่ จะได้คำนวณระยะ left ได้)
+            var LINE  = 'border-right:1px solid #e3f2fd; border-bottom:1px solid #e3f2fd;';
+            var HEAD_BG = '#2196f3';
+            var stickyEdge = 'box-shadow:2px 0 5px rgba(38,50,56,.12);';   // เงาบอกขอบเขตคอลัมน์ที่ตรึงไว้
+
+            // ตำแหน่ง left ของแต่ละคอลัมน์ติ๊ก เรียงตามที่แสดงจริง
+            var cutLeft = 0;
+            var fixLeft = opts.cut ? CHK_W : 0;
+            var lastChk = opts.fix ? 'fix' : (opts.cut ? 'cut' : null);
+
+            var thBase = 'padding:10px; ' + LINE + ' background:' + HEAD_BG + '; color:white;' +
+                         ' position:sticky; top:0; z-index:3;';
+            // หัวของคอลัมน์ติ๊กต้องตรึงทั้งบนและซ้าย จึงต้องอยู่เหนือหัวอื่นและเหนือช่องข้อมูล
+            var thChk = function (left, edge) {
+                return 'padding:10px; ' + LINE + ' background:' + HEAD_BG + '; color:white;' +
+                       ' position:sticky; top:0; left:' + left + 'px; z-index:5;' +
+                       ' width:' + CHK_W + 'px; min-width:' + CHK_W + 'px;' + (edge ? stickyEdge : '');
+            };
+
+            h += '<div style="overflow:auto; max-height:68vh; border:1px solid #e3f2fd; border-radius:8px;">' +
+                 '<table style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px; white-space:nowrap;">' +
+                 '<thead><tr>' +
+                 (opts.cut ? '<th style="' + thChk(cutLeft, lastChk === 'cut') + '">ตัด</th>' : '') +
+                 (opts.fix ? '<th style="' + thChk(fixLeft, lastChk === 'fix') + '">เพิ่ม</th>' : '') +
+                 '<th style="' + thBase + '">ลำดับ</th>';
+            cols.forEach(function (c) {
+                h += '<th style="' + thBase + ' text-align:left;">' + esc(c) + '</th>';
+            });
+            h += '</tr></thead><tbody>';
+
+            slice.forEach(function (r, i) {
+                var need = opts.cut && rowNeedsCut(r);
+                var needFix = opts.fix && rowNeedsFix(r);
+                var vn = String(r['VN'] === undefined ? '' : r['VN']);
+                var bg = need ? '#fff8e1' : (needFix ? '#ffebee' : (i % 2 === 0 ? '#f5f9ff' : 'white'));
+                var td = 'padding:8px; ' + LINE + ' background:' + bg + ';';
+                // ช่องติ๊กพกพื้นหลังของแถวติดตัวไป จะได้ไม่โปร่งตอนเลื่อนแนวนอน
+                var tdChk = function (left, edge) {
+                    return td + ' text-align:center; position:sticky; left:' + left + 'px; z-index:2;' +
+                           ' width:' + CHK_W + 'px; min-width:' + CHK_W + 'px;' + (edge ? stickyEdge : '');
+                };
+                var box = function () {
+                    return '<input type="checkbox" value="' + esc(vn) + '"' + (t.sel[vn] ? ' checked' : '') +
+                           ' onchange="tblSel(this.value, this.checked)">';
+                };
+
+                h += '<tr>';
+                if (opts.cut) {
+                    h += '<td style="' + tdChk(cutLeft, lastChk === 'cut') + '">' + (need ? box() : '') + '</td>';
+                }
+                if (opts.fix) {
+                    h += '<td style="' + tdChk(fixLeft, lastChk === 'fix') + '">' + (needFix ? box() : '') + '</td>';
+                }
+                h += '<td style="' + td + '">' + (start + i + 1).toLocaleString() + '</td>';
+                cols.forEach(function (c) {
+                    h += '<td style="' + td + '">' + esc(r[c]) + '</td>';
+                });
+                h += '</tr>';
+            });
+
+            h += '</tbody></table></div>';
+            document.getElementById('content-area').innerHTML = h;
+        }
+
+        // ---------- ครอบ searchData เดิม ----------
+        var _origSearchData = window.searchData;
+        window.searchData = async function () {
+            var fund = FUND_ENDPOINTS[window.currentFileView];
+            if (!fund) return _origSearchData.apply(this, arguments);
+
+            var df = document.getElementById('dateFrom').value;
+            var dt = document.getElementById('dateTo').value;
+            if (!df || !dt) { alert('กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุด'); return; }
+
+            var cfg = getDatabaseConfig();
+            if (!cfg) { alert('⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล'); return; }
+
+            var area = document.getElementById('content-area');
+            showFundMessage('กำลังโหลดข้อมูล...', 'กรุณารอสักครู่', fund.title);
+
+            var apiBase = (cfg.apiUrl ? cfg.apiUrl.replace(/\/$/, '') : window.location.origin);
+            try {
+                var res = await fetch(apiBase + fund.endpoint, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: cfg.host, port: cfg.port, database: cfg.database,
+                        user: cfg.user, password: cfg.password, type: cfg.type,
+                        dateFrom: df, dateTo: dt, sub: fund.sub || null,
+                        departments:  window.erFilter ? window.erFilter.departments  : undefined,
+                        weekdayFrom:  window.erFilter ? window.erFilter.weekdayFrom  : undefined,
+                        weekdayTo:    window.erFilter ? window.erFilter.weekdayTo    : undefined,
+                        holidayFrom:  window.erFilter ? window.erFilter.holidayFrom  : undefined,
+                        holidayTo:    window.erFilter ? window.erFilter.holidayTo    : undefined,
+                        pttypes:      window.pttypeFilter || undefined,
+                        ...fundOptPayload()
+                    })
+                });
+                var data = await res.json();
+                if (!data.success) {
+                    showFundMessage('เกิดข้อผิดพลาด', data.error, fund.title);
+                    updateStatistics(0, 0, 0);
+                    return;
+                }
+                // ทุกแถวที่ออกมาผ่านเงื่อนไขครบ ส่วนที่เกินเพดานจำนวนนับเป็น "ต้องแก้ไข"
+                // เมนูที่มีข้อ "ถ้ามีให้ตัดออก" ใช้ needCut เป็นตัวนับ "ต้องแก้ไข"
+                var over = countIncomplete(data);
+                updateStatistics(data.count, data.count - over, over);
+                var sub = fund.cond;
+                if (data.limitText)     sub += ' &nbsp;·&nbsp; เพดาน: ' + data.limitText;
+                if (data.needCut)       sub += ' &nbsp;·&nbsp; <b style="color:#e65100;">ต้องตัด WALKIN/ER-EXT ' + data.needCut + ' วิสิต</b>';
+                if (data.needFix)       sub += ' &nbsp;·&nbsp; <b style="color:#c62828;">ต้องเพิ่มข้อมูล ' + data.needFix + ' วิสิต</b>';
+                if (data.noHd)          sub += ' &nbsp;·&nbsp; ไม่มีรายการ HD ' + data.noHd + ' วิสิต';
+                if (data.emtypeSource)  sub += ' &nbsp;·&nbsp; emtype อ่านจาก ' + data.emtypeSource;
+                if (data.mouCount)      sub += ' &nbsp;·&nbsp; รพ. MOU ' + data.mouCount + ' แห่ง';
+                if (data.icd10tmSource) sub += ' &nbsp;·&nbsp; ICD10TM อ่านจาก ' + data.icd10tmSource;
+                if (data.pttypeUsed)    sub += ' &nbsp;·&nbsp; สิทธิที่นับ: ' + data.pttypeUsed;
+                if (data.overLimit)     sub += ' &nbsp;·&nbsp; <b style="color:#c62828;">เกินเพดาน ' + data.overLimit + ' ราย</b>';
+                renderRowsTable(fund.title, sub, data.data, {
+                    cut: !!fund.cutWalkin && !!data.cuttable,
+                    cutCount: data.needCut || 0,
+                    cutNoun: fund.cutNoun,
+                    fix: !!fund.fixEndpoint && !!data.needFix,
+                    fixCount: data.needFix || 0,
+                    canFilter: !!fund.canFilter,
+                    incomplete: over
+                });
+            } catch (e) {
+                showFundMessage('เชื่อมต่อ API ไม่ได้', e.message, fund.title);
+                updateStatistics(0, 0, 0);
+            }
+        };
+
+        // ---------- แผงตั้งค่ากรองข้อมูลของกองทุน ER คุณภาพ ----------
+        window.erFilter = null;
+
+        function erApiBase() {
+            var c = getDatabaseConfig();
+            return (c && c.apiUrl) ? c.apiUrl.replace(/\/$/, '') : window.location.origin;
+        }
+
+        function erPost(pathname, extra) {
+            var c = getDatabaseConfig() || {};
+            return fetch(erApiBase() + pathname, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.assign({
+                    host: c.host, port: c.port, database: c.database,
+                    user: c.user, password: c.password, type: c.type
+                }, extra || {}))
+            }).then(function (r) { return r.json(); });
+        }
+
+        async function renderErSetup() {
+            var area = document.getElementById('content-area');
+            showFundMessage('กำลังโหลดรายการห้องตรวจ...', '');
+
+            var deps = [], mou = [];
+            try {
+                var d = await erPost('/api/get-kskdepartment-list');
+                if (!d.success) throw new Error(d.error);
+                deps = d.data || [];
+            } catch (e) {
+                showFundMessage('โหลดห้องตรวจไม่ได้', e.message);
+                return;
+            }
+            try {
+                var m = await erPost('/api/er-settings-get');
+                mou = m.mouHospcodes || [];
+            } catch (e) { /* ใช้ค่าว่าง */ }
+
+            var prev = window.erFilter || {};
+            var esc = function (v) {
+                return String(v === null || v === undefined ? '' : v)
+                    .replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; });
+            };
+
+            var opts = deps.map(function (r) {
+                var code = r.depcode !== undefined ? r.depcode : r.DEPCODE;
+                var nm   = r.department !== undefined ? r.department : r.DEPARTMENT;
+                var on   = (prev.departments || []).indexOf(String(code)) !== -1;
+                var key  = (String(nm) + ' ' + String(code)).toLowerCase();
+                return '<label class="er-dep-row" data-key="' + esc(key) + '"' +
+                       ' style="display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:6px; cursor:pointer;">' +
+                       '<input type="checkbox" class="er-dep-chk" value="' + esc(code) + '"' + (on ? ' checked' : '') +
+                       ' onchange="erUpdateDepCount()">' +
+                       '<span style="font-size:13px;">' + esc(nm) + ' <span style="color:#90a4ae;">(' + esc(code) + ')</span></span>' +
+                       '</label>';
+            }).join('');
+
+            var box = 'background:white; border:1px solid #e3f2fd; border-radius:12px; padding:16px; margin-bottom:14px;';
+            var lbl = 'display:block; font-size:13px; font-weight:700; color:#1565c0; margin-bottom:8px;';
+            var inp = 'padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; font-size:13px;';
+
+            area.innerHTML =
+                fundHeader('🚑 กองทุน ER คุณภาพ — ตั้งค่าการกรองข้อมูล') +
+                '<div style="font-size:13px; color:#607d8b; margin-bottom:16px;">' +
+                'ตั้งค่าให้ครบแล้วกด "🔍 ค้นหา" ด้านบน (หรือปุ่มท้ายหน้านี้)</div>' +
+
+                '<div style="' + box + '">' +
+                  '<label style="' + lbl + '">🏥 ห้องตรวจ (เลือกได้มากกว่า 1 — กด Ctrl หรือ Shift ค้างไว้)</label>' +
+                  '<input type="text" id="er-dep-search" placeholder="🔍 พิมพ์ชื่อหรือรหัสห้องตรวจเพื่อค้นหา"' +
+                  ' oninput="erFilterDeps(this.value)" style="width:100%; ' + inp + ' margin-bottom:8px;">' +
+                  '<div id="er-dep-list" style="max-height:260px; overflow-y:auto; border:1px solid #cfd8dc;' +
+                  ' border-radius:8px; padding:6px;">' + opts + '</div>' +
+                  '<div style="display:flex; align-items:center; gap:12px; margin-top:8px; flex-wrap:wrap;">' +
+                    '<button type="button" onclick="erSelectShown(true)" style="padding:5px 12px; border:1px solid #90caf9;' +
+                    ' background:white; color:#1565c0; border-radius:7px; font-size:12px; cursor:pointer;">เลือกที่แสดงอยู่ทั้งหมด</button>' +
+                    '<button type="button" onclick="erSelectShown(false)" style="padding:5px 12px; border:1px solid #cfd8dc;' +
+                    ' background:white; color:#607d8b; border-radius:7px; font-size:12px; cursor:pointer;">ล้างที่เลือก</button>' +
+                    '<span id="er-dep-count" style="font-size:12px; color:#607d8b;"></span>' +
+                  '</div>' +
+                  '<div style="font-size:12px; color:#90a4ae; margin-top:6px;">' +
+                  'จาก kskdepartment ที่ depcode_active = Y — พบ ' + deps.length + ' ห้อง' +
+                  ' &nbsp;·&nbsp; เทียบกับ ovst.main_dep</div>' +
+                '</div>' +
+
+                '<div style="' + box + '">' +
+                  '<label style="' + lbl + '">⏰ ช่วงเวลาที่มารับบริการ</label>' +
+                  '<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">' +
+                    '<div>' +
+                      '<div style="font-size:12px; color:#455a64; margin-bottom:6px;">วันทำการ จ. - ศ.</div>' +
+                      '<input type="time" id="er-wd-from" value="' + esc(prev.weekdayFrom || '16:30') + '" style="' + inp + '"> ถึง ' +
+                      '<input type="time" id="er-wd-to"   value="' + esc(prev.weekdayTo   || '08:30') + '" style="' + inp + '">' +
+                    '</div>' +
+                    '<div>' +
+                      '<div style="font-size:12px; color:#455a64; margin-bottom:6px;">วันหยุด ส. - อา. และนักขัตฤกษ์</div>' +
+                      '<input type="time" id="er-hd-from" value="' + esc(prev.holidayFrom || '00:00') + '" style="' + inp + '"> ถึง ' +
+                      '<input type="time" id="er-hd-to"   value="' + esc(prev.holidayTo   || '23:59') + '" style="' + inp + '">' +
+                    '</div>' +
+                  '</div>' +
+                  '<div style="font-size:12px; color:#90a4ae; margin-top:8px;">' +
+                  'วันหยุดนักขัตฤกษ์ดูจาก holiday.holiday_date = ovst.vstdate</div>' +
+                '</div>' +
+
+                '<div style="' + box + '">' +
+                  '<label style="' + lbl + '">🤝 สถานพยาบาลนอกสังกัด สธ. ที่ทำ MOU กับ รพ.</label>' +
+                  '<textarea id="er-mou" rows="3" placeholder="ใส่รหัสสถานพยาบาล คั่นด้วยเว้นวรรค จุลภาค หรือขึ้นบรรทัดใหม่&#10;เช่น 11450 10670 23456"' +
+                  ' style="width:100%; ' + inp + ' font-family:Consolas,monospace;">' + esc(mou.join(' ')) + '</textarea>' +
+                  '<div style="display:flex; align-items:center; gap:12px; margin-top:8px;">' +
+                    '<button onclick="saveErMou()" style="padding:8px 16px; background:#5e35b1; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">💾 บันทึกรายชื่อ MOU</button>' +
+                    '<span id="er-mou-msg" style="font-size:12px; color:#607d8b;">บันทึกไว้ที่เซิร์ฟเวอร์ ใช้ร่วมกันทุกเครื่อง</span>' +
+                  '</div>' +
+                  '<div style="font-size:12px; color:#90a4ae; margin-top:6px;">' +
+                  'รหัสเหล่านี้จะถูกนับว่าผ่านเงื่อนไข visit_pttype.hospmain เพิ่มเติมจาก รพ. ตัวเอง' +
+                  ' และ รพ. ในจังหวัดเดียวกันที่ hospital_type_id 5/6/7</div>' +
+                '</div>' +
+
+                '<button onclick="applyErFilter()" style="padding:11px 24px; background:linear-gradient(135deg,#42a5f5,#2196f3); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">🔍 ค้นหาด้วยค่าที่ตั้งไว้</button>';
+
+            erUpdateDepCount();
+        }
+
+        // พิมพ์ค้นหาห้องตรวจ — ซ่อนแถวที่ไม่ตรงคำค้น (ที่ติ๊กไว้แล้วไม่หาย)
+        function erFilterDeps(q) {
+            q = String(q || '').trim().toLowerCase();
+            var rows = document.querySelectorAll('.er-dep-row');
+            var shown = 0;
+            rows.forEach(function (row) {
+                var hit = !q || row.getAttribute('data-key').indexOf(q) !== -1;
+                row.style.display = hit ? 'flex' : 'none';
+                if (hit) shown++;
+            });
+            erUpdateDepCount(shown);
+        }
+
+        function erSelectShown(on) {
+            document.querySelectorAll('.er-dep-row').forEach(function (row) {
+                if (row.style.display === 'none') return;      // ทำเฉพาะที่แสดงอยู่
+                row.querySelector('.er-dep-chk').checked = !!on;
+            });
+            erUpdateDepCount();
+        }
+
+        function erUpdateDepCount(shown) {
+            var el = document.getElementById('er-dep-count');
+            if (!el) return;
+            var picked = document.querySelectorAll('.er-dep-chk:checked').length;
+            var total = document.querySelectorAll('.er-dep-chk').length;
+            el.textContent = 'เลือกไว้ ' + picked + ' ห้อง' +
+                (shown !== undefined && shown < total ? ' · แสดงอยู่ ' + shown + ' จาก ' + total : ' จาก ' + total);
+        }
+
+        async function saveErMou() {
+            var raw = document.getElementById('er-mou').value || '';
+            var list = raw.split(/[\s,]+/).filter(function (x) { return x.length; });
+            var msg = document.getElementById('er-mou-msg');
+            try {
+                var d = await erPost('/api/er-settings-save', { mouHospcodes: list });
+                if (d.success) {
+                    msg.textContent = '✅ บันทึกแล้ว ' + d.mouHospcodes.length + ' แห่ง';
+                    msg.style.color = '#2e7d32';
+                } else {
+                    msg.textContent = '❌ ' + d.error; msg.style.color = '#c62828';
+                }
+            } catch (e) {
+                msg.textContent = '❌ ' + e.message; msg.style.color = '#c62828';
+            }
+        }
+
+        function applyErFilter() {
+            var deps = Array.prototype.map.call(
+                document.querySelectorAll('.er-dep-chk:checked'), function (c) { return c.value; });
+            if (!deps.length) { alert('กรุณาเลือกห้องตรวจอย่างน้อย 1 ห้อง'); return; }
+
+            window.erFilter = {
+                departments: deps,
+                weekdayFrom: document.getElementById('er-wd-from').value,
+                weekdayTo:   document.getElementById('er-wd-to').value,
+                holidayFrom: document.getElementById('er-hd-from').value,
+                holidayTo:   document.getElementById('er-hd-to').value
+            };
+            searchData();
+        }
+
+        // ---------- แผงตั้งค่า: กรองตามกลุ่มสิทธิ + สิทธิ (pttype ที่เปิดใช้งาน) ----------
+        // จำค่าที่เลือกไว้ทั้งกลุ่มสิทธิและรายการสิทธิ ใน localStorage
+        // เปิดหน้าใหม่หรือสลับเมนูไปมาแล้วกลับมา ค่าที่เลือกไว้ยังอยู่
+        var PT_STORE_KEY = 'preexPttypeFilter';
+
+        function ptLoadSaved() {
+            try {
+                var o = JSON.parse(localStorage.getItem(PT_STORE_KEY) || '{}');
+                // รูปแบบเก่าเก็บกลุ่มเดียวเป็นสตริง แปลงให้เป็นอาเรย์
+                var groups = Array.isArray(o.groups) ? o.groups : (o.group ? [o.group] : []);
+                return { groups: groups, pttypes: Array.isArray(o.pttypes) ? o.pttypes : [] };
+            } catch (e) { return { groups: [], pttypes: [] }; }
+        }
+
+        function ptSaveSelection() {
+            var picked = Array.prototype.map.call(
+                document.querySelectorAll('.pt-chk:checked'), function (c) { return c.value; });
+            var groups = Array.prototype.map.call(
+                document.querySelectorAll('.pt-grp-chk:checked'), function (c) { return c.value; });
+            try {
+                localStorage.setItem(PT_STORE_KEY, JSON.stringify({
+                    groups: groups, pttypes: picked
+                }));
+            } catch (e) {}
+            window.pttypeFilter = picked.length ? picked : null;
+        }
+
+        window.pttypeFilter = ptLoadSaved().pttypes.length ? ptLoadSaved().pttypes : null;
+
+        async function renderPttypeSetup() {
+            var area = document.getElementById('content-area');
+            var fund = FUND_ENDPOINTS[window.currentFileView] || {};
+            showFundMessage('กำลังโหลดรายการสิทธิ...', '');
+
+            var list = [];
+            try {
+                var d = await erPost('/api/get-pttype-active-list');
+                if (!d.success) throw new Error(d.error);
+                list = d.data || [];
+            } catch (e) {
+                showFundMessage('โหลดรายการสิทธิไม่ได้', e.message);
+                return;
+            }
+
+            var saved = ptLoadSaved();
+            var esc = tblEsc;
+
+            // นับจำนวนสิทธิในแต่ละกลุ่ม เพื่อทำตัวเลือกกลุ่มสิทธิ
+            var groups = {};
+            list.forEach(function (r) {
+                var hip = String((r.hipdata_code !== undefined ? r.hipdata_code : r.HIPDATA_CODE) || '').trim();
+                var k = hip || '(ไม่ระบุกลุ่ม)';
+                groups[k] = (groups[k] || 0) + 1;
+            });
+            var groupOpts = Object.keys(groups).sort().map(function (k) {
+                var on = saved.groups.indexOf(k) !== -1;
+                return '<label class="pt-grp-chip"' +
+                       ' style="display:inline-flex; align-items:center; gap:6px; padding:5px 12px;' +
+                       ' border:1px solid ' + (on ? '#1565c0' : '#cfd8dc') + '; border-radius:999px;' +
+                       ' background:' + (on ? '#e3f2fd' : 'white') + '; font-size:13px; cursor:pointer;">' +
+                       '<input type="checkbox" class="pt-grp-chk" value="' + esc(k) + '"' + (on ? ' checked' : '') +
+                       ' onchange="ptGroupChanged()">' +
+                       esc(k) + ' <span style="color:#90a4ae;">(' + groups[k] + ')</span>' +
+                       '</label>';
+            }).join('');
+
+            var rows = list.map(function (r) {
+                var code = r.pttype !== undefined ? r.pttype : r.PTTYPE;
+                var nm   = r.name !== undefined ? r.name : r.NAME;
+                var hip  = String((r.hipdata_code !== undefined ? r.hipdata_code : r.HIPDATA_CODE) || '').trim();
+                var grp  = hip || '(ไม่ระบุกลุ่ม)';
+                var on   = saved.pttypes.indexOf(String(code)) !== -1;
+                var key  = (String(nm) + ' ' + String(code) + ' ' + hip).toLowerCase();
+                return '<label class="pt-row" data-key="' + esc(key) + '" data-group="' + esc(grp) + '"' +
+                       ' style="display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:6px; cursor:pointer;">' +
+                       '<input type="checkbox" class="pt-chk" value="' + esc(code) + '"' + (on ? ' checked' : '') +
+                       ' onchange="ptSaveSelection(); ptUpdateCount();">' +
+                       '<span style="font-size:13px;">' + esc(nm) +
+                       ' <span style="color:#90a4ae;">(' + esc(code) + (hip ? ' · ' + esc(hip) : '') + ')</span></span>' +
+                       '</label>';
+            }).join('');
+
+            var box = 'background:white; border:1px solid #e3f2fd; border-radius:12px; padding:16px; margin-bottom:14px;';
+            var lbl = 'display:block; font-size:13px; font-weight:700; color:#1565c0; margin-bottom:8px;';
+            var inp = 'padding:8px 10px; border:1px solid #cfd8dc; border-radius:8px; font-size:13px;';
+
+            area.innerHTML =
+                fundHeader(fund.title) +
+                '<div style="font-size:13px; color:#607d8b; margin-bottom:16px;">' +
+                'เลือกกลุ่มสิทธิก่อน แล้วเลือกสิทธิที่ต้องการ จากนั้นกด "📄 สร้างไฟล์" ด้านล่าง</div>' +
+
+                '<div style="' + box + '">' +
+                  '<label style="' + lbl + '">🗂️ กลุ่มสิทธิ (hipdata_code) — เลือกได้หลายกลุ่ม</label>' +
+                  '<div id="pt-group" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">' +
+                  groupOpts + '</div>' +
+                  '<div style="display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;">' +
+                    '<button type="button" onclick="ptGroupAll(false)" style="padding:4px 11px; border:1px solid #cfd8dc;' +
+                    ' background:white; color:#607d8b; border-radius:7px; font-size:12px; cursor:pointer;">ล้างกลุ่มที่เลือก</button>' +
+                    '<span style="font-size:12px; color:#90a4ae;">ไม่เลือกกลุ่มใดเลย = แสดงทุกกลุ่ม</span>' +
+                  '</div>' +
+
+                  '<label style="' + lbl + '">🎫 สิทธิการรักษา (จากตาราง pttype ที่เปิดใช้งาน)</label>' +
+                  '<input type="text" id="pt-search" placeholder="🔍 พิมพ์ชื่อสิทธิ รหัสสิทธิ หรือ hipdata_code เพื่อค้นหา"' +
+                  ' oninput="ptFilter()" style="width:100%; ' + inp + ' margin-bottom:8px;">' +
+                  '<div id="pt-list" style="max-height:300px; overflow-y:auto; border:1px solid #cfd8dc;' +
+                  ' border-radius:8px; padding:6px;">' + rows + '</div>' +
+                  '<div style="display:flex; align-items:center; gap:12px; margin-top:8px; flex-wrap:wrap;">' +
+                    '<button type="button" onclick="ptSelectShown(true)" style="padding:5px 12px; border:1px solid #90caf9;' +
+                    ' background:white; color:#1565c0; border-radius:7px; font-size:12px; cursor:pointer;">เลือกที่แสดงอยู่ทั้งหมด</button>' +
+                    '<button type="button" onclick="ptSelectShown(false)" style="padding:5px 12px; border:1px solid #cfd8dc;' +
+                    ' background:white; color:#607d8b; border-radius:7px; font-size:12px; cursor:pointer;">ล้างที่เลือก</button>' +
+                    '<span id="pt-count" style="font-size:12px; color:#607d8b;"></span>' +
+                  '</div>' +
+                  '<div style="font-size:12px; color:#90a4ae; margin-top:8px;">' +
+                  'สิทธิที่ติ๊กไว้จะไม่หายเมื่อเปลี่ยนกลุ่มหรือพิมพ์ค้นหา · ' +
+                  'ถ้าไม่เลือกสิทธิใดเลย ระบบจะใช้ค่าเริ่มต้นคือสิทธิที่มี hipdata_code = UCS, WEL</div>' +
+                '</div>' +
+
+                '<button onclick="applyPttypeFilter()" style="padding:11px 24px;' +
+                ' background:linear-gradient(135deg,#42a5f5,#2196f3); color:white; border:none; border-radius:8px;' +
+                ' font-size:14px; font-weight:600; cursor:pointer;">📄 สร้างไฟล์</button>';
+
+            ptFilter();   // ใช้กลุ่มที่จำไว้กรองทันทีตั้งแต่เปิดแผง
+        }
+
+        function ptGroupChanged() {
+            ptSaveSelection();   // จำกลุ่มที่เพิ่งเลือก
+            ptFilter();
+        }
+
+        // กรองด้วยกลุ่มสิทธิ และคำค้น พร้อมกัน
+        function ptFilter() {
+            var sEl = document.getElementById('pt-search');
+            var q = sEl ? String(sEl.value || '').trim().toLowerCase() : '';
+            var gs = Array.prototype.map.call(
+                document.querySelectorAll('.pt-grp-chk:checked'), function (c) { return c.value; });
+            var shown = 0;
+            document.querySelectorAll('.pt-row').forEach(function (row) {
+                var okG = !gs.length || gs.indexOf(row.getAttribute('data-group')) !== -1;
+                var okQ = !q || row.getAttribute('data-key').indexOf(q) !== -1;
+                var hit = okG && okQ;
+                row.style.display = hit ? 'flex' : 'none';
+                if (hit) shown++;
+            });
+            ptPaintChips();
+            ptUpdateCount(shown);
+        }
+
+        // ระบายสีป้ายกลุ่มให้เห็นว่าอันไหนถูกเลือกอยู่
+        function ptPaintChips() {
+            document.querySelectorAll('.pt-grp-chip').forEach(function (chip) {
+                var on = chip.querySelector('.pt-grp-chk').checked;
+                chip.style.borderColor = on ? '#1565c0' : '#cfd8dc';
+                chip.style.background = on ? '#e3f2fd' : 'white';
+            });
+        }
+
+        function ptGroupAll(on) {
+            document.querySelectorAll('.pt-grp-chk').forEach(function (c) { c.checked = !!on; });
+            ptGroupChanged();
+        }
+
+        function ptSelectShown(on) {
+            document.querySelectorAll('.pt-row').forEach(function (row) {
+                if (row.style.display === 'none') return;
+                row.querySelector('.pt-chk').checked = !!on;
+            });
+            ptSaveSelection();
+            ptUpdateCount();
+        }
+
+        function ptUpdateCount(shown) {
+            var el = document.getElementById('pt-count');
+            if (!el) return;
+            var picked = document.querySelectorAll('.pt-chk:checked').length;
+            var total = document.querySelectorAll('.pt-chk').length;
+            if (shown === undefined) shown = document.querySelectorAll('.pt-row:not([style*="none"])').length;
+            el.textContent = 'เลือกไว้ ' + picked + ' สิทธิ' +
+                (shown < total ? ' · แสดงอยู่ ' + shown + ' จาก ' + total : ' จาก ' + total);
+        }
+
+        function applyPttypeFilter() {
+            ptSaveSelection();
+            var df = document.getElementById('dateFrom').value;
+            var dt = document.getElementById('dateTo').value;
+            if (!df || !dt) { alert('กรุณาเลือกช่วงวันที่ด้านบนก่อน'); return; }
+            searchData();
+        }
+
+        // ---------- About: เงื่อนไขของเมนูที่เปิดอยู่ ----------
+        function showAbout() {
+            var fund = FUND_ENDPOINTS[window.currentFileView] || {};
+            var lines = fund.about || [];
+            var esc = tblEsc;
+
+            var body = lines.length
+                ? lines.map(function (L) {
+                    if (L === '---') return '<hr style="border:none; border-top:1px solid #e0e0e0; margin:12px 0;">';
+                    return '<li style="margin-bottom:8px; line-height:1.6;">' + esc(L) + '</li>';
+                  }).join('')
+                : '<li>ยังไม่ได้ระบุเงื่อนไขสำหรับเมนูนี้</li>';
+
+            var old = document.getElementById('about-modal');
+            if (old) old.remove();
+
+            var d = document.createElement('div');
+            d.id = 'about-modal';
+            d.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:99999;' +
+                              ' display:flex; align-items:center; justify-content:center; padding:24px;';
+            d.onclick = function (e) { if (e.target === d) d.remove(); };
+            d.innerHTML =
+                '<div style="background:white; border-radius:14px; max-width:900px; width:100%; max-height:80vh;' +
+                ' overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
+                  '<div style="display:flex; align-items:center; justify-content:space-between; gap:16px;' +
+                  ' padding:18px 22px; border-bottom:1px solid #e3f2fd; position:sticky; top:0; background:white;">' +
+                    '<h3 style="margin:0; color:#1565c0;">ℹ️ เงื่อนไข — ' + esc(fund.title || '') + '</h3>' +
+                    '<button onclick="document.getElementById(' + String.fromCharCode(39) + 'about-modal' + String.fromCharCode(39) + ').remove()"' +
+                    ' style="padding:6px 14px; border:1px solid #cfd8dc; background:white; border-radius:7px;' +
+                    ' font-size:13px; font-weight:600; cursor:pointer;">ปิด</button>' +
+                  '</div>' +
+                  '<ul style="margin:0; padding:18px 22px 22px 40px; font-size:14px; color:#37474f;">' + body + '</ul>' +
+                '</div>';
+            document.body.appendChild(d);
+        }
+
+        // ---------- เพิ่มข้อมูลที่ขาด (เมนู HD) ----------
+        // บางเมนูบอกสถานะด้วยคอลัมน์ 'ต้องเพิ่ม'/'ต้องตัด' (วางแผนครอบครัว)
+        // บางเมนูบอกผ่านคอลัมน์ 'สถานะ' (HD, ส่งยาไปรษณีย์, OP Anywhere)
+        function rowNeedsFix(r) {
+            return r['ต้องเพิ่ม'] === 'Y' || r['สถานะ'] === 'ต้องเพิ่ม';
+        }
+        function rowNeedsCut(r) {
+            return r['ต้องตัด'] === 'Y' || r['สถานะ'] === 'ต้องตัดออก';
+        }
+
+        // ---------- จำนวนวิสิตที่ต้องแก้ไขก่อนส่ง ----------
+        // นับจากแถวจริง ไม่ใช่จากตัวเลขสรุปของ API การ์ดสถิติกับปุ่มกรอง
+        // "เฉพาะที่ไม่สมบูรณ์" จึงตรงกันเสมอ
+        // เกณฑ์: วิสิตที่ต้องเพิ่ม หรือ ต้องตัด อย่างใดอย่างหนึ่ง = ไม่สมบูรณ์
+        // (เกินเพดานไม่นับรวมตรงนี้ แยกไปแจ้งในแถบสรุปใต้ชื่อกองทุน)
+        //
+        // คอลัมน์ 'สถานะ' แต่ละเมนูใช้คำไม่เหมือนกัน จึงไล่จาก "คำที่แปลว่าผ่าน"
+        // แทนที่จะไล่จากคำที่แปลว่าไม่ผ่าน ถ้ามีเมนูใหม่ใช้คำที่ยังไม่รู้จัก
+        // จะถูกนับเป็นต้องแก้ไข (ให้คนไปดู) ดีกว่าเงียบ ๆ นับว่าผ่าน
+        //   สมบูรณ์ / ผ่าน / ครบ = ผ่าน
+        //   ไม่สมบูรณ์ / ต้องตัดออก / ต้องเพิ่ม / ไม่มีรายการ HD = ต้องแก้ไข
+        var STATUS_PASS = { 'สมบูรณ์': 1, 'ผ่าน': 1, 'ครบ': 1 };
+
+        function rowIncomplete(r) {
+            if (rowNeedsFix(r) || rowNeedsCut(r)) return true;
+            var s = r['สถานะ'];
+            if (s === undefined || s === null || s === '') return false;   // เมนูที่ไม่มีคอลัมน์สถานะ
+            return !STATUS_PASS[s];
+        }
+
+        function countIncomplete(data) {
+            var rows = data.data || [];
+            var n = rows.filter(rowIncomplete).length;
+            // เมนูที่คืนแถวมาโดยไม่มีคอลัมน์สถานะ ยังใช้ตัวเลขสรุปจาก API ได้
+            if (!n) n = data.incomplete || data.needCut || data.needFix || data.overLimit || 0;
+            return n;
+        }
+
+        function toggleAllFix(master) {
+            var t = window.tbl;
+            t.sel = {};
+            if (master.checked) {
+                t.rows.forEach(function (r) {
+                    if (rowNeedsFix(r)) t.sel[String(r['VN'])] = true;
+                });
+            }
+            paintTable();
+        }
+
+        async function addMissingSelected() {
+            var vns = Object.keys(window.tbl.sel || {});
+            if (!vns.length) { alert('กรุณาเลือกวิสิตที่ต้องการเพิ่มข้อมูลก่อน'); return; }
+
+            var fund = FUND_ENDPOINTS[window.currentFileView] || {};
+            if (!fund.fixEndpoint) { alert('เมนูนี้ไม่รองรับการเพิ่มข้อมูล'); return; }
+
+            // เมนูที่ให้เลือกรหัสเอง ส่งค่าที่เลือกไปด้วย และบอกไว้ในกล่องยืนยัน
+            var choice = fund.fixChoice
+                ? fundChoiceGet(window.currentFileView, fund.fixChoice) : null;
+            var choiceLine = choice
+                ? String.fromCharCode(10) + fund.fixChoice.label + ' ' + choice : '';
+
+            if (!confirm('ยืนยันเพิ่มข้อมูลที่ขาดลงฐานข้อมูลจริง' + String.fromCharCode(10) +
+                         'จำนวน ' + vns.length + ' วิสิต' + String.fromCharCode(10) +
+                         'เขียนลง: ' + (fund.fixNoun || '') + choiceLine + String.fromCharCode(10, 10) +
+                         'ระบบจะเช็คซ้ำก่อนเพิ่มทุกรายการ ถ้ามีอยู่แล้วจะข้าม' + String.fromCharCode(10) +
+                         'แต่ข้อมูลที่เพิ่มแล้วจะย้อนกลับเองไม่ได้')) return;
+
+            var cfg = getDatabaseConfig();
+            var apiBase = (cfg.apiUrl ? cfg.apiUrl.replace(/\/$/, '') : window.location.origin);
+            try {
+                var payload = {
+                    host: cfg.host, port: cfg.port, database: cfg.database,
+                    user: cfg.user, password: cfg.password, type: cfg.type, vns: vns,
+                    sub: fund.sub || null
+                };
+                if (choice) payload[fund.fixChoice.key] = choice;
+
+                var res = await fetch(apiBase + fund.fixEndpoint, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                var d = await res.json();
+                if (!d.success) { alert('❌ ' + d.error); return; }
+
+                if (d.added !== undefined) {   // รูปแบบผลลัพธ์ของวางแผนครอบครัว
+                    var m2 = '✅ เพิ่ม ' + d.added + ' รายการ (' + (d.codes || []).join(', ') + ')' +
+                             String.fromCharCode(10) + 'ข้ามเพราะมีอยู่แล้ว ' + d.skipped + ' รายการ';
+                    if (d.failed) m2 += String.fromCharCode(10) + '❌ ไม่สำเร็จ ' + d.failed + ' วิสิต:' +
+                                        String.fromCharCode(10) + d.errors.join(String.fromCharCode(10));
+                    alert(m2);
+                    searchData();
+                    return;
+                }
+
+                // เมนูที่ส่งชื่อรหัสมาด้วยจะขึ้นชื่อจริง เมนูเก่า (HD) ยังใช้คำเดิม
+                var msg = '✅ เพิ่ม ' + (d.diagNoun || 'ICD9') + ' ลง ovstdiag ' + d.addedDiag + ' รายการ' + String.fromCharCode(10) +
+                          '✅ เพิ่ม ' + (d.itemNoun || 'ADP') + ' ลง opitemrece ' + d.addedItem + ' รายการ' + String.fromCharCode(10) +
+                          'ข้ามเพราะมีอยู่แล้ว ' + d.skipped + ' รายการ';
+                if (d.failed) msg += String.fromCharCode(10) + '❌ ไม่สำเร็จ ' + d.failed + ' วิสิต:' +
+                                     String.fromCharCode(10) + d.errors.join(String.fromCharCode(10));
+                alert(msg);
+                searchData();   // โหลดใหม่ให้เห็นผล
+            } catch (e) {
+                alert('❌ ' + e.message);
+            }
+        }
+
+        // ---------- ตัดรายการ ADP WALKIN / ER-EXT ----------
+        function toggleAllCut(master) {
+            var t = window.tbl;
+            t.sel = {};
+            if (master.checked) {
+                t.rows.forEach(function (r) {
+                    if (rowNeedsCut(r)) t.sel[String(r['VN'])] = true;
+                });
+            }
+            paintTable();
+        }
+
+        async function cutWalkinSelected() {
+            var vns = Object.keys(window.tbl.sel || {});
+            if (!vns.length) { alert('กรุณาเลือกวิสิตที่ต้องการตัดก่อน'); return; }
+
+            var fund = FUND_ENDPOINTS[window.currentFileView] || {};
+            if (!fund.cutEndpoint) { alert('เมนูนี้ไม่รองรับการตัดรายการ'); return; }
+
+            if (!confirm('ยืนยันลบรายการค่าใช้จ่าย: ' + (fund.cutNoun || '') + '\n' +
+                         'จำนวน ' + vns.length + ' วิสิต ออกจากตาราง opitemrece\n\n' +
+                         'การลบนี้ย้อนกลับไม่ได้')) return;
+
+            var cfg = getDatabaseConfig();
+            var apiBase = (cfg.apiUrl ? cfg.apiUrl.replace(/\/$/, '') : window.location.origin);
+            try {
+                var res = await fetch(apiBase + fund.cutEndpoint, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: cfg.host, port: cfg.port, database: cfg.database,
+                        user: cfg.user, password: cfg.password, type: cfg.type, vns: vns,
+                        sub: fund.sub || null
+                    })
+                });
+                var d = await res.json();
+                if (!d.success) { alert('❌ ' + d.error); return; }
+                alert('✅ ตัดแล้ว ' + d.deleted + ' วิสิต (ลบ ' + d.removedRows + ' รายการ)' +
+                      (d.failed ? '\nไม่สำเร็จ ' + d.failed + ' รายการ:\n' + d.errors.join('\n') : ''));
+                searchData();   // โหลดใหม่ให้เห็นผล
+            } catch (e) {
+                alert('❌ ' + e.message);
+            }
+        }
     </script>
-<script src="zoom_control.js"></script>
 </body>
 </html>

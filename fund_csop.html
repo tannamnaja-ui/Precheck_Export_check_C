@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <script src="api_guard.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ข้าราชการผู้ป่วยนอก (CSOP)</title>
     <link rel="stylesheet" href="styles.css">
@@ -2389,7 +2390,6 @@
             XLSX.writeFile(wb, `${filename}_${dateStr}.xlsx`);
         }
     </script>
-<script src="zoom_control.js"></script>
 
 <!-- Modal: ออกใบแจ้งหนี้ -->
 <div id="invoice-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">

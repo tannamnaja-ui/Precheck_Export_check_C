@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <script src="api_guard.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ - ระบบตรวจสอบข้อมูลส่งออก</title>
     <style>
@@ -224,6 +225,28 @@
         </div>
 
         <button class="btn btn-primary" onclick="doLogin()" id="btn-login">🔐 เข้าสู่ระบบ</button>
+
+        <!-- ====== BMS Session login ====== -->
+        <div style="display:flex; align-items:center; gap:10px; margin:16px 0 12px;">
+            <div style="flex:1; height:1px; background:#e0e0e0;"></div>
+            <span style="font-size:12px; color:#9e9e9e;">หรือ</span>
+            <div style="flex:1; height:1px; background:#e0e0e0;"></div>
+        </div>
+
+        <div id="bms-box" style="background:#f5f9ff; border:1px solid #e3f2fd; border-radius:12px; padding:14px;">
+            <div style="font-size:13px; font-weight:700; color:#1565c0; margin-bottom:8px;">
+                🆔 เข้าด้วย BMS Session
+            </div>
+            <div id="bms-status" style="font-size:12px; color:#607d8b; margin-bottom:10px;">
+                เปิดจาก HOSxP จะเข้าระบบให้อัตโนมัติ ไม่ต้องกรอก username / password
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+                <input type="text" id="bms-session-input" placeholder="วาง BMS Session ID ที่นี่ (ถ้าไม่ได้มาจาก HOSxP)">
+            </div>
+            <button class="btn btn-secondary" id="btn-bms-login" onclick="bmsLoginFromInput()"
+                style="margin:0;">🚀 เข้าสู่ระบบด้วย BMS Session</button>
+        </div>
+
         <button class="btn btn-secondary" onclick="showView('settings')">⚙️ ตั้งค่าการเชื่อมต่อ</button>
     </div>
 
@@ -271,6 +294,25 @@
 
         <hr class="divider">
         <button class="btn btn-success" onclick="saveConn()">💾 บันทึกข้อมูลเชื่อมต่อ</button>
+
+        <!-- ====== API Token ====== -->
+        <hr class="divider">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:14px; font-weight:700; color:#1565c0;">🔑 Token สำหรับเรียก API</span>
+            <span id="token-state" style="font-size:12px; color:#9e9e9e;">กำลังตรวจสอบ...</span>
+        </div>
+        <div style="font-size:12px; color:#607d8b; line-height:1.6; margin-bottom:10px;">
+            Token ขึ้นต้นด้วยรหัสสถานพยาบาล (อ่านจาก opdconfig) ต่อด้วยรหัสสุ่ม 10 หลัก<br>
+            หลังสร้างแล้ว ทุก API จะต้องมี Token นี้เสมอ คนก๊อป URL ไปยิง Postman เปล่า ๆ จะไม่ได้ข้อมูล
+        </div>
+        <div class="form-group">
+            <label>API Token</label>
+            <input type="text" id="set-token" placeholder="เช่น 10670A7K2M9PQR" style="font-family:Consolas,monospace;">
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-outline btn-sm" onclick="genToken()" id="btn-gen-token">🎲 สร้าง Token ใหม่</button>
+            <button class="btn btn-outline btn-sm" onclick="saveTokenOnly()">💾 บันทึก Token</button>
+        </div>
 
         <!-- ตารางที่จำเป็น -->
         <hr class="divider">
@@ -554,9 +596,155 @@ window.showView = function(name) {
     }
 };
 
+// ==================== API Token ====================
+async function refreshTokenState() {
+    const el = document.getElementById('token-state');
+    const input = document.getElementById('set-token');
+    if (!el || !input) return;
+    if (!input.value) input.value = (window.PreEXToken ? PreEXToken.get() : '') || '';
+    try {
+        const res = await fetch(`${API}/api/token-status`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+        });
+        const d = await res.json();
+        if (d.configured) {
+            el.textContent = 'เปิดใช้งานแล้ว (' + d.masked + ')';
+            el.style.color = '#2e7d32';
+        } else {
+            el.textContent = 'ยังไม่ได้สร้าง — API ยังเปิดให้เรียกได้ทุกคน';
+            el.style.color = '#ef6c00';
+        }
+    } catch(e) {
+        el.textContent = 'ตรวจสอบไม่ได้';
+        el.style.color = '#9e9e9e';
+    }
+}
+
+async function genToken() {
+    const cfg = getSettingsValues();
+    if (!cfg.host || !cfg.port || !cfg.database || !cfg.user) {
+        showSetMsg('error', '⚠️ กรอกข้อมูลเชื่อมต่อฐานข้อมูลให้ครบก่อน จึงจะอ่านรหัสสถานพยาบาลได้'); return;
+    }
+    const btn = document.getElementById('btn-gen-token');
+    btn.classList.add('loading'); btn.textContent = '⏳ กำลังสร้าง...';
+    try {
+        const res = await fetch(`${API}/api/generate-token`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cfg)
+        });
+        const d = await res.json();
+        if (d.success) {
+            document.getElementById('set-token').value = d.token;
+            if (window.PreEXToken) PreEXToken.set(d.token);
+            showSetMsg('success', `✅ สร้าง Token แล้ว: ${d.token} (รหัสสถานพยาบาล ${d.hospitalCode})`);
+            refreshTokenState();
+        } else {
+            showSetMsg('error', '❌ ' + (d.error || 'สร้าง Token ไม่สำเร็จ'));
+        }
+    } catch(e) {
+        showSetMsg('error', '❌ ' + e.message);
+    } finally {
+        btn.classList.remove('loading'); btn.textContent = '🎲 สร้าง Token ใหม่';
+    }
+}
+
+// บันทึก token ที่พิมพ์เอง (กรณี รพ. มี token อยู่แล้วแล้วย้ายเครื่อง)
+function saveTokenOnly() {
+    const t = document.getElementById('set-token').value.trim();
+    if (window.PreEXToken) PreEXToken.set(t);
+    showSetMsg('success', t ? '✅ บันทึก Token ลงเครื่องนี้แล้ว' : '✅ ล้าง Token ออกจากเครื่องนี้แล้ว');
+    refreshTokenState();
+}
+
+// ==================== BMS Session login ====================
+function setCookie(name, val, days) {
+    const d = new Date(); d.setTime(d.getTime() + days * 864e5);
+    document.cookie = `${name}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+}
+function getCookie(name) {
+    const m = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[2]) : '';
+}
+
+function bmsStatus(msg, color) {
+    const el = document.getElementById('bms-status');
+    if (el) { el.textContent = msg; el.style.color = color || '#607d8b'; }
+}
+
+async function bmsLogin(sessionId, silent) {
+    sessionId = (sessionId || '').trim();
+    if (!sessionId) { if (!silent) bmsStatus('⚠️ กรุณาวาง BMS Session ID ก่อน', '#c62828'); return false; }
+
+    const btn = document.getElementById('btn-bms-login');
+    if (btn) { btn.classList.add('loading'); btn.textContent = '⏳ กำลังยืนยัน Session...'; }
+    bmsStatus('⏳ กำลังยืนยัน Session กับ HOSxP...');
+    try {
+        const res = await fetch(`${API}/api/bms-session-login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+        });
+        const d = await res.json();
+        if (d.success) {
+            setCookie('bms-session-id', sessionId, 7);
+            localStorage.setItem('loginSession', JSON.stringify({
+                username: d.doctorCode || 'bms',
+                name: d.name || 'ผู้ใช้ BMS',
+                location: d.location || '',
+                via: 'bms-session',
+                loginTime: Date.now()
+            }));
+            bmsStatus(`✅ ยืนยันแล้ว: ${d.name || ''} ${d.location ? '— ' + d.location : ''}`, '#2e7d32');
+            window.location.href = 'index_first.html';
+            return true;
+        }
+        // session เสียแล้ว -> ล้าง cookie ทิ้ง จะได้ไม่ลองซ้ำทุกครั้ง
+        setCookie('bms-session-id', '', -1);
+        bmsStatus('❌ ' + (d.error || 'ยืนยัน Session ไม่สำเร็จ'), '#c62828');
+        return false;
+    } catch(e) {
+        bmsStatus('❌ ' + e.message, '#c62828');
+        return false;
+    } finally {
+        if (btn) { btn.classList.remove('loading'); btn.textContent = '🚀 เข้าสู่ระบบด้วย BMS Session'; }
+    }
+}
+
+function bmsLoginFromInput() {
+    bmsLogin(document.getElementById('bms-session-input').value, false);
+}
+
+// วิธีที่ 1: ?bms-session-id=... จาก URL -> เก็บ cookie, ลบ param ออกจาก URL, login ทันที
+// วิธีที่ 2: cookie ที่เคยใช้ได้ (อายุ 7 วัน) -> เติมให้ในช่อง แล้วให้กดยืนยันเอง
+// วิธีที่ 3: ผู้ใช้วางเอง
+(function initBms() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('bms-session-id');
+    if (fromUrl) {
+        setCookie('bms-session-id', fromUrl, 7);
+        params.delete('bms-session-id');
+        const clean = window.location.pathname + (params.toString() ? '?' + params : '');
+        window.history.replaceState({}, '', clean);
+        document.getElementById('bms-session-input').value = fromUrl;
+        bmsLogin(fromUrl, true);
+        return;
+    }
+    const fromCookie = getCookie('bms-session-id');
+    if (fromCookie) {
+        document.getElementById('bms-session-input').value = fromCookie;
+        bmsStatus('พบ Session ที่เคยใช้ไว้ — กดปุ่มด้านล่างเพื่อเข้าระบบ');
+    }
+})();
+
 // Init
 updateConnStatus();
+refreshTokenState();
+
+// โหลดสถานะ token ทุกครั้งที่เข้าหน้าตั้งค่า
+const _origShowView2 = window.showView;
+window.showView = function(name) {
+    _origShowView2(name);
+    if (name === 'settings') refreshTokenState();
+};
 </script>
-<script src="zoom_control.js"></script>
 </body>
 </html>

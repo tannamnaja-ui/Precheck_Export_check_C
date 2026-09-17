@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <script src="api_guard.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบส่งออกข้อมูล</title>
     <script>
@@ -99,7 +100,8 @@
         }
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
+            justify-content: center;
             gap: 28px;
             max-width: 1200px;
             width: 100%;
@@ -241,8 +243,8 @@
     <div class="cards-wrap">
         <div class="cards-grid">
 
-            <!-- ข้อมูลพื้นฐาน -->
-            <div class="main-card" style="--accent:#f48fb1; --accent-dark:#f06292;" onclick="window.location.href='basic_data.html'">
+            <!-- ข้อมูลพื้นฐาน — ซ่อนอยู่ (ลบ display:none ออกเพื่อเปิดใช้อีกครั้ง) -->
+            <div class="main-card" style="display:none; --accent:#f48fb1; --accent-dark:#f06292;" onclick="window.location.href='basic_data.html'">
                 <span class="card-emoji">📋</span>
                 <span class="card-prefix">ระบบตรวจสอบข้อมูล</span>
                 <span class="card-keyword" style="color:#f06292;">พื้นฐาน</span>
@@ -261,8 +263,8 @@
                 <span class="card-btn">เข้าสู่การใช้งาน →</span>
             </div>
 
-            <!-- หลังส่งออก -->
-            <div class="main-card" style="--accent:#6a1b9a; --accent-dark:#4a148c;" onclick="window.location.href='finance_first.html'">
+            <!-- หลังส่งออก — ซ่อนอยู่ (ลบ display:none ออกเพื่อเปิดใช้อีกครั้ง) -->
+            <div class="main-card" style="display:none; --accent:#6a1b9a; --accent-dark:#4a148c;" onclick="window.location.href='finance_first.html'">
                 <span class="card-emoji">📊</span>
                 <span class="card-prefix">ระบบตรวจสอบข้อมูล</span>
                 <span class="card-keyword">หลังส่งออก</span>
@@ -305,6 +307,5 @@
             }
         }
     </script>
-<script src="zoom_control.js"></script>
 </body>
 </html>
