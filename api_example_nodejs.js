@@ -7470,6 +7470,7 @@ app.post('/api/get-feeschedule-mammogram', async (req, res) => {
                 'hipdata_code': r['hipdata_code']
             };
             o['วินิจฉัย ' + MAMMO_DX] = noDx ? 'ไม่มี' : 'มี';
+            o['_bad'] = [].concat(noDx ? ['วินิจฉัย ' + MAMMO_DX] : [], bad ? ['ADP ที่ต้องตัด'] : []);
             o['ICD10 ในวิสิต'] = r['ICD10 ในวิสิต'];
             o['รายการ ADP ' + MAMMO_ADP] = r['รายการ ADP ' + MAMMO_ADP];
             o['ADP ที่ต้องตัด'] = r['ADP ที่ต้องตัด'];
@@ -7842,6 +7843,11 @@ app.post('/api/get-feeschedule-dental-anc', async (req, res) => {
                 'hipdata_code': r['hipdata_code']
             };
             DENTAL_ADP.forEach((c, i) => { o['ADP ' + c] = Y(r['f_adp' + i]) ? 'มี' : 'ไม่มี'; });
+            o['_bad'] = [].concat(
+                missAdp.map(c => 'ADP ' + c),
+                noDx ? ['วินิจฉัย ' + DENTAL_DX] : [],
+                missTm.map(c => 'ICD10TM ' + c),
+                bad ? ['ADP ที่ต้องตัด'] : []);
             o['วินิจฉัย ' + DENTAL_DX] = noDx ? 'ไม่มี' : 'มี';
             DENTAL_TM.forEach((c, i) => { o['ICD10TM ' + c] = Y(r['f_tm' + i]) ? 'มี' : 'ไม่มี'; });
             o['ICD10 ในวิสิต'] = r['ICD10 ในวิสิต'];
@@ -8114,6 +8120,10 @@ app.post('/api/get-feeschedule-iron', async (req, res) => {
                 'hipdata_code': r['hipdata_code']
             };
             o['วินิจฉัย ' + IRON_ANEMIA.join('/')] = noAnemia ? 'ไม่มี' : 'มี';
+            o['_bad'] = [].concat(
+                noAnemia ? ['วินิจฉัย ' + IRON_ANEMIA.join('/')] : [],
+                noScreen ? ['วินิจฉัย ' + IRON_SCREEN] : [],
+                bad ? ['ADP ที่ต้องตัด'] : []);
             o['วินิจฉัย ' + IRON_SCREEN] = noScreen ? 'ไม่มี' : 'มี';
             o['ICD10 D50x ที่พบ'] = r['ICD10 D50x ที่พบ'];
             o['ICD10 ในวิสิต'] = r['ICD10 ในวิสิต'];
@@ -8403,6 +8413,9 @@ app.post('/api/get-feeschedule-family-planning', async (req, res) => {
             o['ICD9 ในวิสิต'] = r['ICD9 ในวิสิต'];
             o['ADP ที่ต้องตัด'] = r['ADP ที่ต้องตัด'];
             o['ADP code ทั้งหมดในวิสิต'] = r['ADP code ทั้งหมดในวิสิต'];
+            o['_bad'] = [].concat(
+                missing.length ? ['ICD10 ในวิสิต', 'ICD9 ในวิสิต'] : [],
+                bad ? ['ADP ที่ต้องตัด'] : []);
             return o;
         });
 
@@ -9178,6 +9191,7 @@ app.post('/api/get-feeschedule-dm-remission', async (req, res) => {
                 'hipdata_code': r['hipdata_code']
             };
             o['ผล LAB ตามเงื่อนไข'] = ok ? 'ผ่าน' : 'ไม่ผ่าน';
+            o['_bad'] = ok ? [] : ['ผล LAB ตามเงื่อนไข', 'LABTEST (sys_lab_code_id)', 'LABRESULT'];
             o['ICD10 E11x ที่พบ'] = r['ICD10 E11x ที่พบ'];
             o['รายการ ADP ' + DM_ADP] = r['รายการ ADP ' + DM_ADP];
             o['Item Lab ที่ผูกกับ ADP ' + DM_ADP] = r['Item Lab ที่ผูกกับ ADP ' + DM_ADP];
@@ -9196,6 +9210,853 @@ app.post('/api/get-feeschedule-dm-remission', async (req, res) => {
     }
 });
 
+
+// ============================================================================
+// Fee Schedule — กองทุนคัดกรองที่ใช้โครงเงื่อนไขเดียวกัน
+// ----------------------------------------------------------------------------
+// กองทุนกลุ่มนี้มีรูปแบบเหมือนกันหมด จึงใช้เครื่องยนต์ตัวเดียว แล้วแยกด้วย sub
+//   ลำดับ 1  ต้องมีค่าใช้จ่าย ADP ของกองทุนนั้น (มีตัวใดตัวหนึ่งก็ผ่าน)
+//   ลำดับ 2  ต้องเป็นคนไทย patient.nationality = '99'
+//   ลำดับ 3  ต้องอยู่ในช่วงอายุที่กำหนด (คิด ณ วันรับบริการ)
+//   ลำดับ 4  สิทธิ UC / ข้าราชการ / ประกันสังคม (UCS, WEL, OFC, SSS)
+//   ลำดับ 5 เป็นต้นไป  ตรวจวินิจฉัย / ICD9 / ICD10TM ตามที่กองทุนนั้นกำหนด
+//   ลำดับสุดท้าย  ต้องไม่มี ADP WALKIN / ER-EXT
+//
+// ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ไม่เข้าเงื่อนไขจะไม่ถูกดึงมา
+// ลำดับ 5 เป็นต้นไปเป็นผลตรวจ ติดธงไว้ให้ Tools จัดการ
+//
+// หมายเหตุเรื่อง ICD9: ตามที่โค้ดเดิมของโปรแกรมนี้ใช้อยู่
+//   - ตอนอ่าน  ดูทั้ง doctor_operation.icd9 และ ovstdiag.icd10
+//   - ตอนเขียน ลง ovstdiag.icd10 (ที่เดียวกับวินิจฉัย)
+// ============================================================================
+const SIMPLE_PTTYPE  = ['UCS', 'WEL', 'OFC', 'SSS'];
+const SIMPLE_BAD_ADP = ['WALKIN', 'ER-EXT'];
+
+// ขยายช่วงรหัสท้ายตัวเลข เช่น fsCodeRange('C50',0,9) -> C500..C509
+function fsCodeRange(prefix, from, to) {
+    const out = [];
+    for (let i = from; i <= to; i++) out.push(prefix + i);
+    return out;
+}
+
+// ขยายช่วงรหัสที่เป็นตัวเลขล้วน เช่น fsNumRange(80008,80014) -> '80008'..'80014'
+function fsNumRange(from, to) {
+    const out = [];
+    for (let i = from; i <= to; i++) out.push(String(i));
+    return out;
+}
+
+const SIMPLE_FUNDS = {
+    'ca-oral': {
+        name: 'คัดกรองรอยโรคเสี่ยงมะเร็งช่องปาก',
+        adp: ['90004'], ageMin: 40, ageMax: null,
+        checks: [
+            { kind: 'icd10', codes: ['Z128'], label: 'วินิจฉัย Z128' },
+            { kind: 'icd9', codes: ['2721', '2722', '2723', '2724'], pick: true,
+              label: 'ICD9 2721/2722/2723/2724 (อย่างใดอย่างหนึ่ง)' },
+            { kind: 'icd9', codes: ['2729'], label: 'ICD9 2729' }
+        ]
+    },
+    'fluoride-risk': {
+        name: 'เคลือบฟลูออไรด์ (กลุ่มเสี่ยง)',
+        adp: ['15001'], ageMin: 25, ageMax: 59,
+        checks: [
+            { kind: 'icd10', codes: ['K020', 'K0600', 'K0601', 'K0609', 'K117', 'Z298'], pick: true,
+              label: 'วินิจฉัย K020/K0600/K0601/K0609/K117/Z298 (อย่างใดอย่างหนึ่ง)' },
+            { kind: 'icd9', codes: ['2729'], label: 'ICD9 2729' },
+            // ICD10TM มาจากการลงหัตถการทันตกรรม Tools เพิ่มให้ไม่ได้ แจ้งอย่างเดียว
+            { kind: 'icd10tm', codes: ['2387021'], fixable: false, label: 'ICD10TM 2387021' }
+        ]
+    },
+    'cbc-anemia': {
+        name: 'คัดกรองโลหิตจางจากการขาดธาตุเหล็ก (CBC)',
+        adp: ['13001'], ageMin: 13, ageMax: 45,
+        checks: [{ kind: 'icd10', codes: ['Z138'], label: 'วินิจฉัย Z138' }]
+    },
+    'dm-screen-12003': {
+        name: 'คัดกรองเบาหวาน (ADP 12003)',
+        adp: ['12003'], ageMin: 35, ageMax: 59,
+        checks: [{ kind: 'icd10', codes: ['Z131'], label: 'วินิจฉัย Z131' }]
+    },
+    'dm-screen-12004': {
+        name: 'คัดกรองเบาหวาน (ADP 12004)',
+        adp: ['12004'], ageMin: 45, ageMax: 70,
+        checks: [{ kind: 'icd10', codes: ['Z136'], label: 'วินิจฉัย Z136' }]
+    },
+    'brca': {
+        name: 'ตรวจยีน BRCA1 BRCA2',
+        adp: ['90001', '37550', '90002'], ageMin: 18, ageMax: null,
+        checks: [
+            { kind: 'icd10', codes: fsCodeRange('C50', 0, 9).concat(['D050', 'D051', 'D057', 'D059']), pick: true,
+              label: 'วินิจฉัย C500-C509 / D050 / D051 / D057 / D059 (อันใดอันหนึ่ง)' },
+            { kind: 'icd10', codes: ['Z123'], label: 'วินิจฉัย Z123' }
+        ]
+    },
+    'child-glasses': {
+        name: 'แว่นตาเด็กที่มีสายตาผิดปกติ',
+        adp: ['2206', '2207'], ageMin: 6, ageMax: 12,
+        checks: [
+            { kind: 'icd10', codes: fsCodeRange('H52', 0, 7), pick: true,
+              label: 'วินิจฉัย H520-H527 (อันใดอันหนึ่ง)' },
+            { kind: 'icd9', codes: ['9531'], label: 'ICD9 9531' }
+        ]
+    },
+
+    // ---- กลุ่มสิทธิ UCS/WEL เท่านั้น และไม่จำกัดอายุ ----
+    'lithotripsy': {
+        name: 'สลายนิ่วในระบบทางเดินปัสสาวะ',
+        adp: ['9851'], pttype: ['UCS', 'WEL'], ageMin: null, ageMax: null,
+        checks: [
+            { kind: 'icd10', codes: ['N200', 'N201', 'N202'], pick: true,
+              label: 'วินิจฉัย N200/N201/N202 (อันใดอันหนึ่ง)' },
+            { kind: 'icd9', codes: ['9851'], label: 'ICD9 9851' }
+        ]
+    },
+    'gdm': {
+        name: 'เบาหวานขณะตั้งครรภ์ (GDM)',
+        adp: fsNumRange(80008, 80014), pttype: ['UCS', 'WEL'], ageMin: null, ageMax: null,
+        checks: [
+            { kind: 'icd10', codes: ['O244', 'O249'], pick: true,
+              label: 'วินิจฉัย O244/O249 (อันใดอันหนึ่ง)' }
+        ]
+    },
+    'pdm': {
+        name: 'เบาหวานก่อนการตั้งครรภ์ (PDM)',
+        adp: ['80015'].concat(fsNumRange(80032, 80040)), pttype: ['UCS', 'WEL'], ageMin: null, ageMax: null,
+        checks: [
+            { kind: 'icd10', codes: ['O240', 'O241', 'O242', 'O243'], pick: true,
+              label: 'วินิจฉัย O240/O241/O242/O243 (อันใดอันหนึ่ง)' }
+        ]
+    },
+    't1dm': {
+        name: 'เบาหวานอายุรกรรม เด็ก/ผู้ใหญ่ (T1DM)',
+        adp: fsNumRange(80001, 80007).concat(fsNumRange(80024, 80028)),
+        pttype: ['UCS', 'WEL'], ageMin: null, ageMax: null,
+        checks: [
+            { kind: 'icd10', codes: fsCodeRange('E10', 1, 9), pick: true,
+              label: 'วินิจฉัย E101-E109 (อันใดอันหนึ่ง)' }
+        ]
+    },
+    'cgm': {
+        name: 'ตรวจวัดระดับน้ำตาลต่อเนื่อง (CGM)',
+        adp: fsNumRange(80029, 80031), pttype: ['UCS', 'WEL'], ageMin: null, ageMax: null,
+        checks: [
+            { kind: 'icd10', codes: fsCodeRange('E10', 1, 9), pick: true,
+              label: 'วินิจฉัย E101-E109 (อันใดอันหนึ่ง)' }
+        ]
+    }
+};
+
+app.post('/api/get-feeschedule-simple', async (req, res) => {
+    try {
+        const cfg = req.body;
+        const { dateFrom, dateTo, sub } = cfg;
+        const S = SIMPLE_FUNDS[sub];
+        if (!S) return res.json({ success: false, error: 'ไม่รู้จักเมนู: ' + sub });
+
+        const isPg = cfg.type === 'postgresql';
+        const ph = (n) => isPg ? `$${n}` : '?';
+        const age = fsAgeExpr(isPg);
+        const q = (list) => list.map(c => `'${c}'`).join(',');
+        const yn = (expr) => `CASE WHEN ${expr} THEN 'Y' ELSE 'N' END`;
+
+        // ICD10TM ต้องรู้ชื่อคอลัมน์จริงใน dttm ก่อน (แต่ละรุ่นเขียนไม่เหมือนกัน)
+        let TM_COL = null, TM_SRC = null;
+        if (S.checks.some(c => c.kind === 'icd10tm')) {
+            const info = await fsFindDttmIcd10tmColumn(cfg);
+            if (!info.col) {
+                return res.json({
+                    success: false,
+                    error: 'ไม่พบคอลัมน์ ICD10TM ในตาราง dttm — คอลัมน์ที่มีคือ: '
+                         + (info.all.length ? info.all.join(', ') : '(ไม่มีคอลัมน์ที่มีคำว่า icd10tm เลย)')
+                });
+            }
+            TM_COL = info.col;
+            TM_SRC = 'dttm.' + TM_COL;
+        }
+
+        // เงื่อนไข "มีรหัสนี้ไหม" แยกตามชนิด
+        const checkExpr = (c) => {
+            if (c.kind === 'icd10')
+                return `EXISTS (SELECT 1 FROM ovstdiag dd WHERE dd.vn = ov.vn AND dd.icd10 IN (${q(c.codes)}))`;
+            if (c.kind === 'icd9')
+                return `(EXISTS (SELECT 1 FROM doctor_operation dq WHERE dq.vn = ov.vn AND dq.icd9 IN (${q(c.codes)}))
+                         OR EXISTS (SELECT 1 FROM ovstdiag dv WHERE dv.vn = ov.vn AND dv.icd10 IN (${q(c.codes)})))`;
+            // icd10tm : ผูกผ่านรายการค่าใช้จ่าย opitemrece -> dttm
+            return `EXISTS (SELECT 1 FROM opitemrece ot JOIN dttm dt ON dt.icode = ot.icode
+                            WHERE ot.vn = ov.vn AND dt.${TM_COL} IN (${q(c.codes)}))`;
+        };
+
+        const hasBad = `EXISTS (
+                    SELECT 1 FROM opitemrece ob JOIN nondrugitems nb ON nb.icode = ob.icode
+                    WHERE ob.vn = ov.vn AND nb.nhso_adp_code IN (${q(SIMPLE_BAD_ADP)}))`;
+
+        const flagCols = S.checks.map((c, i) => `                ${yn(checkExpr(c))} AS "f_c${i}",`).join('\n');
+
+        const dxAgg   = fsAgg(isPg, 'd2.icd10', `FROM ovstdiag d2 WHERE d2.vn = ov.vn`);
+        const icd9Agg = fsAgg(isPg, 'dop.icd9', `FROM doctor_operation dop WHERE dop.vn = ov.vn AND dop.icd9 IS NOT NULL AND dop.icd9 <> ''`);
+        const adpItemAgg = fsAgg(isPg, 'n3.name', `FROM opitemrece o3 JOIN nondrugitems n3 ON n3.icode = o3.icode WHERE o3.vn = ov.vn AND n3.nhso_adp_code IN (${q(S.adp)})`);
+        const badAdpAgg  = fsAgg(isPg, 'nx.nhso_adp_code', `FROM opitemrece ox JOIN nondrugitems nx ON nx.icode = ox.icode WHERE ox.vn = ov.vn AND nx.nhso_adp_code IN (${q(SIMPLE_BAD_ADP)})`);
+        const adpAllAgg  = fsAgg(isPg, 'n4.nhso_adp_code', `FROM opitemrece o4 JOIN nondrugitems n4 ON n4.icode = o4.icode WHERE o4.vn = ov.vn AND n4.nhso_adp_code IS NOT NULL AND n4.nhso_adp_code <> ''`);
+        const tmAgg = TM_COL ? fsAgg(isPg, `dt2.${TM_COL}`,
+            `FROM opitemrece ot2 JOIN dttm dt2 ON dt2.icode = ot2.icode
+             WHERE ot2.vn = ov.vn AND dt2.${TM_COL} IS NOT NULL AND dt2.${TM_COL} <> ''`) : null;
+
+        // ช่วงอายุ — ไม่ระบุขอบบนก็เช็คแค่ขั้นต่ำ ไม่ระบุทั้งคู่คือกองทุนที่ไม่จำกัดอายุ
+        const noMin = (S.ageMin === null || S.ageMin === undefined);
+        const noMax = (S.ageMax === null || S.ageMax === undefined);
+        const ageCond = (noMin && noMax) ? '1=1'
+            : noMax ? `${age} >= ${S.ageMin}`
+            : noMin ? `${age} <= ${S.ageMax}`
+            : `${age} BETWEEN ${S.ageMin} AND ${S.ageMax}`;
+
+        // สิทธิที่รับ — กองทุนไหนไม่ระบุใช้ค่ากลาง (UCS, WEL, OFC, SSS)
+        const ptList = S.pttype || SIMPLE_PTTYPE;
+
+        // ป้ายชื่อคอลัมน์ ADP — รหัสที่เป็นช่วงยาว ๆ ย่อเป็น ตัวแรก-ตัวสุดท้าย ไม่งั้นหัวตารางยาวเกิน
+        const adpLabel = S.adp.length > 3 ? (S.adp[0] + '-' + S.adp[S.adp.length - 1]) : S.adp.join('/');
+
+        const sql = `
+            SELECT DISTINCT
+                ov.vstdate                                AS "วันที่รับบริการ",
+                ov.vsttime                                AS "เวลารับบริการ",
+                ov.hn                                     AS "HN",
+                ov.vn                                     AS "VN",
+                CONCAT(pt.pname, pt.fname, ' ', pt.lname) AS "ชื่อ-นามสกุล",
+                pt.cid                                    AS "เลขบัตรประชาชน",
+                pt.sex                                    AS "เพศ",
+                pt.birthday                               AS "วันเกิด",
+                ${age}                                    AS "อายุ (ปี)",
+                pt.nationality                            AS "สัญชาติ",
+                ov.pttype                                 AS "รหัสสิทธิ",
+                ptt.name                                  AS "ชื่อสิทธิ",
+                ptt.hipdata_code                          AS "hipdata_code",
+${flagCols}
+                ${yn(hasBad)}                             AS "f_bad",
+                ${dxAgg}                                  AS "ICD10 ในวิสิต",
+                ${icd9Agg}                                AS "ICD9 ในวิสิต",
+                ${tmAgg ? tmAgg + '                       AS "ICD10TM ในวิสิต",' : ''}
+                ${adpItemAgg}                             AS "รายการ ADP ${adpLabel}",
+                ${badAdpAgg}                              AS "ADP ที่ต้องตัด",
+                ${adpAllAgg}                              AS "ADP code ทั้งหมดในวิสิต"
+            FROM ovst ov
+            INNER JOIN patient pt ON pt.hn = ov.hn
+            LEFT  JOIN pttype ptt ON ptt.pttype = ov.pttype
+            WHERE ov.vstdate BETWEEN ${ph(1)} AND ${ph(2)}
+                -- ลำดับที่ 1 ต้องมีค่าใช้จ่าย ADP ${S.adp.join(' หรือ ')}
+                AND EXISTS (
+                    SELECT 1 FROM opitemrece o
+                    JOIN nondrugitems n ON n.icode = o.icode
+                    WHERE o.vn = ov.vn AND n.nhso_adp_code IN (${q(S.adp)})
+                )
+                -- ลำดับที่ 2 คนไทยเท่านั้น
+                AND pt.nationality = '99'
+                -- ช่วงอายุ (1=1 คือกองทุนที่ไม่จำกัดอายุ)
+                AND ${ageCond}
+                -- สิทธิที่รับ
+                AND ov.pttype IN (
+                    SELECT p2.pttype FROM pttype p2
+                    WHERE p2.hipdata_code IN (${q(ptList)})
+                )
+            ORDER BY ov.vstdate, ov.vn
+        `;
+
+        const raw = fsNormRows(await fsRun(cfg, sql, [dateFrom, dateTo]));
+        const Y = (v) => String(v === undefined || v === null ? 'N' : v).toUpperCase() === 'Y';
+
+        const rows = raw.map(r => {
+            const problems = [];
+            let canAdd = false;
+
+            S.checks.forEach((c, i) => {
+                if (Y(r['f_c' + i])) return;
+                if (c.fixable === false) {
+                    problems.push('ขาด ' + c.label + ' (ลงหัตถการเอง)');
+                } else {
+                    problems.push('ต้องเพิ่ม ' + c.label);
+                    canAdd = true;
+                }
+            });
+
+            const bad = Y(r.f_bad);
+            if (bad) problems.push('ต้องตัด ADP ' + SIMPLE_BAD_ADP.join('/'));
+
+            const o = {
+                'วันที่รับบริการ': r['วันที่รับบริการ'],
+                'เวลารับบริการ': r['เวลารับบริการ'],
+                'HN': r['HN'], 'VN': r['VN'],
+                'สถานะ': problems.length ? 'ไม่สมบูรณ์' : 'สมบูรณ์',
+                'สิ่งที่ต้องแก้': problems.join(' · ') || '-',
+                'ต้องเพิ่ม': canAdd ? 'Y' : 'N',
+                'ต้องตัด': bad ? 'Y' : 'N',
+                'ชื่อ-นามสกุล': r['ชื่อ-นามสกุล'],
+                'เลขบัตรประชาชน': r['เลขบัตรประชาชน'],
+                'เพศ': r['เพศ'],
+                'วันเกิด': r['วันเกิด'],
+                'อายุ (ปี)': r['อายุ (ปี)'],
+                'สัญชาติ': r['สัญชาติ'],
+                'รหัสสิทธิ': r['รหัสสิทธิ'],
+                'ชื่อสิทธิ': r['ชื่อสิทธิ'],
+                'hipdata_code': r['hipdata_code']
+            };
+            S.checks.forEach((c, i) => { o[c.label] = Y(r['f_c' + i]) ? 'มี' : 'ไม่มี'; });
+            o['_bad'] = [].concat(
+                S.checks.filter((c, i) => !Y(r['f_c' + i])).map(c => c.label),
+                bad ? ['ADP ที่ต้องตัด'] : []);
+            o['ICD10 ในวิสิต'] = r['ICD10 ในวิสิต'];
+            o['ICD9 ในวิสิต'] = r['ICD9 ในวิสิต'];
+            if (tmAgg) o['ICD10TM ในวิสิต'] = r['ICD10TM ในวิสิต'];
+            o['รายการ ADP ' + adpLabel] = r['รายการ ADP ' + adpLabel];
+            o['ADP ที่ต้องตัด'] = r['ADP ที่ต้องตัด'];
+            o['ADP code ทั้งหมดในวิสิต'] = r['ADP code ทั้งหมดในวิสิต'];
+            return o;
+        });
+
+        const needFix    = rows.filter(r => r['ต้องเพิ่ม'] === 'Y').length;
+        const needCut    = rows.filter(r => r['ต้องตัด'] === 'Y').length;
+        const incomplete = rows.filter(r => r['สถานะ'] === 'ไม่สมบูรณ์').length;
+
+        const out = {
+            success: true, data: rows, count: rows.length,
+            needFix, needCut, incomplete, cuttable: !!needCut,
+            pttypeUsed: ptList.join('/')
+        };
+        if (TM_SRC) out.icd10tmSource = TM_SRC;
+        res.json(out);
+    } catch (error) {
+        console.error('feeschedule-simple error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+
+// ============================================================================
+// กองทุนคัดกรอง — Tools เติมวินิจฉัย/ICD9 ที่ขาดให้วิสิตที่เลือก
+// ----------------------------------------------------------------------------
+// รหัสมาจาก SIMPLE_FUNDS ฝั่ง server ตาม sub ที่ส่งมา ไม่รับรหัสอิสระจากหน้าเว็บ
+// เงื่อนไขที่ยอมรับหลายรหัส (pick) จะลงรหัสที่ผู้ใช้เลือกจาก dropdown (pickCode)
+// ถ้าส่งค่าที่ไม่อยู่ในรายการมา จะถอยไปใช้ตัวแรกของกลุ่มนั้น
+// ICD10TM ไม่เติมให้ เพราะต้องลงหัตถการในโปรแกรมหลัก
+// เช็คซ้ำก่อนเขียนทุกรายการ ถ้ามีอยู่แล้วจะข้าม
+// ============================================================================
+app.post('/api/add-feeschedule-simple-missing', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type, vns, sub, pickCode } = req.body;
+        if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+
+        const S = SIMPLE_FUNDS[sub];
+        if (!S) return res.json({ success: false, error: 'ไม่รู้จักเมนู: ' + sub });
+
+        const fixable = (S.checks || []).filter(c => c.fixable !== false);
+        if (!fixable.length) return res.json({ success: false, error: 'เมนูนี้ไม่มีรหัสที่เพิ่มได้' });
+
+        const isPg = type === 'postgresql';
+        const P = (n) => isPg ? `$${n}` : '?';
+
+        const conn = isPg
+            ? new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 60000 })
+            : await mysql.createConnection({ host, port, user, password, database, connectTimeout: 60000 });
+        if (isPg) await conn.connect();
+
+        const q = async (sql, params) => {
+            if (isPg) return (await conn.query(sql, params || [])).rows;
+            const [r] = await conn.execute(sql, params || []);
+            return r;
+        };
+
+        let added = 0, skipped = 0, failed = 0;
+        const errors = [], results = [];
+        const usedCodes = [];
+
+        try {
+            for (const vn of vns) {
+                const detail = { vn: vn, added: [], skip: [], error: null };
+                try {
+                    const ov = await q(`SELECT vn, hn, vstdate, vsttime, doctor FROM ovst WHERE vn = ${P(1)}`, [vn]);
+                    if (!ov.length) { detail.error = 'ไม่พบวิสิตนี้'; failed++; results.push(detail); continue; }
+                    const v = ov[0];
+
+                    for (const c of fixable) {
+                        // กลุ่มนี้มีรหัสใดรหัสหนึ่งอยู่แล้วก็ถือว่าผ่าน ไม่ลงซ้ำ
+                        const marks = c.codes.map((_, i) => P(i + 2)).join(',');
+                        let hit = await q(
+                            `SELECT 1 AS x FROM ovstdiag WHERE vn = ${P(1)} AND icd10 IN (${marks})`,
+                            [vn].concat(c.codes));
+                        if (!hit.length && c.kind === 'icd9') {
+                            hit = await q(
+                                `SELECT 1 AS x FROM doctor_operation WHERE vn = ${P(1)} AND icd9 IN (${marks})`,
+                                [vn].concat(c.codes));
+                        }
+                        if (hit.length) { detail.skip.push('มี ' + c.label + ' อยู่แล้ว'); skipped++; continue; }
+
+                        // เลือกรหัสที่จะลง: ตามที่ผู้ใช้เลือก ถ้าไม่ถูกต้องใช้ตัวแรก
+                        const code = (c.pick && c.codes.indexOf(pickCode) !== -1) ? pickCode : c.codes[0];
+
+                        if (isPg) {
+                            const sid = (await q(`SELECT get_serialnumber('ovst_diag_id') AS sid`))[0].sid;
+                            await q(
+                                `INSERT INTO ovstdiag (ovst_diag_id, vn, icd10, hn, vstdate, vsttime, diagtype, doctor, staff, update_datetime)
+                                 VALUES ($1,$2,$3,$4,$5,$6,'4',$7,$8,NOW())`,
+                                [sid, v.vn, code, v.hn, v.vstdate, v.vsttime, v.doctor, v.doctor]);
+                        } else {
+                            await q(
+                                `INSERT INTO ovstdiag (ovst_diag_id, vn, icd10, hn, vstdate, vsttime, diagtype, doctor, staff, update_datetime)
+                                 VALUES (get_serialnumber('ovst_diag_id'),?,?,?,?,?,'4',?,?,NOW())`,
+                                [v.vn, code, v.hn, v.vstdate, v.vsttime, v.doctor, v.doctor]);
+                        }
+                        detail.added.push(code);
+                        if (usedCodes.indexOf(code) === -1) usedCodes.push(code);
+                        added++;
+                    }
+                } catch (e) {
+                    detail.error = e.message; failed++; errors.push(`${vn}: ${e.message}`);
+                }
+                results.push(detail);
+            }
+        } finally {
+            await conn.end();
+        }
+
+        res.json({ success: true, added, skipped, failed, errors, results, codes: usedCodes });
+    } catch (error) {
+        console.error('add-feeschedule-simple-missing error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// ============================================================================
+// Fee Schedule — กองทุน CA CANCER
+// ----------------------------------------------------------------------------
+// ตรวจสอบตามลำดับ
+//   ลำดับที่ 1  Principal Diagnosis (ovstdiag.diagtype = '1') ต้องเป็นรหัสมะเร็ง
+//               C00-C97 และ D00-D48 (ICD-10 บทเนื้องอกทั้งบท)
+//   ลำดับที่ 2  ต้องเป็นคนไทย patient.nationality = '99'
+//   ลำดับที่ 3  สิทธิ UCS, WEL
+//   ลำดับที่ 4  แยกเป็น 4 กรณีตามบริการที่ได้รับในวิสิตนั้น
+//               กรณี 1  ฉายแสงอย่างเดียว (ADP ขึ้นต้น RTX) -> ต้องมี Z510 + ICD9 9925
+//               กรณี 2  เคมีบำบัดอย่างเดียว (ยาใน drugitems ที่ nhso_adp_type_id = 6)
+//                       -> ต้องมี Z511 + ICD9 9224
+//               กรณี 3  มีทั้งคู่ -> ต้องมี Z510, Z511, ICD9 9925, 9224
+//               กรณี 4  มาพบแพทย์เฉย ๆ -> ไม่ต้องมีรหัสพวกนี้ ถ้ามีถือว่าเกิน ลบออกได้
+//   ลำดับที่ 5  ตรวจการลงทะเบียนคลินิกมะเร็ง (clinicmember + clinic ที่
+//               hosxp_clinic_type_id = 7) และดึง Protocol จาก
+//               clinic_subtype.nhso_cancer_type_code
+//   ลำดับที่ 6  ต้องมีค่าใช้จ่าย ADP Code = CANCER — ไม่มีให้ Tools คีย์เพิ่มได้
+//   ลำดับที่ 7  ต้องไม่มี ADP WALKIN / ER-EXT — ถ้ามี Tools ลบออกให้ได้
+//
+// ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ลำดับ 4-7 เป็นผลตรวจที่ติดธงไว้ให้จัดการ
+// ============================================================================
+const CANCER_RTX_PREFIX = 'RTX';
+const CANCER_CHEMO_TYPE = '6';          // drugitems.nhso_adp_type_id
+const CANCER_ADP        = 'CANCER';
+const CANCER_CLINIC_TYPE = '7';         // clinic.hosxp_clinic_type_id
+const CANCER_BAD_ADP    = ['WALKIN', 'ER-EXT'];
+
+// รหัสที่ต้องมีคู่กับบริการแต่ละแบบ
+const CANCER_RTX_CODES   = { dx: 'Z510', icd9: '9925' };
+const CANCER_CHEMO_CODES = { dx: 'Z511', icd9: '9224' };
+const CANCER_ALL_EXTRA   = ['Z510', 'Z511', '9925', '9224'];
+
+// C00-C97 + D00-D48 -> รายการ prefix 3 ตัว ใช้เทียบตรง ๆ ไม่ต้อง cast เป็นตัวเลข
+// (รหัสจริงบางตัวยาวกว่า 3 เช่น C509 จึงตัด 3 ตัวแรกมาเทียบ)
+function fsCancerPrefixes() {
+    const out = [];
+    for (let i = 0; i <= 97; i++) out.push('C' + String(i).padStart(2, '0'));
+    for (let i = 0; i <= 48; i++) out.push('D' + String(i).padStart(2, '0'));
+    return out;
+}
+
+// ตาราง/คอลัมน์บางตัวไม่มีใน HOSxP ทุกรุ่น จึงต้องถามจาก schema ก่อนใช้
+async function fsHasColumn(cfg, table, column) {
+    const isPg = cfg.type === 'postgresql';
+    const sql = isPg
+        ? `SELECT 1 AS x FROM information_schema.columns WHERE table_name = $1 AND column_name = $2`
+        : `SELECT 1 AS x FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?`;
+    try {
+        const rows = await fsRun(cfg, sql, isPg ? [table, column] : [cfg.database, table, column]);
+        return rows.length > 0;
+    } catch (e) { return false; }
+}
+
+app.post('/api/get-feeschedule-cancer', async (req, res) => {
+    try {
+        const cfg = req.body;
+        const { dateFrom, dateTo } = cfg;
+        const isPg = cfg.type === 'postgresql';
+        const ph = (n) => isPg ? `$${n}` : '?';
+        const q = (list) => list.map(c => `'${c}'`).join(',');
+        const yn = (expr) => `CASE WHEN ${expr} THEN 'Y' ELSE 'N' END`;
+
+        // Protocol อ่านได้เฉพาะรุ่นที่มี clinicmember.clinic_subtype_id และตาราง clinic_subtype
+        const hasSubtypeCol = await fsHasColumn(cfg, 'clinicmember', 'clinic_subtype_id');
+        const hasSubtypeTbl = await fsHasColumn(cfg, 'clinic_subtype', 'nhso_cancer_type_code');
+        const canProtocol = hasSubtypeCol && hasSubtypeTbl;
+
+        const cancerPrefix = `SUBSTRING(dm.icd10, 1, 3) IN (${q(fsCancerPrefixes())})`;
+
+        // ---- ลำดับที่ 4 : บริการที่ได้รับ ----
+        const hasRtx = `EXISTS (
+                    SELECT 1 FROM opitemrece orx JOIN nondrugitems nrx ON nrx.icode = orx.icode
+                    WHERE orx.vn = ov.vn AND nrx.nhso_adp_code LIKE '${CANCER_RTX_PREFIX}%')`;
+        const hasChemo = `EXISTS (
+                    SELECT 1 FROM opitemrece oc JOIN drugitems dg ON dg.icode = oc.icode
+                    WHERE oc.vn = ov.vn AND CAST(dg.nhso_adp_type_id AS ${isPg ? 'TEXT' : 'CHAR'}) = '${CANCER_CHEMO_TYPE}')`;
+
+        // มีรหัสนี้ไหม — ICD10 ดูที่ ovstdiag, ICD9 ดูทั้ง doctor_operation และ ovstdiag
+        const hasDx = (code) => `EXISTS (SELECT 1 FROM ovstdiag dd WHERE dd.vn = ov.vn AND dd.icd10 = '${code}')`;
+        // ICD9 อยู่ได้สองที่ ต้องแยกให้รู้ว่าอยู่ที่ไหน เพราะ Tools ลบได้เฉพาะใน ovstdiag
+        const opInDiag = (code) => `EXISTS (SELECT 1 FROM ovstdiag dv WHERE dv.vn = ov.vn AND dv.icd10 = '${code}')`;
+        const opInProc = (code) => `EXISTS (SELECT 1 FROM doctor_operation dq WHERE dq.vn = ov.vn AND dq.icd9 = '${code}')`;
+
+        const hasAdpCancer = `EXISTS (
+                    SELECT 1 FROM opitemrece oa JOIN nondrugitems na ON na.icode = oa.icode
+                    WHERE oa.vn = ov.vn AND na.nhso_adp_code = '${CANCER_ADP}')`;
+        const hasBad = `EXISTS (
+                    SELECT 1 FROM opitemrece ob JOIN nondrugitems nb ON nb.icode = ob.icode
+                    WHERE ob.vn = ov.vn AND nb.nhso_adp_code IN (${q(CANCER_BAD_ADP)}))`;
+
+        // ---- ลำดับที่ 5 : คลินิกมะเร็ง ----
+        const inCancerClinic = `EXISTS (
+                    SELECT 1 FROM clinicmember cm JOIN clinic cl ON cl.clinic = cm.clinic
+                    WHERE cm.hn = ov.hn AND cl.hosxp_clinic_type_id = '${CANCER_CLINIC_TYPE}')`;
+        const protocolAgg = canProtocol
+            ? fsAgg(isPg, 'cs.nhso_cancer_type_code', `
+                    FROM clinicmember cm2
+                    JOIN clinic cl2 ON cl2.clinic = cm2.clinic
+                    JOIN clinic_subtype cs ON cs.clinic_subtype_id = cm2.clinic_subtype_id
+                    WHERE cm2.hn = ov.hn AND cl2.hosxp_clinic_type_id = '${CANCER_CLINIC_TYPE}'
+                      AND cs.nhso_cancer_type_code IS NOT NULL AND cs.nhso_cancer_type_code <> ''`)
+            : `NULL`;
+
+        const dxPrincipalAgg = fsAgg(isPg, 'dp.icd10',
+            `FROM ovstdiag dp WHERE dp.vn = ov.vn AND dp.diagtype = '1'`);
+        const dxAgg = fsAgg(isPg, 'd2.icd10', `FROM ovstdiag d2 WHERE d2.vn = ov.vn`);
+        const icd9Agg = fsAgg(isPg, 'dop.icd9', `FROM doctor_operation dop WHERE dop.vn = ov.vn AND dop.icd9 IS NOT NULL AND dop.icd9 <> ''`);
+        const rtxAgg = fsAgg(isPg, 'nr2.nhso_adp_code', `FROM opitemrece or2 JOIN nondrugitems nr2 ON nr2.icode = or2.icode WHERE or2.vn = ov.vn AND nr2.nhso_adp_code LIKE '${CANCER_RTX_PREFIX}%'`);
+        const chemoAgg = fsAgg(isPg, 'dg2.name', `FROM opitemrece oc2 JOIN drugitems dg2 ON dg2.icode = oc2.icode WHERE oc2.vn = ov.vn AND CAST(dg2.nhso_adp_type_id AS ${isPg ? 'TEXT' : 'CHAR'}) = '${CANCER_CHEMO_TYPE}'`);
+        const badAdpAgg = fsAgg(isPg, 'nx.nhso_adp_code', `FROM opitemrece ox JOIN nondrugitems nx ON nx.icode = ox.icode WHERE ox.vn = ov.vn AND nx.nhso_adp_code IN (${q(CANCER_BAD_ADP)})`);
+        const adpAllAgg = fsAgg(isPg, 'n4.nhso_adp_code', `FROM opitemrece o4 JOIN nondrugitems n4 ON n4.icode = o4.icode WHERE o4.vn = ov.vn AND n4.nhso_adp_code IS NOT NULL AND n4.nhso_adp_code <> ''`);
+
+        const sql = `
+            SELECT DISTINCT
+                ov.vstdate                                AS "วันที่รับบริการ",
+                ov.vsttime                                AS "เวลารับบริการ",
+                ov.hn                                     AS "HN",
+                ov.vn                                     AS "VN",
+                CONCAT(pt.pname, pt.fname, ' ', pt.lname) AS "ชื่อ-นามสกุล",
+                pt.cid                                    AS "เลขบัตรประชาชน",
+                pt.sex                                    AS "เพศ",
+                ${fsAgeExpr(isPg)}                        AS "อายุ (ปี)",
+                pt.nationality                            AS "สัญชาติ",
+                ov.pttype                                 AS "รหัสสิทธิ",
+                ptt.name                                  AS "ชื่อสิทธิ",
+                ptt.hipdata_code                          AS "hipdata_code",
+                ${yn(hasRtx)}                             AS "f_rtx",
+                ${yn(hasChemo)}                           AS "f_chemo",
+                ${yn(hasDx(CANCER_RTX_CODES.dx))}         AS "f_z510",
+                ${yn(hasDx(CANCER_CHEMO_CODES.dx))}       AS "f_z511",
+                ${yn(opInDiag(CANCER_RTX_CODES.icd9))}    AS "f_9925d",
+                ${yn(opInProc(CANCER_RTX_CODES.icd9))}    AS "f_9925p",
+                ${yn(opInDiag(CANCER_CHEMO_CODES.icd9))}  AS "f_9224d",
+                ${yn(opInProc(CANCER_CHEMO_CODES.icd9))}  AS "f_9224p",
+                ${yn(hasAdpCancer)}                       AS "f_adp",
+                ${yn(hasBad)}                             AS "f_bad",
+                ${yn(inCancerClinic)}                     AS "f_clinic",
+                ${protocolAgg}                            AS "f_protocol",
+                ${dxPrincipalAgg}                         AS "Principal Dx (type 1)",
+                ${rtxAgg}                                 AS "ADP ฉายแสง (RTX)",
+                ${chemoAgg}                               AS "ยาเคมีบำบัด",
+                ${dxAgg}                                  AS "ICD10 ในวิสิต",
+                ${icd9Agg}                                AS "ICD9 ในวิสิต",
+                ${badAdpAgg}                              AS "ADP ที่ต้องตัด",
+                ${adpAllAgg}                              AS "ADP code ทั้งหมดในวิสิต"
+            FROM ovst ov
+            INNER JOIN patient pt ON pt.hn = ov.hn
+            LEFT  JOIN pttype ptt ON ptt.pttype = ov.pttype
+            WHERE ov.vstdate BETWEEN ${ph(1)} AND ${ph(2)}
+                -- ลำดับที่ 1 Principal Dx เป็นรหัสมะเร็ง C00-C97 / D00-D48
+                AND EXISTS (
+                    SELECT 1 FROM ovstdiag dm
+                    WHERE dm.vn = ov.vn AND dm.diagtype = '1' AND ${cancerPrefix}
+                )
+                -- ลำดับที่ 2 คนไทยเท่านั้น
+                AND pt.nationality = '99'
+                -- ลำดับที่ 3 สิทธิ UCS / WEL
+                AND ov.pttype IN (
+                    SELECT p2.pttype FROM pttype p2 WHERE p2.hipdata_code IN ('UCS','WEL')
+                )
+            ORDER BY ov.vstdate, ov.vn
+        `;
+
+        const raw = fsNormRows(await fsRun(cfg, sql, [dateFrom, dateTo]));
+        const Y = (v) => String(v === undefined || v === null ? 'N' : v).toUpperCase() === 'Y';
+
+        const rows = raw.map(r => {
+            const rtx = Y(r.f_rtx), chemo = Y(r.f_chemo);
+
+            // ลำดับที่ 4 — กรณีไหน และรหัสอะไรที่ต้องมี
+            let caseNo, caseName, need = [];
+            if (rtx && chemo)      { caseNo = 3; caseName = 'กรณี 3 ฉายแสง + เคมีบำบัด'; need = ['Z510', 'Z511', '9925', '9224']; }
+            else if (rtx)          { caseNo = 1; caseName = 'กรณี 1 ฉายแสง';            need = ['Z510', '9925']; }
+            else if (chemo)        { caseNo = 2; caseName = 'กรณี 2 เคมีบำบัด';          need = ['Z511', '9224']; }
+            else                   { caseNo = 4; caseName = 'กรณี 4 พบแพทย์อย่างเดียว';  need = []; }
+
+            // อยู่ใน ovstdiag = Tools ลบได้  ·  อยู่ใน doctor_operation = ต้องไปลบในโปรแกรมหลัก
+            const inDiag = { 'Z510': Y(r.f_z510), 'Z511': Y(r.f_z511), '9925': Y(r.f_9925d), '9224': Y(r.f_9224d) };
+            const inProc = { 'Z510': false,       'Z511': false,       '9925': Y(r.f_9925p), '9224': Y(r.f_9224p) };
+            const present = {};
+            CANCER_ALL_EXTRA.forEach(c => { present[c] = inDiag[c] || inProc[c]; });
+
+            const missing = need.filter(c => !present[c]);
+            // รหัสที่ไม่ควรมีในกรณีนี้ แต่ดันมีอยู่ — แยกตามที่อยู่ เพราะจัดการได้ไม่เหมือนกัน
+            const extra     = CANCER_ALL_EXTRA.filter(c => inDiag[c] && need.indexOf(c) === -1);
+            const extraProc = CANCER_ALL_EXTRA.filter(c => !inDiag[c] && inProc[c] && need.indexOf(c) === -1);
+
+            const noAdp = !Y(r.f_adp);
+            const bad   = Y(r.f_bad);
+
+            // ลำดับที่ 5 — สถานะคลินิกมะเร็ง
+            const proto = r.f_protocol;
+            let clinicText;
+            if (!Y(r.f_clinic))                                  clinicText = 'ยังไม่ลงทะเบียนคลินิกมะเร็ง';
+            else if (!canProtocol)                               clinicText = 'ลงทะเบียนแล้ว (ฐานข้อมูลนี้ไม่มีข้อมูล Protocol)';
+            else if (proto === null || proto === undefined || String(proto) === '') clinicText = 'ยังไม่ได้ระบุ Protocol';
+            else                                                 clinicText = String(proto);
+
+            const problems = [];
+            if (missing.length)   problems.push('ต้องเพิ่ม ' + missing.join('/'));
+            if (extra.length)     problems.push('มีเกินต้องลบ ' + extra.join('/'));
+            if (extraProc.length) problems.push('มีเกิน ' + extraProc.join('/') + ' ใน doctor_operation (ลบเองในโปรแกรมหลัก)');
+            if (noAdp)          problems.push('ต้องเพิ่ม ADP ' + CANCER_ADP);
+            if (!Y(r.f_clinic)) problems.push('ยังไม่ลงทะเบียนคลินิกมะเร็ง');
+            else if (canProtocol && (proto === null || proto === undefined || String(proto) === ''))
+                                problems.push('ยังไม่ได้ระบุ Protocol');
+            if (bad)            problems.push('ต้องตัด ADP ' + CANCER_BAD_ADP.join('/'));
+
+            const o = {
+                'วันที่รับบริการ': r['วันที่รับบริการ'],
+                'เวลารับบริการ': r['เวลารับบริการ'],
+                'HN': r['HN'], 'VN': r['VN'],
+                'สถานะ': problems.length ? 'ไม่สมบูรณ์' : 'สมบูรณ์',
+                'สิ่งที่ต้องแก้': problems.join(' · ') || '-',
+                // ติดธงให้เลือกได้เมื่อมีอะไรให้ Tools ทำ (เพิ่มที่ขาด หรือ ลบที่เกิน)
+                'ต้องเพิ่ม': (missing.length || extra.length || noAdp) ? 'Y' : 'N',
+                'ต้องตัด': bad ? 'Y' : 'N',
+                'ชื่อ-นามสกุล': r['ชื่อ-นามสกุล'],
+                'เลขบัตรประชาชน': r['เลขบัตรประชาชน'],
+                'เพศ': r['เพศ'],
+                'อายุ (ปี)': r['อายุ (ปี)'],
+                'สัญชาติ': r['สัญชาติ'],
+                'รหัสสิทธิ': r['รหัสสิทธิ'],
+                'ชื่อสิทธิ': r['ชื่อสิทธิ'],
+                'กรณี': caseName,
+                'คลินิกมะเร็ง / Protocol': clinicText,
+                'ฉายแสง (RTX)': rtx ? 'มี' : 'ไม่มี',
+                'เคมีบำบัด': chemo ? 'มี' : 'ไม่มี',
+                'Z510': present['Z510'] ? 'มี' : 'ไม่มี',
+                'Z511': present['Z511'] ? 'มี' : 'ไม่มี',
+                // บอกแหล่งด้วย เพราะที่อยู่ใน doctor_operation ปุ่มลบของ Tools แตะไม่ได้
+                'ICD9 9925': !present['9925'] ? 'ไม่มี' : (inDiag['9925'] ? 'มี (ovstdiag)' : 'มี (doctor_operation)'),
+                'ICD9 9224': !present['9224'] ? 'ไม่มี' : (inDiag['9224'] ? 'มี (ovstdiag)' : 'มี (doctor_operation)'),
+                'ADP CANCER': noAdp ? 'ไม่มี' : 'มี',
+                'Principal Dx (type 1)': r['Principal Dx (type 1)'],
+                'ADP ฉายแสง (RTX)': r['ADP ฉายแสง (RTX)'],
+                'ยาเคมีบำบัด': r['ยาเคมีบำบัด'],
+                'ICD10 ในวิสิต': r['ICD10 ในวิสิต'],
+                'ICD9 ในวิสิต': r['ICD9 ในวิสิต'],
+                'ADP ที่ต้องตัด': r['ADP ที่ต้องตัด'],
+                'ADP code ทั้งหมดในวิสิต': r['ADP code ทั้งหมดในวิสิต']
+            };
+            // ช่องที่ผิดจริงของแถวนี้ — ขาดก็แดง เกินก็แดง ตามกรณีที่วิสิตนั้นเข้า
+            o['_bad'] = [].concat(
+                missing.map(c => (c === '9925' || c === '9224') ? 'ICD9 ' + c : c),
+                extra.map(c => (c === '9925' || c === '9224') ? 'ICD9 ' + c : c),
+                extraProc.map(c => (c === '9925' || c === '9224') ? 'ICD9 ' + c : c),
+                noAdp ? ['ADP CANCER'] : [],
+                clinicText.indexOf('ยังไม่') === 0 ? ['คลินิกมะเร็ง / Protocol'] : [],
+                bad ? ['ADP ที่ต้องตัด'] : []);
+            return o;
+        });
+
+        const needFix    = rows.filter(r => r['ต้องเพิ่ม'] === 'Y').length;
+        const needCut    = rows.filter(r => r['ต้องตัด'] === 'Y').length;
+        const incomplete = rows.filter(r => r['สถานะ'] === 'ไม่สมบูรณ์').length;
+        const byCase = {};
+        rows.forEach(r => { byCase[r['กรณี']] = (byCase[r['กรณี']] || 0) + 1; });
+
+        res.json({
+            success: true, data: rows, count: rows.length,
+            needFix, needCut, incomplete, cuttable: !!needCut,
+            caseSummary: Object.keys(byCase).sort().map(k => k + ' ' + byCase[k]).join(' · '),
+            protocolSource: canProtocol ? 'clinic_subtype.nhso_cancer_type_code' : 'ฐานข้อมูลนี้ไม่มี clinic_subtype'
+        });
+    } catch (error) {
+        console.error('feeschedule-cancer error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+
+// ============================================================================
+// CA CANCER — Tools ปรับข้อมูลให้ตรงกับกรณีของแต่ละวิสิต
+// ----------------------------------------------------------------------------
+// dxMode เลือกได้ 3 แบบจาก dropdown หน้าจอ
+//   add     เพิ่มเฉพาะรหัสที่ขาด (ค่าเริ่มต้น)
+//   remove  ลบเฉพาะรหัสที่ไม่ควรมีในกรณีนั้น
+//   both    ทำทั้งสองอย่าง
+// ADP CANCER ที่ขาดจะถูกเพิ่มในโหมด add และ both
+//
+// การลบทำเฉพาะใน ovstdiag (ที่เดียวกับที่ Tools เขียนลงไป)
+// ไม่แตะ doctor_operation เพราะเป็นบันทึกหัตถการที่ห้องตรวจลงไว้
+// ============================================================================
+app.post('/api/add-feeschedule-cancer-fix', async (req, res) => {
+    try {
+        const cfg = req.body;
+        const { host, port, database, user, password, type, vns } = cfg;
+        const dxMode = ['add', 'remove', 'both'].indexOf(cfg.dxMode) !== -1 ? cfg.dxMode : 'add';
+        if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+
+        const isPg = type === 'postgresql';
+        const P = (n) => isPg ? `$${n}` : '?';
+
+        // คอลัมน์ที่มีจริงใน opitemrece (แต่ละรุ่นไม่เท่ากัน)
+        const colSql = isPg
+            ? `SELECT column_name FROM information_schema.columns WHERE table_name = 'opitemrece'`
+            : `SELECT column_name FROM information_schema.columns WHERE table_schema = ? AND table_name = 'opitemrece'`;
+        const colRows = await fsRun(cfg, colSql, isPg ? [] : [database]);
+        const oprCols = new Set(colRows.map(r => String(r.column_name || r.COLUMN_NAME).toLowerCase()));
+
+        const conn = isPg
+            ? new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 60000 })
+            : await mysql.createConnection({ host, port, user, password, database, connectTimeout: 60000 });
+        if (isPg) await conn.connect();
+
+        const q = async (sql, params) => {
+            if (isPg) return (await conn.query(sql, params || [])).rows;
+            const [r] = await conn.execute(sql, params || []);
+            return r;
+        };
+        // DELETE ต้องรู้จำนวนแถวที่ถูกลบ ซึ่งอยู่คนละที่กันในสองไดรเวอร์
+        const qDel = async (sql, params) => {
+            if (isPg) return (await conn.query(sql, params || [])).rowCount || 0;
+            const [r] = await conn.execute(sql, params || []);
+            return r.affectedRows || 0;
+        };
+
+        let addedDiag = 0, addedItem = 0, removedDiag = 0, skipped = 0, failed = 0;
+        const errors = [], results = [];
+
+        try {
+            for (const vn of vns) {
+                const detail = { vn: vn, added: [], removed: [], skip: [], error: null };
+                try {
+                    const ov = await q(`SELECT vn, hn, vstdate, vsttime, doctor, pttype FROM ovst WHERE vn = ${P(1)}`, [vn]);
+                    if (!ov.length) { detail.error = 'ไม่พบวิสิตนี้'; failed++; results.push(detail); continue; }
+                    const v = ov[0];
+
+                    // ดูว่าวิสิตนี้เข้ากรณีไหน คำนวณใหม่ฝั่ง server ไม่เชื่อค่าจากหน้าเว็บ
+                    const rtxRows = await q(
+                        `SELECT 1 AS x FROM opitemrece o JOIN nondrugitems n ON n.icode = o.icode
+                         WHERE o.vn = ${P(1)} AND n.nhso_adp_code LIKE '${CANCER_RTX_PREFIX}%'`, [vn]);
+                    const chemoRows = await q(
+                        `SELECT 1 AS x FROM opitemrece o JOIN drugitems d ON d.icode = o.icode
+                         WHERE o.vn = ${P(1)} AND CAST(d.nhso_adp_type_id AS ${isPg ? 'TEXT' : 'CHAR'}) = '${CANCER_CHEMO_TYPE}'`, [vn]);
+                    const rtx = rtxRows.length > 0, chemo = chemoRows.length > 0;
+
+                    let need = [];
+                    if (rtx && chemo) need = ['Z510', 'Z511', '9925', '9224'];
+                    else if (rtx)     need = ['Z510', '9925'];
+                    else if (chemo)   need = ['Z511', '9224'];
+
+                    // ---- เพิ่มรหัสที่ขาด ----
+                    if (dxMode === 'add' || dxMode === 'both') {
+                        for (const code of need) {
+                            const dup = await q(
+                                `SELECT 1 AS x FROM ovstdiag WHERE vn = ${P(1)} AND icd10 = ${P(2)}`, [vn, code]);
+                            let alsoOp = [];
+                            if (!dup.length && (code === '9925' || code === '9224')) {
+                                alsoOp = await q(
+                                    `SELECT 1 AS x FROM doctor_operation WHERE vn = ${P(1)} AND icd9 = ${P(2)}`, [vn, code]);
+                            }
+                            if (dup.length || alsoOp.length) { detail.skip.push(code + ' มีอยู่แล้ว'); skipped++; continue; }
+
+                            if (isPg) {
+                                const sid = (await q(`SELECT get_serialnumber('ovst_diag_id') AS sid`))[0].sid;
+                                await q(
+                                    `INSERT INTO ovstdiag (ovst_diag_id, vn, icd10, hn, vstdate, vsttime, diagtype, doctor, staff, update_datetime)
+                                     VALUES ($1,$2,$3,$4,$5,$6,'4',$7,$8,NOW())`,
+                                    [sid, v.vn, code, v.hn, v.vstdate, v.vsttime, v.doctor, v.doctor]);
+                            } else {
+                                await q(
+                                    `INSERT INTO ovstdiag (ovst_diag_id, vn, icd10, hn, vstdate, vsttime, diagtype, doctor, staff, update_datetime)
+                                     VALUES (get_serialnumber('ovst_diag_id'),?,?,?,?,?,'4',?,?,NOW())`,
+                                    [v.vn, code, v.hn, v.vstdate, v.vsttime, v.doctor, v.doctor]);
+                            }
+                            detail.added.push(code);
+                            addedDiag++;
+                        }
+
+                        // ---- ลำดับที่ 6 : ADP CANCER ----
+                        const dupAdp = await q(
+                            `SELECT 1 AS x FROM opitemrece o JOIN nondrugitems n ON n.icode = o.icode
+                             WHERE o.vn = ${P(1)} AND n.nhso_adp_code = ${P(2)}`, [vn, CANCER_ADP]);
+                        if (dupAdp.length) { detail.skip.push('ADP ' + CANCER_ADP + ' มีอยู่แล้ว'); skipped++; }
+                        else {
+                            const items = await q(
+                                `SELECT icode, name, price, income FROM nondrugitems
+                                 WHERE nhso_adp_code = ${P(1)} AND istatus = '1' ORDER BY icode`, [CANCER_ADP]);
+                            if (!items.length) {
+                                detail.skip.push('ไม่พบรายการ ADP ' + CANCER_ADP + " ที่เปิดใช้งาน (istatus='1')");
+                                skipped++;
+                            } else {
+                                const it = items[0];
+                                const price = Number(it.price || 0);
+                                const want = {
+                                    vn: v.vn, hn: v.hn, vstdate: v.vstdate, vsttime: v.vsttime,
+                                    icode: it.icode, qty: 1, unitprice: price, sum_price: price,
+                                    paidst: '02', income: it.income, doctor: v.doctor, staff: v.doctor,
+                                    pttype: v.pttype
+                                };
+                                const cols = Object.keys(want).filter(c => oprCols.has(c));
+                                const vals = cols.map(c => want[c]);
+                                const marks = cols.map((_, i) => isPg ? `$${i + 1}` : '?').join(',');
+                                await q(`INSERT INTO opitemrece (${cols.join(',')}) VALUES (${marks})`, vals);
+                                detail.added.push('ADP ' + CANCER_ADP);
+                                addedItem++;
+                            }
+                        }
+                    }
+
+                    // ---- ลบรหัสที่ไม่ควรมีในกรณีนี้ ----
+                    if (dxMode === 'remove' || dxMode === 'both') {
+                        const extra = CANCER_ALL_EXTRA.filter(c => need.indexOf(c) === -1);
+                        for (const code of extra) {
+                            const n = await qDel(
+                                `DELETE FROM ovstdiag WHERE vn = ${P(1)} AND icd10 = ${P(2)}`, [vn, code]);
+                            if (n > 0) { detail.removed.push(code); removedDiag += n; }
+                        }
+                    }
+                } catch (e) {
+                    detail.error = e.message; failed++; errors.push(`${vn}: ${e.message}`);
+                }
+                results.push(detail);
+            }
+        } finally {
+            await conn.end();
+        }
+
+        res.json({
+            success: true,
+            addedDiag, addedItem, removedDiag, skipped, failed, errors, results,
+            diagNoun: 'วินิจฉัย/ICD9 ของกองทุนมะเร็ง',
+            itemNoun: 'ADP ' + CANCER_ADP,
+            mode: dxMode
+        });
+    } catch (error) {
+        console.error('add-feeschedule-cancer-fix error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
 
 // ============================================================================
 // Fee Schedule — กองทุนฟอกเลือดด้วยเครื่องไตเทียม (HD)

@@ -399,6 +399,58 @@
                     <div class="file-menu-item-title">กองทุน DM REMISSION</div>
                     <div class="file-menu-item-code">E110-E119 · ADP 32401 · LABTEST 05</div>
                 </div>
+                <div class="file-menu-item" data-file="ca-oral">
+                    <div class="file-menu-item-title">กองทุนบริการคัดกรองรอยโรคเสี่ยงมะเร็งช่องปาก</div>
+                    <div class="file-menu-item-code">CA Oral Screening · ADP 90004 · อายุ ≥ 40</div>
+                </div>
+                <div class="file-menu-item" data-file="fluoride-risk">
+                    <div class="file-menu-item-title">กองทุนการเคลือบฟลูออไรด์ (กลุ่มเสี่ยง)</div>
+                    <div class="file-menu-item-code">Fluoride Varnish · ADP 15001 · อายุ 25-59</div>
+                </div>
+                <div class="file-menu-item" data-file="cbc-anemia">
+                    <div class="file-menu-item-title">กองทุนบริการคัดกรองโลหิตจางจากการขาดธาตุเหล็ก</div>
+                    <div class="file-menu-item-code">CBC · ADP 13001 · อายุ 13-45</div>
+                </div>
+                <div class="file-menu-item" data-file="dm-screen-12003">
+                    <div class="file-menu-item-title">กองทุนบริการคัดกรองเบาหวาน (ADP 12003)</div>
+                    <div class="file-menu-item-code">DM Screening · ADP 12003 · อายุ 35-59</div>
+                </div>
+                <div class="file-menu-item" data-file="dm-screen-12004">
+                    <div class="file-menu-item-title">กองทุนบริการคัดกรองเบาหวาน (ADP 12004)</div>
+                    <div class="file-menu-item-code">DM Screening · ADP 12004 · อายุ 45-70</div>
+                </div>
+                <div class="file-menu-item" data-file="brca">
+                    <div class="file-menu-item-title">บริการตรวจยีน BRCA1 BRCA2</div>
+                    <div class="file-menu-item-code">BRCA · ADP 90001/37550/90002 · อายุ ≥ 18</div>
+                </div>
+                <div class="file-menu-item" data-file="child-glasses">
+                    <div class="file-menu-item-title">กองทุนแว่นตาเด็กที่มีสายตาผิดปกติ</div>
+                    <div class="file-menu-item-code">Child Glasses · ADP 2206/2207 · อายุ 6-12</div>
+                </div>
+                <div class="file-menu-item" data-file="ca-cancer">
+                    <div class="file-menu-item-title">กองทุน CA CANCER</div>
+                    <div class="file-menu-item-code">Principal Dx C00-C97/D00-D48 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="lithotripsy">
+                    <div class="file-menu-item-title">กองทุนสลายนิ่วในระบบทางเดินปัสสาวะ</div>
+                    <div class="file-menu-item-code">Lithotripsy · ADP 9851 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="gdm">
+                    <div class="file-menu-item-title">กองทุนเบาหวานขณะตั้งครรภ์ (GDM)</div>
+                    <div class="file-menu-item-code">GDM · ADP 80008-80014 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="pdm">
+                    <div class="file-menu-item-title">กองทุนเบาหวานก่อนการตั้งครรภ์ (PDM)</div>
+                    <div class="file-menu-item-code">PDM · ADP 80015, 80032-80040 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="t1dm">
+                    <div class="file-menu-item-title">กองทุนเบาหวานอายุรกรรม เด็ก/ผู้ใหญ่ (T1DM)</div>
+                    <div class="file-menu-item-code">T1DM · ADP 80001-80007, 80024-80028 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="cgm">
+                    <div class="file-menu-item-title">กองทุนตรวจวัดระดับน้ำตาลต่อเนื่อง (CGM)</div>
+                    <div class="file-menu-item-code">CGM · ADP 80029-80031 · UCS/WEL</div>
+                </div>
                 <div class="file-menu-item" data-file="hd-dialysis">
                     <div class="file-menu-item-title">กองทุนฟอกเลือดด้วยเครื่องไตเทียม (HD)</div>
                     <div class="file-menu-item-code">Hemodialysis</div>
@@ -659,6 +711,286 @@
                 cutNoun: 'Project code ที่ ADP type 5 (ที่ไม่ใช่ WALKIN)',
                 canFilter: true
             },
+            'ca-oral': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 90004', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 40 ปีขึ้นไป (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 ต้องเป็นคนไข้กลุ่มสิทธิ UC, ข้าราชการ, ประกันสังคม (UCS, WEL, OFC, SSS)', 'ลำดับที่ 5 ต้องมีวินิจฉัย Z128 — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 6 ต้องมี ICD9 2721 หรือ 2722 หรือ 2723 หรือ 2724 อย่างใดอย่างหนึ่ง (เลือกรหัสที่จะลงจาก dropdown ข้างปุ่มเพิ่ม) และต้องมี ICD9 2729 ด้วย — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 7 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'ca-oral',
+                title: '🦷 กองทุนบริการคัดกรองรอยโรคเสี่ยงมะเร็งช่องปาก (CA Oral Screening)',
+                cond: 'ลำดับ 1: ADP 90004 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ ≥ 40 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี Z128 · ลำดับ 6: ต้องมี ICD9 2721/2722/2723/2724 และ 2729 · ลำดับ 7: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย Z128 และ ICD9 ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 6 ลง ICD9:',
+                    options: [
+                        { value: '2721', label: '2721' },
+                        { value: '2722', label: '2722' },
+                        { value: '2723', label: '2723' },
+                        { value: '2724', label: '2724' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'fluoride-risk': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 15001', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 25 - 59 ปี (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 ต้องเป็นคนไข้กลุ่มสิทธิ UC, ข้าราชการ, ประกันสังคม (UCS, WEL, OFC, SSS)', 'ลำดับที่ 5 ต้องมีวินิจฉัย K020 หรือ K0600 หรือ K0601 หรือ K0609 หรือ K117 หรือ Z298 อย่างใดอย่างหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 6 ต้องมี ICD9 2729 — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 7 ต้องมี ICD10TM 2387021 — อ่านจากหัตถการทันตกรรมที่ผูก ICD10TM ไว้ (opitemrece → dttm) ข้อนี้แจ้งอย่างเดียว ต้องไปลงหัตถการในโปรแกรมหลักเอง', 'ลำดับที่ 8 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'fluoride-risk',
+                title: '🦷 กองทุนการเคลือบฟลูออไรด์ (กลุ่มเสี่ยง)',
+                cond: 'ลำดับ 1: ADP 15001 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ 25-59 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี K020/K0600/K0601/K0609/K117/Z298 · ลำดับ 6: ต้องมี ICD9 2729 · ลำดับ 7: ต้องมี ICD10TM 2387021 · ลำดับ 8: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย และ ICD9 2729 ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 5 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'K020', label: 'K020' },
+                        { value: 'K0600', label: 'K0600' },
+                        { value: 'K0601', label: 'K0601' },
+                        { value: 'K0609', label: 'K0609' },
+                        { value: 'K117', label: 'K117' },
+                        { value: 'Z298', label: 'Z298' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'cbc-anemia': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 13001', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 13 - 45 ปี (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 ต้องเป็นคนไข้กลุ่มสิทธิ UC, ข้าราชการ, ประกันสังคม (UCS, WEL, OFC, SSS)', 'ลำดับที่ 5 ต้องมีวินิจฉัย Z138 — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 6 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'cbc-anemia',
+                title: '🩸 กองทุนบริการคัดกรองโลหิตจางจากการขาดธาตุเหล็ก (CBC)',
+                cond: 'ลำดับ 1: ADP 13001 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ 13-45 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี Z138 · ลำดับ 6: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย Z138 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'dm-screen-12003': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 12003', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 35 - 59 ปี (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 คนไข้กลุ่มคนไข้ทุกสิทธิ (UC, ข้าราชการ, ประกันสังคม)', 'ลำดับที่ 5 ต้องมีวินิจฉัย Z131 — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 6 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'dm-screen-12003',
+                title: '🩺 กองทุนบริการคัดกรองเบาหวาน (ADP 12003)',
+                cond: 'ลำดับ 1: ADP 12003 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ 35-59 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี Z131 · ลำดับ 6: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย Z131 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'dm-screen-12004': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 12004', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 45 - 70 ปี (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 คนไข้กลุ่มคนไข้ทุกสิทธิ (UC, ข้าราชการ, ประกันสังคม)', 'ลำดับที่ 5 ต้องมีวินิจฉัย Z136 — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 6 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'dm-screen-12004',
+                title: '🩺 กองทุนบริการคัดกรองเบาหวาน (ADP 12004)',
+                cond: 'ลำดับ 1: ADP 12004 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ 45-70 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี Z136 · ลำดับ 6: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย Z136 ลง ovstdiag',
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'brca': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 90001 หรือ 37550 หรือ 90002', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 18 ปีขึ้นไป (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 คนไข้กลุ่มคนไข้ทุกสิทธิ (UC, ข้าราชการ, ประกันสังคม)', 'ลำดับที่ 5 ต้องมีวินิจฉัย C500 – C509 หรือ D050 หรือ D051 หรือ D057 หรือ D059 อันใดอันหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 6 ต้องมีวินิจฉัย Z123 ร่วมด้วย — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 7 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'brca',
+                title: '🧬 บริการตรวจยีน BRCA1 BRCA2 (มะเร็งเต้านมความเสี่ยงสูงและญาติสายตรง)',
+                cond: 'ลำดับ 1: ADP 90001/37550/90002 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ ≥ 18 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี C500-C509/D050/D051/D057/D059 · ลำดับ 6: ต้องมี Z123 · ลำดับ 7: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย และ Z123 ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 5 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'C500', label: 'C500' },
+                        { value: 'C501', label: 'C501' },
+                        { value: 'C502', label: 'C502' },
+                        { value: 'C503', label: 'C503' },
+                        { value: 'C504', label: 'C504' },
+                        { value: 'C505', label: 'C505' },
+                        { value: 'C506', label: 'C506' },
+                        { value: 'C507', label: 'C507' },
+                        { value: 'C508', label: 'C508' },
+                        { value: 'C509', label: 'C509' },
+                        { value: 'D050', label: 'D050' },
+                        { value: 'D051', label: 'D051' },
+                        { value: 'D057', label: 'D057' },
+                        { value: 'D059', label: 'D059' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'child-glasses': {
+                about: ['ลำดับที่ 1 คนไข้ที่มีค่าใช้จ่าย ADP Code = 2206 หรือ 2207 อย่างใดอย่างหนึ่ง หรือมีทั้งคู่', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้อายุ 6 - 12 ปี (คิด ณ วันรับบริการ)', 'ลำดับที่ 4 คนไข้กลุ่มคนไข้ทุกสิทธิ (UC, ข้าราชการ, ประกันสังคม)', 'ลำดับที่ 5 ต้องมีวินิจฉัย H520 - H527 อันใดอันหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 6 ต้องมี ICD9 9531 — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 7 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-4 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'child-glasses',
+                title: '👓 กองทุนแว่นตาเด็กที่มีสายตาผิดปกติ',
+                cond: 'ลำดับ 1: ADP 2206/2207 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: อายุ 6-12 · ลำดับ 4: สิทธิ UCS/WEL/OFC/SSS · ลำดับ 5: ต้องมี H520-H527 · ลำดับ 6: ต้องมี ICD9 9531 · ลำดับ 7: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย และ ICD9 9531 ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 5 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'H520', label: 'H520' },
+                        { value: 'H521', label: 'H521' },
+                        { value: 'H522', label: 'H522' },
+                        { value: 'H523', label: 'H523' },
+                        { value: 'H524', label: 'H524' },
+                        { value: 'H525', label: 'H525' },
+                        { value: 'H526', label: 'H526' },
+                        { value: 'H527', label: 'H527' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'ca-cancer': {
+                about: ['ลำดับที่ 1 ตรวจจาก Principal Diagnosis (ovstdiag.diagtype = 1) ที่เป็นรหัสมะเร็ง — นับ C00-C97 และ D00-D48 (ICD-10 บทเนื้องอกทั้งบท)', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 4 แยกเป็น 4 กรณีตามบริการที่ได้รับในวิสิตนั้น', 'กรณีที่ 1 ฉายแสงอย่างเดียว (ADP Code ขึ้นต้นด้วย RTX) — ต้องมีวินิจฉัย Z510 และ ICD9 9925', 'กรณีที่ 2 เคมีบำบัดอย่างเดียว (รายการยาใน opitemrece ที่ตรงกับ drugitems ซึ่ง nhso_adp_type_id = 6) — ต้องมีวินิจฉัย Z511 และ ICD9 9224', 'กรณีที่ 3 มีทั้งฉายแสงและเคมีบำบัด — ต้องมีครบทั้ง Z510, Z511, ICD9 9925 และ 9224', 'กรณีที่ 4 มาพบแพทย์อย่างเดียว ไม่มีฉายแสงและเคมีบำบัด — ส่งเบิกกองทุน CANCER ได้เลย ถ้ามี Z510/Z511/9925/9224 ติดอยู่ถือว่าเกิน ลบออกได้', 'ลำดับที่ 5 ตรวจการลงทะเบียนคลินิกมะเร็ง จาก HN ในตาราง clinicmember ที่ clinicmember.clinic ตรงกับ clinic ซึ่ง hosxp_clinic_type_id = 7 — ยังไม่ลงทะเบียนจะขึ้น "ยังไม่ลงทะเบียนคลินิกมะเร็ง" · ลงทะเบียนแล้วแต่ไม่ได้ระบุ clinic_subtype_id จะขึ้น "ยังไม่ได้ระบุ Protocol" · ถ้าระบุแล้วจะแสดง clinic_subtype.nhso_cancer_type_code', 'ลำดับที่ 6 ต้องมีค่าใช้จ่าย ADP Code = CANCER — ถ้าไม่มี Tools คีย์เพิ่มลง opitemrece ให้ได้', 'ลำดับที่ 7 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ปุ่มปรับข้อมูลเลือกโหมดได้จาก dropdown: เพิ่มที่ขาด / ลบที่เกิน / ทำทั้งสองอย่าง', 'การลบทำเฉพาะใน ovstdiag ซึ่งเป็นที่เดียวกับที่ Tools เขียนลงไป ไม่แตะ doctor_operation เพราะเป็นบันทึกหัตถการของห้องตรวจ'],
+                endpoint: '/api/get-feeschedule-cancer',
+                title: '🎗️ กองทุน CA CANCER',
+                cond: 'ลำดับ 1: Principal Dx มะเร็ง C00-C97/D00-D48 · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: สิทธิ UCS/WEL · ลำดับ 4: ตรวจตามกรณี RTX/เคมีบำบัด · ลำดับ 5: คลินิกมะเร็ง + Protocol · ลำดับ 6: ต้องมี ADP CANCER · ลำดับ 7: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-cancer-fix',
+                fixNoun: 'วินิจฉัย Z510/Z511, ICD9 9925/9224 และ ADP CANCER',
+                fixBarText: 'วิสิตที่ต้องปรับข้อมูลให้ตรงกับกรณี',
+                fixButton: '🛠️ ปรับข้อมูลให้วิสิตที่เลือก',
+                fixChoice: {
+                    key: 'dxMode',
+                    label: 'โหมด:',
+                    options: [
+                        { value: 'add',    label: 'เพิ่มที่ขาด' },
+                        { value: 'remove', label: 'ลบที่เกิน' },
+                        { value: 'both',   label: 'ทำทั้งสองอย่าง' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'lithotripsy': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 คนไข้ที่มีค่าใช้จ่าย ADP Code = 9851', 'ลำดับที่ 4 ต้องมีวินิจฉัย N200 หรือ N201 หรือ N202 อันใดอันหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 5 ต้องมี ICD9 9851 — ถ้าไม่มี Tools เติมให้ได้', 'ลำดับที่ 6 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'lithotripsy',
+                title: '🪨 กองทุนสลายนิ่วในระบบทางเดินปัสสาวะ',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP 9851 · ลำดับ 4: ต้องมี N200/N201/N202 · ลำดับ 5: ต้องมี ICD9 9851 · ลำดับ 6: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย N20x และ ICD9 9851 ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 4 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'N200', label: 'N200' },
+                        { value: 'N201', label: 'N201' },
+                        { value: 'N202', label: 'N202' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'gdm': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 คนไข้ที่มีค่าใช้จ่าย ADP Code = 80008 – 80014 (อันใดอันหนึ่งตามช่วงที่ระบุ)', 'ลำดับที่ 4 ต้องมีวินิจฉัย O244 หรือ O249 อันใดอันหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 5 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'gdm',
+                title: '🤰 กองทุนเบาหวานขณะตั้งครรภ์ (GDM)',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP 80008-80014 · ลำดับ 4: ต้องมี O244/O249 · ลำดับ 5: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย O244/O249 ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 4 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'O244', label: 'O244' },
+                        { value: 'O249', label: 'O249' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'pdm': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 คนไข้ที่มีค่าใช้จ่าย ADP Code = 80015 หรือ 80032 – 80040 (อันใดอันหนึ่งตามช่วงที่ระบุ)', 'ลำดับที่ 4 ต้องมีวินิจฉัย O240 หรือ O241 หรือ O242 หรือ O243 อันใดอันหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 5 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'pdm',
+                title: '🤰 กองทุนเบาหวานก่อนการตั้งครรภ์ (PDM)',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP 80015 หรือ 80032-80040 · ลำดับ 4: ต้องมี O240-O243 · ลำดับ 5: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย O24x ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 4 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'O240', label: 'O240' },
+                        { value: 'O241', label: 'O241' },
+                        { value: 'O242', label: 'O242' },
+                        { value: 'O243', label: 'O243' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            't1dm': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 คนไข้ที่มีค่าใช้จ่าย ADP Code 80001 - 80007 หรือ 80024 - 80028 (อันใดอันหนึ่งตามช่วงที่ระบุ)', 'ลำดับที่ 4 ต้องมีวินิจฉัย E101 - E109 อันใดอันหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 5 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 't1dm',
+                title: '💉 กองทุนเบาหวานอายุรกรรม เด็ก, ผู้ใหญ่ (T1DM)',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP 80001-80007 หรือ 80024-80028 · ลำดับ 4: ต้องมี E101-E109 · ลำดับ 5: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย E10x ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 4 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'E101', label: 'E101' },
+                        { value: 'E102', label: 'E102' },
+                        { value: 'E103', label: 'E103' },
+                        { value: 'E104', label: 'E104' },
+                        { value: 'E105', label: 'E105' },
+                        { value: 'E106', label: 'E106' },
+                        { value: 'E107', label: 'E107' },
+                        { value: 'E108', label: 'E108' },
+                        { value: 'E109', label: 'E109' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'cgm': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 คนไข้ที่มีค่าใช้จ่าย ADP Code 80029 - 80031 (อันใดอันหนึ่งตามช่วงที่ระบุ)', 'ลำดับที่ 4 ต้องมีวินิจฉัย E101 - E109 อันใดอันหนึ่ง — ถ้าไม่มี Tools เติมให้ได้ (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม)', 'ลำดับที่ 5 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับถัดจากนั้นเป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'cgm',
+                title: '📈 กองทุนตรวจวัดระดับน้ำตาลต่อเนื่อง (CGM)',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP 80029-80031 · ลำดับ 4: ต้องมี E101-E109 · ลำดับ 5: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย E10x ลง ovstdiag',
+                fixChoice: {
+                    key: 'pickCode',
+                    label: 'ลำดับ 4 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'E101', label: 'E101' },
+                        { value: 'E102', label: 'E102' },
+                        { value: 'E103', label: 'E103' },
+                        { value: 'E104', label: 'E104' },
+                        { value: 'E105', label: 'E105' },
+                        { value: 'E106', label: 'E106' },
+                        { value: 'E107', label: 'E107' },
+                        { value: 'E108', label: 'E108' },
+                        { value: 'E109', label: 'E109' }
+                    ]
+                },
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
             'fp-implant-remove': {
                 about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP002_2 (ไม่เกิน 1 ครั้ง/3 ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z308 และ ICD9 = 9923 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
                 endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-implant-remove',
@@ -791,7 +1123,8 @@
             all[menu] = all[menu] || {};
             all[menu][key] = v;
             try { localStorage.setItem(FUND_CHOICE_KEY, JSON.stringify(all)); } catch (e) {}
-            paintTable();   // ให้ป้ายสรุปใต้ปุ่มอัปเดตตาม
+            // วาดใหม่ให้ dropdown แสดงค่าที่เพิ่งเลือก — เฉพาะตอนที่มีตารางอยู่จริง
+            if (window.tbl && window.tbl.rows) paintTable();
         }
 
         function fundChoiceBar() {
@@ -861,6 +1194,37 @@
             paintTable();
         }
 
+        // ---------- ระบายสีแดงเฉพาะช่องที่ข้อมูลยังไม่สมบูรณ์ ----------
+        // เมนูที่ API ส่ง _bad มาด้วย (รายชื่อคอลัมน์ที่มีปัญหาของแถวนั้น) จะใช้ค่านั้นตรง ๆ
+        // เพราะบางเมนูตัดสินจากค่าในช่องอย่างเดียวไม่ได้ เช่น CA CANCER กรณี 4
+        // การ "ไม่มี" Z510 คือถูกต้อง แต่การ "มี" ต่างหากที่ผิด
+        // เมนูที่ยังไม่ส่ง _bad มา ใช้ค่าในช่องเป็นตัวตัดสินแบบระวังตัว
+        var CELL_BAD_STATUS = {
+            'ไม่สมบูรณ์': 1, 'ต้องตัดออก': 1, 'ต้องเพิ่ม': 1, 'ไม่มีรายการ HD': 1
+        };
+
+        function cellIsBad(col, val, r) {
+            var marked = r['_bad'];                       // undefined = เมนูนี้ยังไม่ส่งมา
+            if (marked && marked.indexOf(col) !== -1) return true;
+
+            // กฎที่ใช้ได้กับทุกเมนู
+            if (col === 'สถานะ')         return CELL_BAD_STATUS[val] === 1;
+            if (col === 'สิ่งที่ต้องแก้') return !!(val && val !== '-');
+            if (col === 'ต้องเพิ่ม' || col === 'ต้องตัด') return val === 'Y';
+            if (col === 'สถานะเพดาน')    return val === 'เกินเพดาน';
+
+            // เมนูที่ไม่มี _bad — เดาจากค่าในช่อง
+            if (!marked) {
+                // คอลัมน์ที่ "มีค่า = มีปัญหา"
+                if (col === 'ADP ที่ต้องตัด' || col === 'WALKIN/ER-EXT ที่พบ')
+                    return !!(val && String(val).trim());
+                if (col === 'สิ่งที่ขาด')
+                    return !!(val && String(val).trim() && val !== '-');
+                if (val === 'ไม่มี' || val === 'ไม่ผ่าน') return true;
+            }
+            return false;
+        }
+
         // แถวที่ผ่านตัวกรองสมบูรณ์/ไม่สมบูรณ์ — ทั้งการแบ่งหน้าและลำดับอิงชุดนี้
         function tblRows() {
             var t = window.tbl;
@@ -916,7 +1280,9 @@
             if (t.page > pages) t.page = pages;
             var start = (t.page - 1) * t.size;
             var slice = rows.slice(start, start + t.size);
-            var cols = Object.keys(rows.length ? rows[0] : (t.rows[0] || {}));
+            // _bad เป็นข้อมูลภายในบอกว่าช่องไหนผิด ไม่ต้องแสดงเป็นคอลัมน์
+            var cols = Object.keys(rows.length ? rows[0] : (t.rows[0] || {}))
+                             .filter(function (c) { return c !== '_bad'; });
 
             var SIZES = [20, 50, 100, 200, 500, 1000];
             var sizeOpts = SIZES.map(function (n) {
@@ -981,13 +1347,18 @@
             }
 
             // แถบปุ่มเพิ่มข้อมูลที่ขาด (เมนู HD)
+            // เมนูที่ทำได้มากกว่า "เพิ่ม" (เช่น CA CANCER ที่ลบรหัสเกินได้ด้วย)
+            // ตั้งคำของตัวเองผ่าน fixBarText / fixButton ได้
             if (opts.fix && opts.fixCount) {
                 var picked2 = Object.keys(t.sel).length;
+                var fundNow = FUND_ENDPOINTS[window.currentFileView] || {};
+                var barText = fundNow.fixBarText || 'วิสิตที่ต้องเพิ่มข้อมูล';
+                var btnText = fundNow.fixButton  || '➕ เพิ่มข้อมูลที่ขาดให้วิสิตที่เลือก';
                 h += '<div style="display:flex; align-items:center; gap:12px; background:#ffebee; border:1px solid #ffcdd2;' +
                      ' border-radius:10px; padding:12px 14px; margin-bottom:14px; flex-wrap:wrap;">' +
-                     '<span style="font-size:13px; color:#c62828;">พบ <b>' + opts.fixCount + '</b> วิสิตที่ต้องเพิ่มข้อมูล</span>' +
+                     '<span style="font-size:13px; color:#c62828;">พบ <b>' + opts.fixCount + '</b> ' + esc(barText) + '</span>' +
                      '<button onclick="addMissingSelected()" style="padding:8px 16px; background:#c62828; color:white; border:none;' +
-                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">➕ เพิ่มข้อมูลที่ขาดให้วิสิตที่เลือก</button>' +
+                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">' + esc(btnText) + '</button>' +
                      '<label style="font-size:12px; color:#8d6e63; cursor:pointer;">' +
                      '<input type="checkbox" onclick="toggleAllFix(this)"' + (picked2 && picked2 === opts.fixCount ? ' checked' : '') + '> เลือกทั้งหมดที่ต้องเพิ่ม (ทุกหน้า)</label>' +
                      '<span style="font-size:12px; color:#8d6e63;">เลือกไว้ <b>' + picked2 + '</b> วิสิต</span>' +
@@ -1055,7 +1426,10 @@
                 }
                 h += '<td style="' + td + '">' + (start + i + 1).toLocaleString() + '</td>';
                 cols.forEach(function (c) {
-                    h += '<td style="' + td + '">' + esc(r[c]) + '</td>';
+                    // ช่องที่ข้อมูลยังไม่สมบูรณ์ ระบายแดงให้เห็นชัดกว่าสีพื้นของแถว
+                    h += cellIsBad(c, r[c], r)
+                        ? '<td style="' + td + ' background:#ffcdd2; color:#b71c1c; font-weight:700;">' + esc(r[c]) + '</td>'
+                        : '<td style="' + td + '">' + esc(r[c]) + '</td>';
                 });
                 h += '</tr>';
             });
