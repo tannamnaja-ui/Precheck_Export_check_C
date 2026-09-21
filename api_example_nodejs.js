@@ -66,6 +66,8 @@ const OPEN_ENDPOINTS = new Set([
     '/bms-session-login',
     '/generate-token',
     '/token-status',
+    '/db-config-status',
+    '/db-config-save',
     '/shutdown'
 ]);
 
@@ -149,6 +151,90 @@ app.use('/api', (req, res, next) => {
         res.json = (payload) => origJson(encryptPayload(payload, stored.token));
     }
     next();
+});
+
+// ============================================================================
+// ค่าเชื่อมต่อฐานข้อมูลที่เก็บไว้ฝั่งเซิร์ฟเวอร์
+// ----------------------------------------------------------------------------
+// เดิมค่าเชื่อมต่อเก็บใน localStorage ของเบราว์เซอร์แต่ละเครื่อง
+// พอใช้งานแบบเซิร์ฟเวอร์กลาง (เช่น http://192.168.100.108:3002) จะมีปัญหา
+//   - ผู้ใช้ทุกเครื่องต้องกรอก host/user/password ของฐานข้อมูลเอง
+//   - ล้าง cache หรือเปลี่ยนเครื่อง = ใช้งานไม่ได้ทันที
+//   - password ฐานข้อมูลกระจายไปอยู่ทุกเครื่อง
+//
+// เปลี่ยนมาเก็บที่เซิร์ฟเวอร์ไฟล์เดียว ตั้งครั้งเดียวจบ
+// แล้วให้ middleware เติมค่าลงใน body ของทุก request ที่เรียก /api/
+// endpoint เดิมทั้งหมดจึงทำงานได้โดยไม่ต้องแก้ และเครื่องลูกข่ายไม่ต้องรู้ password
+// ============================================================================
+const DBCFG_FILE = path.join(staticDir, 'preex-dbconfig.json');
+
+function readDbConfig() {
+    try {
+        const o = JSON.parse(fs.readFileSync(DBCFG_FILE, 'utf8'));
+        return (o && o.host && o.database) ? o : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeDbConfig(cfg) {
+    fs.writeFileSync(DBCFG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+}
+
+// เติมค่าเชื่อมต่อให้ทุก request ที่ยังไม่ได้ส่งมาครบ
+// ถ้าเครื่องลูกข่ายส่ง host/user/password มาเองก็ใช้ของเขา (เข้ากันได้กับรุ่นเดิม)
+app.use('/api', (req, res, next) => {
+    const cfg = readDbConfig();
+    if (cfg && req.body && typeof req.body === 'object' && req.body.__enc !== 1) {
+        const b = req.body;
+        if (!b.host)     b.host = cfg.host;
+        if (!b.port)     b.port = cfg.port;
+        if (!b.database) b.database = cfg.database;
+        if (!b.user)     b.user = cfg.user;
+        if (b.password === undefined || b.password === null || b.password === '') b.password = cfg.password;
+        if (!b.type)     b.type = cfg.type;
+    }
+    next();
+});
+
+// สถานะค่าเชื่อมต่อของเซิร์ฟเวอร์ — ไม่คืน password ออกไป
+app.post('/api/db-config-status', (req, res) => {
+    const cfg = readDbConfig();
+    if (!cfg) return res.json({ success: true, configured: false });
+    res.json({
+        success: true,
+        configured: true,
+        host: cfg.host,
+        port: cfg.port,
+        database: cfg.database,
+        user: cfg.user,
+        type: cfg.type,
+        savedAt: cfg.savedAt || null
+    });
+});
+
+// บันทึกค่าเชื่อมต่อลงเซิร์ฟเวอร์ (ผู้ดูแลตั้งครั้งเดียว)
+// ทดสอบเชื่อมต่อให้ผ่านก่อน จะได้ไม่บันทึกค่าที่ใช้ไม่ได้ทับของเดิม
+app.post('/api/db-config-save', async (req, res) => {
+    try {
+        const { host, port, database, user, password, type } = req.body || {};
+        if (!host || !port || !database || !user) {
+            return res.json({ success: false, error: 'กรอกข้อมูลการเชื่อมต่อให้ครบก่อน' });
+        }
+        const cfg = { host, port: String(port), database, user, password: password || '', type: type || 'postgresql' };
+
+        try {
+            await fsRun(cfg, 'SELECT 1 AS ok', []);
+        } catch (e) {
+            return res.json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่ได้: ' + e.message });
+        }
+
+        cfg.savedAt = new Date().toISOString();
+        writeDbConfig(cfg);
+        res.json({ success: true, message: 'บันทึกค่าเชื่อมต่อลงเซิร์ฟเวอร์แล้ว เครื่องลูกข่ายไม่ต้องตั้งค่าเอง' });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
 });
 
 // ------------------------------------------------------------- token endpoints

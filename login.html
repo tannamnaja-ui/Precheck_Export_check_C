@@ -445,14 +445,27 @@ async function testConn() {
     } catch(e) { showSetMsg('error', '❌ เชื่อมต่อ API ไม่ได้: ' + e.message); }
 }
 
-function saveConn() {
+// บันทึกลงเซิร์ฟเวอร์เป็นหลัก เครื่องลูกข่ายอื่นจะได้ใช้ค่าเดียวกันโดยไม่ต้องตั้งเอง
+// ถ้าเซิร์ฟเวอร์รุ่นเก่ายังไม่มีปลายทางนี้ ก็ยังเก็บลงเครื่องนี้ให้เหมือนเดิม
+async function saveConn() {
     const cfg = getSettingsValues();
     if (!cfg.host || !cfg.port || !cfg.database || !cfg.user) {
         showSetMsg('error', '⚠️ กรุณากรอกข้อมูลให้ครบก่อนบันทึก'); return;
     }
     localStorage.setItem('dbConnection', JSON.stringify(cfg));
-    showSetMsg('success', '✅ บันทึกแล้ว กำลังกลับหน้าเข้าสู่ระบบ...');
-    setTimeout(() => showView('login'), 1000);
+    showSetMsg('success', '⏳ กำลังบันทึกลงเซิร์ฟเวอร์...');
+    try {
+        const r = await fetch(`${API}/api/db-config-save`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cfg)
+        });
+        const d = await r.json();
+        if (d.success) showSetMsg('success', '✅ ' + d.message);
+        else           showSetMsg('error', '⚠️ บันทึกลงเครื่องนี้แล้ว แต่เซิร์ฟเวอร์ไม่รับ: ' + d.error);
+    } catch (e) {
+        showSetMsg('error', '⚠️ บันทึกลงเครื่องนี้แล้ว แต่ติดต่อเซิร์ฟเวอร์ไม่ได้: ' + e.message);
+    }
+    setTimeout(() => showView('login'), 1200);
 }
 
 // ==================== Login ====================
@@ -468,8 +481,13 @@ async function doLogin() {
     showLoginError('');
     if (!username || !password) { showLoginError('⚠️ กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'); return; }
 
-    const saved = localStorage.getItem('dbConnection');
-    if (!saved) { showLoginError('⚠️ ยังไม่ได้ตั้งค่าการเชื่อมต่อ กรุณากด "ตั้งค่าการเชื่อมต่อ" ก่อน'); return; }
+    let saved = localStorage.getItem('dbConnection');
+    if (!saved) {
+        // เครื่องลูกข่ายเปิดครั้งแรก ยังไม่มีค่าในเครื่อง -> ขอจากเซิร์ฟเวอร์
+        await pullServerDbConfig();
+        saved = localStorage.getItem('dbConnection');
+    }
+    if (!saved) { showLoginError('⚠️ เซิร์ฟเวอร์ยังไม่ได้ตั้งค่าการเชื่อมต่อฐานข้อมูล กรุณาแจ้งผู้ดูแลระบบ'); return; }
 
     const cfg = JSON.parse(saved);
     const btn = document.getElementById('btn-login');
@@ -753,7 +771,29 @@ function bmsLoginFromInput() {
     }
 })();
 
+// เครื่องลูกข่ายที่ยังไม่มีค่าเชื่อมต่อ ให้ดึงจากเซิร์ฟเวอร์มาใช้
+// password ไม่ได้ถูกส่งออกมา เซิร์ฟเวอร์จะเติมให้เองตอนเรียก API
+async function pullServerDbConfig() {
+    try {
+        const r = await fetch(`${API}/api/db-config-status`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+        });
+        const d = await r.json();
+        if (!d || !d.configured) return false;
+        const saved = localStorage.getItem('dbConnection');
+        if (!saved) {
+            localStorage.setItem('dbConnection', JSON.stringify({
+                host: d.host, port: d.port, database: d.database,
+                user: d.user, password: '', type: d.type,
+                apiUrl: window.location.origin, fromServer: true
+            }));
+        }
+        return true;
+    } catch (e) { return false; }
+}
+
 // Init
+pullServerDbConfig().then(updateConnStatus);
 updateConnStatus();
 refreshTokenState();
 
