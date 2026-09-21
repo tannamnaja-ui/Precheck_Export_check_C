@@ -6,16 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบตรวจสอบข้อมูลพื้นฐาน สำหรับใช้งาน</title>
     <script>
+        // Login guard — ยังไม่ได้เข้าระบบให้ไปหน้า login
+        // เปิดมาจาก Dashboard ของ HOSxP จะมี ?bms-session-id ติดมากับ URL
+        // ต้องส่งต่อไปหน้า login ด้วย ไม่งั้นพารามิเตอร์หายแล้วผู้ใช้ต้อง login ซ้ำ
+        // แนบ next ไว้ให้กลับมาหน้าเดิมหลังยืนยัน session เสร็จ
         (function() {
-            try {
-                const session = JSON.parse(localStorage.getItem('loginSession') || 'null');
-                const TIMEOUT = 8 * 60 * 60 * 1000;
-                if (!session || !session.loginTime || (Date.now() - session.loginTime) > TIMEOUT) {
-                    localStorage.removeItem('loginSession');
+            function gotoLogin() {
+                try {
+                    var p = new URLSearchParams(window.location.search);
+                    var sid = p.get('bms-session-id') || '';
+                    p.delete('bms-session-id');
+                    var here = window.location.pathname.split('/').pop() || 'index_first.html';
+                    var rest = p.toString();
+                    var q = [];
+                    if (sid) q.push('bms-session-id=' + encodeURIComponent(sid));
+                    q.push('next=' + encodeURIComponent(here + (rest ? '?' + rest : '')));
+                    window.location.replace('login.html?' + q.join('&'));
+                } catch (err) {
                     window.location.replace('login.html');
                 }
+            }
+            try {
+                const session = JSON.parse(localStorage.getItem('loginSession') || 'null');
+                const TIMEOUT = 8 * 60 * 60 * 1000; // 8 ชั่วโมง
+                if (!session || !session.loginTime || (Date.now() - session.loginTime) > TIMEOUT) {
+                    localStorage.removeItem('loginSession');
+                    gotoLogin();
+                }
             } catch(e) {
-                window.location.replace('login.html');
+                gotoLogin();
             }
         })();
     </script>

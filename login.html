@@ -492,7 +492,7 @@ async function doLogin() {
                 name: data.name || username,
                 loginTime: Date.now()
             }));
-            window.location.href = 'index_first.html';
+            window.location.href = loginNextPage();
         } else {
             showLoginError('❌ ' + (data.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'));
         }
@@ -666,6 +666,21 @@ function getCookie(name) {
     return m ? decodeURIComponent(m[2]) : '';
 }
 
+// หน้าที่จะพาไปหลัง login สำเร็จ
+// guard ของหน้าอื่นจะแนบ next มาให้ เช่นเปิดจาก dashboard มาที่ fund_feeschedule.html
+// รับเฉพาะชื่อไฟล์ .html ในเว็บเดียวกัน กันการถูกพาไปเว็บอื่น
+function loginNextPage() {
+    var def = 'index_first.html';
+    try {
+        var n = new URLSearchParams(window.location.search).get('next') || '';
+        if (!n) return def;
+        if (/^[a-zA-Z][a-zA-Z0-9+.\-]*:/.test(n)) return def;   // มี scheme เช่น http:
+        if (n.charAt(0) === '/' || n.indexOf('..') !== -1) return def;
+        if (!/^[A-Za-z0-9_.\-]+\.html(\?[^#]*)?$/.test(n)) return def;
+        return n;
+    } catch (e) { return def; }
+}
+
 function bmsStatus(msg, color) {
     const el = document.getElementById('bms-status');
     if (el) { el.textContent = msg; el.style.color = color || '#607d8b'; }
@@ -694,7 +709,7 @@ async function bmsLogin(sessionId, silent) {
                 loginTime: Date.now()
             }));
             bmsStatus(`✅ ยืนยันแล้ว: ${d.name || ''} ${d.location ? '— ' + d.location : ''}`, '#2e7d32');
-            window.location.href = 'index_first.html';
+            window.location.href = loginNextPage();
             return true;
         }
         // session เสียแล้ว -> ล้าง cookie ทิ้ง จะได้ไม่ลองซ้ำทุกครั้ง
@@ -728,10 +743,13 @@ function bmsLoginFromInput() {
         bmsLogin(fromUrl, true);
         return;
     }
+    // เคยยืนยัน session ไว้แล้วภายใน 7 วัน -> เข้าให้เลย ไม่ต้องกดปุ่มซ้ำ
+    // ถ้า session หมดอายุ bmsLogin จะล้าง cookie แล้วแสดงฟอร์มให้ login เองตามปกติ
     const fromCookie = getCookie('bms-session-id');
     if (fromCookie) {
         document.getElementById('bms-session-input').value = fromCookie;
-        bmsStatus('พบ Session ที่เคยใช้ไว้ — กดปุ่มด้านล่างเพื่อเข้าระบบ');
+        bmsStatus('⏳ พบ Session ที่เคยใช้ไว้ — กำลังเข้าระบบให้อัตโนมัติ...');
+        bmsLogin(fromCookie, true);
     }
 })();
 
