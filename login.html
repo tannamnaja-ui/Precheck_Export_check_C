@@ -388,7 +388,9 @@ async function updateConnStatus() {
 }
 
 // ==================== Settings form ====================
-function loadSettingsForm() {
+async function loadSettingsForm() {
+    // ยังไม่มีค่าในเครื่อง -> ขอจากเซิร์ฟเวอร์ก่อน ฟอร์มจะได้ไม่ว่างเปล่า
+    if (!localStorage.getItem('dbConnection')) await pullServerDbConfig();
     const saved = localStorage.getItem('dbConnection');
     const defaultPort = { mysql: '3306', postgresql: '5432' };
     if (saved) {
@@ -704,6 +706,43 @@ function bmsStatus(msg, color) {
     if (el) { el.textContent = msg; el.style.color = color || '#607d8b'; }
 }
 
+// ยืนยัน BMS session ตรงจากเบราว์เซอร์
+// คืน null เมื่อเรียกไม่สำเร็จ (เช่นโดน CORS หรือเน็ตไม่ถึง) เพื่อให้ไปลองทางเซิร์ฟเวอร์ต่อ
+// คืน object เมื่อได้คำตอบจาก hosxp.net จริง ไม่ว่าจะผ่านหรือไม่ผ่าน
+async function bmsVerifyInBrowser(sessionId) {
+    try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 12000);
+        let data;
+        try {
+            const r = await fetch(
+                'https://hosxp.net/phapi/PasteJSON?Action=GET&code=' + encodeURIComponent(sessionId),
+                { headers: { 'Accept': 'application/json' }, signal: ctrl.signal });
+            data = await r.json();
+        } finally { clearTimeout(tid); }
+
+        if (!data) return null;
+        if (data.MessageCode !== 200) {
+            return {
+                success: false,
+                error: data.MessageCode === 500
+                    ? 'BMS Session หมดอายุแล้ว กรุณา login ใหม่จาก HOSxP'
+                    : 'ยืนยัน BMS Session ไม่สำเร็จ (MessageCode: ' + data.MessageCode + ')'
+            };
+        }
+        const ui = (data.result && data.result.user_info) || {};
+        return {
+            success: true,
+            name: ui.name || '',
+            location: ui.location || '',
+            doctorCode: ui.doctor_code || '',
+            via: 'browser'
+        };
+    } catch (e) {
+        return null;   // เบราว์เซอร์ก็ไปไม่ถึง ให้เซิร์ฟเวอร์ลองแทน
+    }
+}
+
 async function bmsLogin(sessionId, silent) {
     sessionId = (sessionId || '').trim();
     if (!sessionId) { if (!silent) bmsStatus('⚠️ กรุณาวาง BMS Session ID ก่อน', '#c62828'); return false; }
@@ -712,11 +751,17 @@ async function bmsLogin(sessionId, silent) {
     if (btn) { btn.classList.add('loading'); btn.textContent = '⏳ กำลังยืนยัน Session...'; }
     bmsStatus('⏳ กำลังยืนยัน Session กับ HOSxP...');
     try {
-        const res = await fetch(`${API}/api/bms-session-login`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId })
-        });
-        const d = await res.json();
+        // ยืนยันจากเบราว์เซอร์ก่อน แล้วค่อยถอยไปให้เซิร์ฟเวอร์ยืนยันแทน
+        // เพราะเครื่องเซิร์ฟเวอร์ใน รพ. ส่วนใหญ่ออกอินเทอร์เน็ตไม่ได้ (ขึ้น terminated)
+        // ส่วนเบราว์เซอร์ของผู้ใช้ออกได้อยู่แล้ว เพราะเปิด BMS Dashboard มา
+        let d = await bmsVerifyInBrowser(sessionId);
+        if (!d) {
+            const res = await fetch(`${API}/api/bms-session-login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId })
+            });
+            d = await res.json();
+        }
         if (d.success) {
             setCookie('bms-session-id', sessionId, 7);
             localStorage.setItem('loginSession', JSON.stringify({

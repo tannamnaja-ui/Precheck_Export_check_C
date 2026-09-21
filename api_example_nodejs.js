@@ -168,13 +168,38 @@ app.use('/api', (req, res, next) => {
 // ============================================================================
 const DBCFG_FILE = path.join(staticDir, 'preex-dbconfig.json');
 
-function readDbConfig() {
+// ไฟล์ค่าเชื่อมต่อเดิมของ hosxp_checker ที่หลาย รพ. ตั้งไว้อยู่แล้ว
+// ใช้ชื่อฟิลด์คนละแบบ (db_type / db / pass) จึงต้องแปลงก่อนใช้
+const LEGACY_DBCFG_FILE = path.join(staticDir, 'hosxp_checker', '.config.json');
+
+function readLegacyDbConfig() {
     try {
-        const o = JSON.parse(fs.readFileSync(DBCFG_FILE, 'utf8'));
-        return (o && o.host && o.database) ? o : null;
+        const o = JSON.parse(fs.readFileSync(LEGACY_DBCFG_FILE, 'utf8'));
+        if (!o || !o.host || !o.db) return null;
+        const t = String(o.db_type || '').toLowerCase();
+        return {
+            host: String(o.host),
+            port: String(o.port || (t.indexOf('pg') === 0 ? 5432 : 3306)),
+            database: String(o.db),
+            user: String(o.user || ''),
+            password: String(o.pass === undefined || o.pass === null ? '' : o.pass),
+            // hosxp_checker เขียนว่า pgsql ส่วนโปรแกรมนี้ใช้ postgresql
+            type: (t.indexOf('pg') === 0 || t.indexOf('postgres') === 0) ? 'postgresql' : 'mysql',
+            fromLegacy: true
+        };
     } catch (e) {
         return null;
     }
+}
+
+// ลำดับ: ไฟล์ที่ตั้งผ่านหน้าเว็บก่อน ถ้ายังไม่เคยตั้งค่อยใช้ของ hosxp_checker
+// เครื่องที่ตั้ง hosxp_checker ไว้อยู่แล้วจึงใช้งานได้ทันทีโดยไม่ต้องตั้งซ้ำ
+function readDbConfig() {
+    try {
+        const o = JSON.parse(fs.readFileSync(DBCFG_FILE, 'utf8'));
+        if (o && o.host && o.database) return o;
+    } catch (e) { /* ยังไม่เคยตั้งค่าผ่านหน้าเว็บ */ }
+    return readLegacyDbConfig();
 }
 
 function writeDbConfig(cfg) {
@@ -9754,7 +9779,7 @@ app.post('/api/add-feeschedule-simple-missing', async (req, res) => {
 //               กรณี 4  มาพบแพทย์เฉย ๆ -> ไม่ต้องมีรหัสพวกนี้ ถ้ามีถือว่าเกิน ลบออกได้
 //   ลำดับที่ 5  ตรวจการลงทะเบียนคลินิกมะเร็ง (clinicmember + clinic ที่
 //               hosxp_clinic_type_id = 7) และดึง Protocol จาก
-//               clinic_subtype.nhso_cancer_type_code
+//               clinic_subtype.nhso_export_code
 //   ลำดับที่ 6  ต้องมีค่าใช้จ่าย ADP Code = CANCER — ไม่มีให้ Tools คีย์เพิ่มได้
 //   ลำดับที่ 7  ต้องไม่มี ADP WALKIN / ER-EXT — ถ้ามี Tools ลบออกให้ได้
 //
@@ -9803,8 +9828,13 @@ app.post('/api/get-feeschedule-cancer', async (req, res) => {
 
         // Protocol อ่านได้เฉพาะรุ่นที่มี clinicmember.clinic_subtype_id และตาราง clinic_subtype
         const hasSubtypeCol = await fsHasColumn(cfg, 'clinicmember', 'clinic_subtype_id');
-        const hasSubtypeTbl = await fsHasColumn(cfg, 'clinic_subtype', 'nhso_cancer_type_code');
-        const canProtocol = hasSubtypeCol && hasSubtypeTbl;
+        // Protocol มะเร็งอยู่ที่ clinic_subtype.nhso_export_code
+        // บางรุ่นอาจใช้ชื่ออื่น จึงไล่หาชื่อที่มีจริงในฐานข้อมูลนั้น
+        let PROTO_COL = null;
+        for (const c of ['nhso_export_code', 'nhso_cancer_type_code', 'export_code']) {
+            if (await fsHasColumn(cfg, 'clinic_subtype', c)) { PROTO_COL = c; break; }
+        }
+        const canProtocol = hasSubtypeCol && !!PROTO_COL;
 
         const cancerPrefix = `SUBSTRING(dm.icd10, 1, 3) IN (${q(fsCancerPrefixes())})`;
 
@@ -9833,13 +9863,15 @@ app.post('/api/get-feeschedule-cancer', async (req, res) => {
         const inCancerClinic = `EXISTS (
                     SELECT 1 FROM clinicmember cm JOIN clinic cl ON cl.clinic = cm.clinic
                     WHERE cm.hn = ov.hn AND cl.hosxp_clinic_type_id = '${CANCER_CLINIC_TYPE}')`;
+        // ดึง Protocol เฉพาะสมาชิกคลินิกมะเร็ง (clinic.hosxp_clinic_type_id = 7) ที่ระบุ clinic_subtype_id ไว้แล้ว
         const protocolAgg = canProtocol
-            ? fsAgg(isPg, 'cs.nhso_cancer_type_code', `
+            ? fsAgg(isPg, 'cs.' + PROTO_COL, `
                     FROM clinicmember cm2
                     JOIN clinic cl2 ON cl2.clinic = cm2.clinic
                     JOIN clinic_subtype cs ON cs.clinic_subtype_id = cm2.clinic_subtype_id
                     WHERE cm2.hn = ov.hn AND cl2.hosxp_clinic_type_id = '${CANCER_CLINIC_TYPE}'
-                      AND cs.nhso_cancer_type_code IS NOT NULL AND cs.nhso_cancer_type_code <> ''`)
+                      AND cm2.clinic_subtype_id IS NOT NULL
+                      AND cs.${PROTO_COL} IS NOT NULL AND cs.${PROTO_COL} <> ''`)
             : `NULL`;
 
         const dxPrincipalAgg = fsAgg(isPg, 'dp.icd10',
@@ -9931,11 +9963,15 @@ app.post('/api/get-feeschedule-cancer', async (req, res) => {
 
             // ลำดับที่ 5 — สถานะคลินิกมะเร็ง
             const proto = r.f_protocol;
+            // คอลัมน์นี้มีได้ 3 สถานะเท่านั้น
+            //   1. เป็นสมาชิกคลินิกมะเร็งและระบุ clinic_subtype_id แล้ว -> แสดง Protocol (nhso_export_code)
+            //   2. ไม่พบใน clinicmember หรือคลินิกไม่ใช่ประเภท 7        -> ยังไม่ลงทะเบียนคลินิกมะเร็ง
+            //   3. เป็นสมาชิกแล้วแต่ clinic_subtype_id ว่าง             -> ยังไม่ได้ระบุ Protocol
+            const hasProto = !(proto === null || proto === undefined || String(proto).trim() === '');
             let clinicText;
-            if (!Y(r.f_clinic))                                  clinicText = 'ยังไม่ลงทะเบียนคลินิกมะเร็ง';
-            else if (!canProtocol)                               clinicText = 'ลงทะเบียนแล้ว (ฐานข้อมูลนี้ไม่มีข้อมูล Protocol)';
-            else if (proto === null || proto === undefined || String(proto) === '') clinicText = 'ยังไม่ได้ระบุ Protocol';
-            else                                                 clinicText = String(proto);
+            if (!Y(r.f_clinic))   clinicText = 'ยังไม่ลงทะเบียนคลินิกมะเร็ง';
+            else if (hasProto)    clinicText = String(proto).trim();
+            else                  clinicText = 'ยังไม่ได้ระบุ Protocol';
 
             const problems = [];
             if (missing.length)   problems.push('ต้องเพิ่ม ' + missing.join('/'));
@@ -9943,8 +9979,7 @@ app.post('/api/get-feeschedule-cancer', async (req, res) => {
             if (extraProc.length) problems.push('มีเกิน ' + extraProc.join('/') + ' ใน doctor_operation (ลบเองในโปรแกรมหลัก)');
             if (noAdp)          problems.push('ต้องเพิ่ม ADP ' + CANCER_ADP);
             if (!Y(r.f_clinic)) problems.push('ยังไม่ลงทะเบียนคลินิกมะเร็ง');
-            else if (canProtocol && (proto === null || proto === undefined || String(proto) === ''))
-                                problems.push('ยังไม่ได้ระบุ Protocol');
+            else if (!hasProto) problems.push('ยังไม่ได้ระบุ Protocol');
             if (bad)            problems.push('ต้องตัด ADP ' + CANCER_BAD_ADP.join('/'));
 
             const o = {
@@ -10002,7 +10037,7 @@ app.post('/api/get-feeschedule-cancer', async (req, res) => {
             success: true, data: rows, count: rows.length,
             needFix, needCut, incomplete, cuttable: !!needCut,
             caseSummary: Object.keys(byCase).sort().map(k => k + ' ' + byCase[k]).join(' · '),
-            protocolSource: canProtocol ? 'clinic_subtype.nhso_cancer_type_code' : 'ฐานข้อมูลนี้ไม่มี clinic_subtype'
+            protocolSource: canProtocol ? ('clinic_subtype.' + PROTO_COL) : 'ฐานข้อมูลนี้ไม่มีตาราง clinic_subtype'
         });
     } catch (error) {
         console.error('feeschedule-cancer error:', error);
