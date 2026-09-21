@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <script src="api_guard.js"></script>
+    <!-- SheetJS เก็บไว้ในเครื่อง ไม่ดึงจาก CDN เพราะเครื่องเซิร์ฟเวอร์ รพ. ออกอินเทอร์เน็ตไม่ได้ -->
+    <script src="xlsx.bundle.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fee Schedule</title>
     <link rel="stylesheet" href="styles.css">
@@ -1183,10 +1185,88 @@
                 rows: rows || [], title: title, subtitle: subtitle, opts: opts || {},
                 page: 1,
                 size: (window.tbl && window.tbl.size) || 20,   // จำจำนวนต่อหน้าที่เลือกไว้ข้ามการค้นหา
-                sel: {},
+                // แยกที่เก็บของสองคอลัมน์ ไม่งั้นติ๊ก "ตัด" แล้วไปติด "เพิ่ม" ด้วย
+                selCut: {},
+                selFix: {},
                 filter: 'all'
             };
             paintTable();
+        }
+
+        // ---------- บันทึกเป็นไฟล์ Excel ----------
+        // เอาเฉพาะที่แสดงอยู่บนจอ (ตามปุ่มกรอง ทั้งหมด/ไม่สมบูรณ์/สมบูรณ์)
+        // ระบายสีแดงช่องเดียวกับที่เห็นบนหน้าจอ จะได้เอาไปไล่แก้ต่อได้เลย
+        function exportExcel() {
+            if (typeof XLSX === 'undefined') {
+                alert('❌ ไม่พบไลบรารีสำหรับสร้างไฟล์ Excel (xlsx.bundle.js)');
+                return;
+            }
+            var t = window.tbl;
+            if (!t || !t.rows || !t.rows.length) { alert('ยังไม่มีข้อมูลให้บันทึก'); return; }
+
+            var rows = tblRows();
+            if (!rows.length) { alert('ไม่มีข้อมูลในตัวกรองที่เลือกอยู่'); return; }
+
+            var cols = Object.keys(rows[0]).filter(function (c) { return c !== '_bad'; });
+            var data = rows.map(function (r) {
+                var o = {};
+                cols.forEach(function (c) { o[c] = (r[c] === null || r[c] === undefined) ? '' : r[c]; });
+                return o;
+            });
+
+            var ws = XLSX.utils.json_to_sheet(data, { header: cols });
+
+            // หัวตาราง: พื้นฟ้า ตัวขาว ตรึงแถวบนไว้
+            cols.forEach(function (c, i) {
+                var cell = ws[XLSX.utils.encode_cell({ r: 0, c: i })];
+                if (!cell) return;
+                cell.s = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' } },
+                    fill: { fgColor: { rgb: '2196F3' } },
+                    alignment: { horizontal: 'center', vertical: 'center' }
+                };
+            });
+
+            // ช่องที่ข้อมูลไม่สมบูรณ์ ระบายแดงให้เหมือนบนหน้าจอ
+            rows.forEach(function (r, ri) {
+                cols.forEach(function (c, ci) {
+                    if (!cellIsBad(c, r[c], r)) return;
+                    var cell = ws[XLSX.utils.encode_cell({ r: ri + 1, c: ci })];
+                    if (!cell) return;
+                    cell.s = {
+                        font: { bold: true, color: { rgb: 'B71C1C' } },
+                        fill: { fgColor: { rgb: 'FFCDD2' } }
+                    };
+                });
+            });
+
+            // ความกว้างคอลัมน์ กะจากความยาวข้อมูลจริง
+            ws['!cols'] = cols.map(function (c) {
+                var w = c.length;
+                rows.forEach(function (r) {
+                    var v = String(r[c] === null || r[c] === undefined ? '' : r[c]);
+                    if (v.length > w) w = v.length;
+                });
+                return { wch: Math.min(Math.max(w + 2, 10), 55) };
+            });
+            // ใส่ตัวกรองให้หัวตาราง ผู้ใช้กดกรองต่อใน Excel ได้เลย
+            ws['!autofilter'] = { ref: XLSX.utils.encode_range({
+                s: { r: 0, c: 0 }, e: { r: rows.length, c: cols.length - 1 } }) };
+
+            // ชื่อชีตห้ามเกิน 31 ตัว และห้ามมีอักขระต้องห้าม
+            var menu = window.currentFileView || 'fund';
+            var sheetName = String(menu).replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31);
+
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+            var df = (document.getElementById('dateFrom') || {}).value || '';
+            var dt = (document.getElementById('dateTo') || {}).value || '';
+            var span = (df && dt) ? (df + '_ถึง_' + dt) : new Date().toISOString().slice(0, 10);
+            var mode = t.filter === 'incomplete' ? '_เฉพาะไม่สมบูรณ์'
+                     : t.filter === 'complete'   ? '_เฉพาะสมบูรณ์' : '';
+
+            XLSX.writeFile(wb, 'FeeSchedule_' + menu + '_' + span + mode + '.xlsx');
         }
 
         // ---------- ระบายสีแดงเฉพาะช่องที่ข้อมูลยังไม่สมบูรณ์ ----------
@@ -1255,8 +1335,10 @@
             paintTable();
         }
 
-        function tblSel(vn, on) {
-            if (on) { window.tbl.sel[vn] = true; } else { delete window.tbl.sel[vn]; }
+        // kind = 'cut' หรือ 'fix' บอกว่าติ๊กมาจากคอลัมน์ไหน
+        function tblSel(kind, vn, on) {
+            var store = (kind === 'cut') ? window.tbl.selCut : window.tbl.selFix;
+            if (on) { store[vn] = true; } else { delete store[vn]; }
         }
 
         function paintTable() {
@@ -1319,8 +1401,12 @@
 
             var h = '<div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:6px;">' +
                       '<h3 style="margin:0; color:#1565c0;">' + esc(t.title) + '</h3>' + fundOptBar() + filterBar + pager +
+                      '<button onclick="exportExcel()" title="บันทึกข้อมูลที่แสดงอยู่เป็นไฟล์ Excel"' +
+                      ' style="margin-left:auto; padding:6px 14px; border:none; background:#2e7d32;' +
+                      ' color:white; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer;">' +
+                      '📗 Export Excel</button>' +
                       '<button onclick="showAbout()" title="ดูเงื่อนไขของเมนูนี้"' +
-                      ' style="margin-left:auto; padding:6px 14px; border:1px solid #1565c0; background:white;' +
+                      ' style="padding:6px 14px; border:1px solid #1565c0; background:white;' +
                       ' color:#1565c0; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer;">' +
                       'ℹ️ About</button>' +
                     '</div>' +
@@ -1329,7 +1415,7 @@
 
             // แถบปุ่มตัดรายการ (เฉพาะเมนูที่เปิดโหมดนี้ และมีแถวที่ต้องตัด)
             if (opts.cut && opts.cutCount) {
-                var picked = Object.keys(t.sel).length;
+                var picked = Object.keys(t.selCut || {}).length;
                 h += '<div style="display:flex; align-items:center; gap:12px; background:#fff3e0; border:1px solid #ffe0b2;' +
                      ' border-radius:10px; padding:12px 14px; margin-bottom:14px; flex-wrap:wrap;">' +
                      '<span style="font-size:13px; color:#e65100;">พบ <b>' + opts.cutCount + '</b> วิสิตที่มี ' + esc(opts.cutNoun || 'รายการที่ต้องตัด') + ' ติดอยู่</span>' +
@@ -1347,7 +1433,7 @@
             // เมนูที่ทำได้มากกว่า "เพิ่ม" (เช่น CA CANCER ที่ลบรหัสเกินได้ด้วย)
             // ตั้งคำของตัวเองผ่าน fixBarText / fixButton ได้
             if (opts.fix && opts.fixCount) {
-                var picked2 = Object.keys(t.sel).length;
+                var picked2 = Object.keys(t.selFix || {}).length;
                 var fundNow = FUND_ENDPOINTS[window.currentFileView] || {};
                 var barText = fundNow.fixBarText || 'วิสิตที่ต้องเพิ่มข้อมูล';
                 var btnText = fundNow.fixButton  || '➕ เพิ่มข้อมูลที่ขาดให้วิสิตที่เลือก';
@@ -1411,17 +1497,19 @@
                     return td + ' text-align:center; position:sticky; left:' + left + 'px; z-index:2;' +
                            ' width:' + CHK_W + 'px; min-width:' + CHK_W + 'px;' + (edge ? stickyEdge : '');
                 };
-                var box = function () {
-                    return '<input type="checkbox" value="' + esc(vn) + '"' + (t.sel[vn] ? ' checked' : '') +
-                           ' onchange="tblSel(this.value, this.checked)">';
+                var box = function (kind) {
+                    var store = (kind === 'cut') ? (t.selCut || {}) : (t.selFix || {});
+                    return '<input type="checkbox" value="' + esc(vn) + '"' + (store[vn] ? ' checked' : '') +
+                           ' onchange="tblSel(' + String.fromCharCode(39) + kind + String.fromCharCode(39) +
+                           ', this.value, this.checked)">';
                 };
 
                 h += '<tr>';
                 if (opts.cut) {
-                    h += '<td style="' + tdChk(cutLeft, lastChk === 'cut') + '">' + (need ? box() : '') + '</td>';
+                    h += '<td style="' + tdChk(cutLeft, lastChk === 'cut') + '">' + (need ? box('cut') : '') + '</td>';
                 }
                 if (opts.fix) {
-                    h += '<td style="' + tdChk(fixLeft, lastChk === 'fix') + '">' + (needFix ? box() : '') + '</td>';
+                    h += '<td style="' + tdChk(fixLeft, lastChk === 'fix') + '">' + (needFix ? box('fix') : '') + '</td>';
                 }
                 h += '<td style="' + td + '">' + (start + i + 1).toLocaleString() + '</td>';
                 cols.forEach(function (c) {
@@ -1949,12 +2037,13 @@
             return n;
         }
 
+        // แตะเฉพาะรายการของคอลัมน์ "เพิ่ม" ไม่ไปยุ่งกับคอลัมน์ "ตัด"
         function toggleAllFix(master) {
             var t = window.tbl;
-            t.sel = {};
+            t.selFix = {};
             if (master.checked) {
                 t.rows.forEach(function (r) {
-                    if (rowNeedsFix(r)) t.sel[String(r['VN'])] = true;
+                    if (rowNeedsFix(r)) t.selFix[String(r['VN'])] = true;
                 });
             }
             paintTable();
@@ -1967,7 +2056,7 @@
 
         async function addMissingSelected() {
             if (window.tblBusy) return;
-            var vns = Object.keys(window.tbl.sel || {});
+            var vns = Object.keys(window.tbl.selFix || {});
             if (!vns.length) { alert('กรุณาเลือกวิสิตที่ต้องการเพิ่มข้อมูลก่อน'); return; }
 
             var fund = FUND_ENDPOINTS[window.currentFileView] || {};
@@ -2031,12 +2120,13 @@
         }
 
         // ---------- ตัดรายการ ADP WALKIN / ER-EXT ----------
+        // แตะเฉพาะรายการของคอลัมน์ "ตัด" ไม่ไปยุ่งกับคอลัมน์ "เพิ่ม"
         function toggleAllCut(master) {
             var t = window.tbl;
-            t.sel = {};
+            t.selCut = {};
             if (master.checked) {
                 t.rows.forEach(function (r) {
-                    if (rowNeedsCut(r)) t.sel[String(r['VN'])] = true;
+                    if (rowNeedsCut(r)) t.selCut[String(r['VN'])] = true;
                 });
             }
             paintTable();
@@ -2044,7 +2134,7 @@
 
         async function cutWalkinSelected() {
             if (window.tblBusy) return;
-            var vns = Object.keys(window.tbl.sel || {});
+            var vns = Object.keys(window.tbl.selCut || {});
             if (!vns.length) { alert('กรุณาเลือกวิสิตที่ต้องการตัดก่อน'); return; }
 
             var fund = FUND_ENDPOINTS[window.currentFileView] || {};
