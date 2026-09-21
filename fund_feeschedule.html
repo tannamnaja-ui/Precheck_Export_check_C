@@ -326,11 +326,7 @@
             <!-- Left Sidebar (20%) -->
             <div class="left-sidebar">
                 <div class="sidebar-title">📁 แฟ้มกองทุน</div>
-                <div class="file-menu-item active" data-file="all">
-                    <div class="file-menu-item-title">แฟ้มทั้งหมด</div>
-                    <div class="file-menu-item-code">All Files</div>
-                </div>
-                <div class="file-menu-item" data-file="mammogram">
+                <div class="file-menu-item active" data-file="mammogram">
                     <div class="file-menu-item-title">กองทุนบริการตรวจคัดกรองมะเร็งเต้านมด้วยเครื่องแมมโมแกรมและอัลตราซาวด์</div>
                     <div class="file-menu-item-code">Mammogram / Ultrasound</div>
                 </div>
@@ -1020,12 +1016,6 @@
                     var file = this.getAttribute('data-file');
                     window.currentFileView = file;
 
-                    if (file === 'all') {
-                        showFundMessage('เลือกช่วงวันที่',
-                            'กรุณาเลือกช่วงวันที่แล้วคลิก "🔍 ค้นหา" เพื่อแสดงข้อมูล', 'แฟ้มทั้งหมด');
-                        return;
-                    }
-
                     var name = this.querySelector('.file-menu-item-title').textContent;
 
                     // กองทุนที่ต้องตั้งค่ากรองเพิ่มก่อน -> แสดงแผงตั้งค่า ไม่ค้นหาทันที
@@ -1049,6 +1039,11 @@
                     showFundMessage(name, 'กองทุนนี้ยังไม่ได้เชื่อมแหล่งข้อมูล — อยู่ระหว่างพัฒนา');
                 });
             });
+
+            // เมนูแรกถูกไฮไลต์ไว้ตั้งแต่เปิดหน้า ต้องตั้งสถานะให้ตรงกันด้วย
+            // ไม่งั้นถ้ากด "ค้นหา" ก่อนคลิกเมนู ระบบจะไม่รู้ว่าดูกองทุนไหนอยู่
+            var first = document.querySelector('.file-menu-item.active');
+            if (first) window.currentFileView = first.getAttribute('data-file');
         })();
 
         // ---------- ตารางผลลัพธ์แบบสร้างคอลัมน์ตามคีย์ที่ API ส่งมา ----------
@@ -1338,8 +1333,10 @@
                 h += '<div style="display:flex; align-items:center; gap:12px; background:#fff3e0; border:1px solid #ffe0b2;' +
                      ' border-radius:10px; padding:12px 14px; margin-bottom:14px; flex-wrap:wrap;">' +
                      '<span style="font-size:13px; color:#e65100;">พบ <b>' + opts.cutCount + '</b> วิสิตที่มี ' + esc(opts.cutNoun || 'รายการที่ต้องตัด') + ' ติดอยู่</span>' +
-                     '<button onclick="cutWalkinSelected()" style="padding:8px 16px; background:#ef6c00; color:white; border:none;' +
-                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">✂️ ตัดรายการที่เลือก</button>' +
+                     '<button onclick="cutWalkinSelected()"' + (window.tblBusy ? ' disabled' : '') +
+                     ' style="padding:8px 16px; background:' + (window.tblBusy ? '#bcaaa4' : '#ef6c00') + '; color:white; border:none;' +
+                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:' + (window.tblBusy ? 'wait' : 'pointer') + ';">' +
+                     (window.tblBusy ? '⏳ กำลังทำงาน...' : '✂️ ตัดรายการที่เลือก') + '</button>' +
                      '<label style="font-size:12px; color:#795548; cursor:pointer;">' +
                      '<input type="checkbox" onclick="toggleAllCut(this)"' + (picked && picked === opts.cutCount ? ' checked' : '') + '> เลือกทั้งหมดที่ต้องตัด (ทุกหน้า)</label>' +
                      '<span style="font-size:12px; color:#795548;">เลือกไว้ <b>' + picked + '</b> วิสิต</span>' +
@@ -1357,8 +1354,10 @@
                 h += '<div style="display:flex; align-items:center; gap:12px; background:#ffebee; border:1px solid #ffcdd2;' +
                      ' border-radius:10px; padding:12px 14px; margin-bottom:14px; flex-wrap:wrap;">' +
                      '<span style="font-size:13px; color:#c62828;">พบ <b>' + opts.fixCount + '</b> ' + esc(barText) + '</span>' +
-                     '<button onclick="addMissingSelected()" style="padding:8px 16px; background:#c62828; color:white; border:none;' +
-                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">' + esc(btnText) + '</button>' +
+                     '<button onclick="addMissingSelected()"' + (window.tblBusy ? ' disabled' : '') +
+                     ' style="padding:8px 16px; background:' + (window.tblBusy ? '#bcaaa4' : '#c62828') + '; color:white; border:none;' +
+                     ' border-radius:8px; font-size:13px; font-weight:600; cursor:' + (window.tblBusy ? 'wait' : 'pointer') + ';">' +
+                     (window.tblBusy ? '⏳ กำลังทำงาน...' : esc(btnText)) + '</button>' +
                      '<label style="font-size:12px; color:#8d6e63; cursor:pointer;">' +
                      '<input type="checkbox" onclick="toggleAllFix(this)"' + (picked2 && picked2 === opts.fixCount ? ' checked' : '') + '> เลือกทั้งหมดที่ต้องเพิ่ม (ทุกหน้า)</label>' +
                      '<span style="font-size:12px; color:#8d6e63;">เลือกไว้ <b>' + picked2 + '</b> วิสิต</span>' +
@@ -1961,7 +1960,13 @@
             paintTable();
         }
 
+        // กันกดปุ่มซ้ำระหว่างที่คำขอก่อนหน้ายังทำงานอยู่
+        // ถ้ายิงสองครั้งพร้อมกัน ทั้งคู่จะเช็คแล้วไม่เจอข้อมูล แล้วเขียนทั้งคู่ -> ซ้ำ
+        // (ฝั่งเซิร์ฟเวอร์มีคิวกันไว้อีกชั้นแล้ว ตรงนี้กันไม่ให้ผู้ใช้ยิงซ้ำตั้งแต่แรก)
+        window.tblBusy = false;
+
         async function addMissingSelected() {
+            if (window.tblBusy) return;
             var vns = Object.keys(window.tbl.sel || {});
             if (!vns.length) { alert('กรุณาเลือกวิสิตที่ต้องการเพิ่มข้อมูลก่อน'); return; }
 
@@ -1982,6 +1987,8 @@
 
             var cfg = getDatabaseConfig();
             var apiBase = (cfg.apiUrl ? cfg.apiUrl.replace(/\/$/, '') : window.location.origin);
+            window.tblBusy = true;
+            paintTable();                    // ปุ่มเปลี่ยนเป็น "กำลังทำงาน..." กดซ้ำไม่ได้
             try {
                 var payload = {
                     host: cfg.host, port: cfg.port, database: cfg.database,
@@ -2017,6 +2024,9 @@
                 searchData();   // โหลดใหม่ให้เห็นผล
             } catch (e) {
                 alert('❌ ' + e.message);
+            } finally {
+                window.tblBusy = false;
+                if (window.tbl && window.tbl.rows) paintTable();
             }
         }
 
@@ -2033,6 +2043,7 @@
         }
 
         async function cutWalkinSelected() {
+            if (window.tblBusy) return;
             var vns = Object.keys(window.tbl.sel || {});
             if (!vns.length) { alert('กรุณาเลือกวิสิตที่ต้องการตัดก่อน'); return; }
 
@@ -2046,6 +2057,8 @@
             var cfg = getDatabaseConfig();
             var apiBase = (cfg.apiUrl ? cfg.apiUrl.replace(/\/$/, '') : window.location.origin);
             try {
+                window.tblBusy = true;
+                paintTable();
                 var res = await fetch(apiBase + fund.cutEndpoint, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2061,6 +2074,9 @@
                 searchData();   // โหลดใหม่ให้เห็นผล
             } catch (e) {
                 alert('❌ ' + e.message);
+            } finally {
+                window.tblBusy = false;
+                if (window.tbl && window.tbl.rows) paintTable();
             }
         }
     </script>

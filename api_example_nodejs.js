@@ -7499,6 +7499,7 @@ app.post('/api/get-feeschedule-mammogram', async (req, res) => {
 // เช็คซ้ำก่อนเขียนทุกครั้ง ถ้ามี Z123 อยู่แล้วจะข้าม ไม่เขียนซ้ำ
 // ============================================================================
 app.post('/api/add-feeschedule-mammogram-dx', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const { host, port, database, user, password, type, vns } = req.body;
         if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
@@ -7559,6 +7560,8 @@ app.post('/api/add-feeschedule-mammogram-dx', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-mammogram-dx error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
@@ -7643,6 +7646,22 @@ async function fsRun(cfg, sql, params) {
     const connection = await mysql.createConnection({ host, port, user, password, database, connectTimeout: 60000 });
     try { const [r] = await connection.execute(sql, params || []); return r; }
     finally { await connection.end(); }
+}
+
+// ---- คิวสำหรับ endpoint ที่เขียนข้อมูล ทำทีละคำขอ ----
+// ทุก endpoint ที่เพิ่มข้อมูลใช้รูปแบบ "เช็คก่อนว่ามีหรือยัง แล้วค่อยเขียน"
+// ถ้าสองคำขอเข้ามาพร้อมกันกับวิสิตเดียวกัน (กดปุ่มรัว หรือเปิดหลายเครื่อง)
+// ทั้งคู่จะเช็คแล้วไม่เจอ แล้วเขียนทั้งคู่ -> ได้ข้อมูลซ้ำ
+// ทดสอบแล้วเกิดขึ้นจริงเมื่อยิงพร้อมกัน จึงต้องบังคับให้ทำทีละคำขอ
+// งานพวกนี้เป็นงาน batch ที่เจ้าหน้าที่กดเป็นครั้งคราว การต่อคิวไม่กระทบการใช้งาน
+let fsWriteQueue = Promise.resolve();
+
+function fsLockWrites() {
+    let release;
+    const gate = new Promise(res => { release = res; });
+    const wait = fsWriteQueue;
+    fsWriteQueue = wait.then(() => gate, () => gate);
+    return wait.then(() => release, () => release);
 }
 
 // อายุ ณ วันรับบริการ
@@ -7883,6 +7902,7 @@ app.post('/api/get-feeschedule-dental-anc', async (req, res) => {
 // เช็คซ้ำก่อนเขียนทุกรายการ ถ้ามีอยู่แล้วจะข้าม
 // ============================================================================
 app.post('/api/add-feeschedule-dental-anc-missing', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const cfg = req.body;
         const { host, port, database, user, password, type, vns } = cfg;
@@ -7993,6 +8013,8 @@ app.post('/api/add-feeschedule-dental-anc-missing', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-dental-anc-missing error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
@@ -8157,6 +8179,7 @@ app.post('/api/get-feeschedule-iron', async (req, res) => {
 // เช็คซ้ำก่อนเขียนทุกรายการ ถ้ามีอยู่แล้วจะข้าม
 // ============================================================================
 app.post('/api/add-feeschedule-iron-missing', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const { host, port, database, user, password, type, vns, anemiaCode } = req.body;
         if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
@@ -8231,6 +8254,8 @@ app.post('/api/add-feeschedule-iron-missing', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-iron-missing error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
@@ -9540,6 +9565,7 @@ ${flagCols}
 // เช็คซ้ำก่อนเขียนทุกรายการ ถ้ามีอยู่แล้วจะข้าม
 // ============================================================================
 app.post('/api/add-feeschedule-simple-missing', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const { host, port, database, user, password, type, vns, sub, pickCode } = req.body;
         if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
@@ -9621,6 +9647,8 @@ app.post('/api/add-feeschedule-simple-missing', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-simple-missing error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
@@ -9910,6 +9938,7 @@ app.post('/api/get-feeschedule-cancer', async (req, res) => {
 // ไม่แตะ doctor_operation เพราะเป็นบันทึกหัตถการที่ห้องตรวจลงไว้
 // ============================================================================
 app.post('/api/add-feeschedule-cancer-fix', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const cfg = req.body;
         const { host, port, database, user, password, type, vns } = cfg;
@@ -10055,6 +10084,8 @@ app.post('/api/add-feeschedule-cancer-fix', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-cancer-fix error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
@@ -10185,6 +10216,7 @@ app.post('/api/get-feeschedule-hd', async (req, res) => {
 // ก่อนเพิ่มทุกรายการจะเช็คซ้ำอีกครั้ง ถ้ามีอยู่แล้วจะข้าม
 // ============================================================================
 app.post('/api/add-feeschedule-hd-missing', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const cfg = req.body;
         const { host, port, database, user, password, type, vns } = cfg;
@@ -10308,6 +10340,8 @@ app.post('/api/add-feeschedule-hd-missing', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-hd-missing error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
@@ -10318,6 +10352,7 @@ app.post('/api/add-feeschedule-hd-missing', async (req, res) => {
 // ไม่รับรหัสจากหน้าเว็บโดยตรง กันการยิงเพิ่มรหัสอะไรก็ได้
 // ============================================================================
 app.post('/api/add-feeschedule-fp-missing', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const cfg = req.body;
         const { host, port, database, user, password, type, vns, sub } = cfg;
@@ -10389,6 +10424,8 @@ app.post('/api/add-feeschedule-fp-missing', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-fp-missing error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
@@ -10446,6 +10483,7 @@ app.post('/api/delete-feeschedule-fp-adp', async (req, res) => {
 // เช็คซ้ำก่อนทุกครั้ง ถ้ามีอยู่แล้วจะข้าม
 // ============================================================================
 app.post('/api/add-feeschedule-er-erext', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
         const cfg = req.body;
         const { host, port, database, user, password, type, vns } = cfg;
@@ -10523,6 +10561,8 @@ app.post('/api/add-feeschedule-er-erext', async (req, res) => {
     } catch (error) {
         console.error('add-feeschedule-er-erext error:', error);
         res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
     }
 });
 
