@@ -8696,6 +8696,109 @@ app.post('/api/delete-feeschedule-walkin-items', async (req, res) => {
 });
 
 
+// ลบค่าใช้จ่าย ADP ของกองทุนเองออกจากวิสิตที่เลือก
+// ----------------------------------------------------------------------------
+// ใช้กับกองทุนที่สเปกเขียนว่า "ถ้าไม่มีวินิจฉัยที่ต้องมี จะเพิ่มวินิจฉัยหรือเลือกลบก็ได้"
+// (กองทุนฝังเข็ม ลำดับที่ 4) — ลบคือถอดรายการค่าใช้จ่ายของกองทุนออกจากวิสิต
+// เพื่อไม่ให้วิสิตนั้นถูกส่งเบิก
+//
+// กันพลาด: ลบให้เฉพาะวิสิตที่ยังมีวินิจฉัยขาดอยู่จริง ณ เวลาที่กดเท่านั้น
+// วิสิตที่ข้อมูลครบแล้วจะข้ามไป ไม่ไปถอดค่าใช้จ่ายที่เบิกได้อยู่แล้วทิ้ง
+// ประเมินใหม่ฝั่ง server ทุกครั้ง ไม่เชื่อสถานะที่หน้าเว็บส่งมา
+app.post('/api/delete-feeschedule-simple-adp', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันชนกับคำขอเขียนอื่น
+    try {
+        const { host, port, database, user, password, type, vns, sub } = req.body;
+        if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+
+        const S = SIMPLE_FUNDS[sub];
+        if (!S) return res.json({ success: false, error: 'ไม่รู้จักเมนู: ' + sub });
+        if (!S.cutOwnAdp) return res.json({ success: false, error: 'เมนูนี้ไม่รองรับการลบค่าใช้จ่ายของกองทุน' });
+        if (!S.adp || !S.adp.length) return res.json({ success: false, error: 'เมนูนี้ไม่ได้คัดกรองด้วย ADP code' });
+
+        // เงื่อนไขที่ Tools เติมให้ได้ ใช้เป็นตัวตัดสินว่าวิสิตนี้ยัง "ข้อมูลไม่ครบ" อยู่ไหม
+        const fixable = (S.checks || []).filter(c => c.fixable !== false);
+
+        const isPg = type === 'postgresql';
+        const P = (n) => isPg ? ('$' + n) : '?';
+
+        const conn = isPg
+            ? new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 60000 })
+            : await mysql.createConnection({ host, port, user, password, database, connectTimeout: 60000 });
+        if (isPg) await conn.connect();
+
+        const q = async (sql, params) => {
+            if (isPg) return (await conn.query(sql, params || [])).rows;
+            const [r] = await conn.execute(sql, params || []);
+            return r;
+        };
+
+        let removedRows = 0, done = 0, skipped = 0, failed = 0;
+        const errors = [], results = [];
+
+        try {
+            for (const vn of vns) {
+                const detail = { vn: vn, removed: 0, skip: null, error: null };
+                try {
+                    // กลุ่มไหนมีรหัสใดรหัสหนึ่งอยู่แล้วถือว่าผ่าน
+                    let missing = 0;
+                    for (const c of fixable) {
+                        const marks = c.codes.map((_, i) => P(i + 2)).join(',');
+                        let hit = await q(
+                            `SELECT 1 AS x FROM ovstdiag WHERE vn = ${P(1)} AND icd10 IN (${marks})`,
+                            [vn].concat(c.codes));
+                        if (!hit.length) {
+                            hit = await q(
+                                `SELECT 1 AS x FROM doctor_operation WHERE vn = ${P(1)} AND icd9 IN (${marks})`,
+                                [vn].concat(c.codes));
+                        }
+                        if (!hit.length) missing++;
+                    }
+                    if (!missing) {
+                        detail.skip = 'ข้อมูลวินิจฉัยครบแล้ว ไม่ได้ลบค่าใช้จ่ายให้';
+                        skipped++;
+                        results.push(detail);
+                        continue;
+                    }
+
+                    // DELETE ต้องรู้จำนวนแถวที่ลบ จึงไม่ผ่าน q() ที่คืนเฉพาะ rows
+                    const marks = S.adp.map((_, i) => P(i + 2)).join(',');
+                    const del = `DELETE FROM opitemrece WHERE vn = ${P(1)} AND icode IN (
+                            SELECT icode FROM nondrugitems WHERE nhso_adp_code IN (${marks}))`;
+                    const args = [vn].concat(S.adp);
+                    let n;
+                    if (isPg) {
+                        n = (await conn.query(del, args)).rowCount || 0;
+                    } else {
+                        const [r] = await conn.execute(del, args);
+                        n = r.affectedRows || 0;
+                    }
+                    detail.removed = n;
+                    removedRows += n;
+                    done++;
+                } catch (e) {
+                    detail.error = e.message; failed++; errors.push(`${vn}: ${e.message}`);
+                }
+                results.push(detail);
+            }
+        } finally {
+            await conn.end();
+        }
+
+        res.json({
+            success: true,
+            deleted: done, removedRows, skipped, failed, errors, results,
+            adp: S.adp.join('/')
+        });
+    } catch (error) {
+        console.error('delete-feeschedule-simple-adp error:', error);
+        res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
+    }
+});
+
+
 // ============================================================================
 // Fee Schedule — กองทุน ER คุณภาพ (สำหรับ รพ. ที่ไม่ได้ใช้หน้าจอ ER)
 // ============================================================================
@@ -9480,6 +9583,35 @@ const SIMPLE_FUNDS = {
             { kind: 'icd10', codes: fsCodeRange('E10', 1, 9), pick: true,
               label: 'วินิจฉัย E101-E109 (อันใดอันหนึ่ง)' }
         ]
+    },
+
+    'acupuncture-stroke': {
+        name: 'ฝังเข็มร่วมกับกระตุ้นไฟฟ้า (โรคหลอดเลือดสมอง)',
+        adp: ['58001'], pttype: ['UCS', 'WEL'], ageMin: null, ageMax: null,
+        // ลำดับที่ 4 เลือกได้ว่าจะเติมวินิจฉัยที่ขาด หรือถอดค่าใช้จ่าย ADP 58001 ออกจากวิสิต
+        cutOwnAdp: true,
+        checks: [
+            { kind: 'icd10', codes: fsCodeRange('I6', 0, 9), pick: true,
+              label: 'วินิจฉัย I60-I69 (อันใดอันหนึ่ง)' },
+            { kind: 'icd10', codes: fsNumRange(78110, 78117).map(n => 'U' + n), pick: true,
+              label: 'วินิจฉัย U78110-U78117 (อันใดอันหนึ่ง)' },
+            // ICD10TM ผูกอยู่ที่ตัวรายการค่าใช้จ่าย (er_oper_code) ไม่ใช่ที่วิสิต
+            // Tools แก้ให้ไม่ได้ ต้องไปตั้งค่าผูกหัตถการในโปรแกรมหลัก
+            { kind: 'er_icd10tm', fixable: false,
+              codes: ['9991801', '9991810', '9991811', '9021801', '9031801'],
+              label: 'ICD10TM 9991801/9991810/9991811/9021801/9031801' }
+        ]
+    },
+
+    'instrument': {
+        name: 'Instrument',
+        // คัดกรองจากคุณสมบัติของเวชภัณฑ์ ไม่ได้ดูจาก ADP code
+        // opitemrece.icode -> drugitems_property_list -> drugitems_property = 'Instrument_UCS'
+        // ชื่อคอลัมน์ที่เก็บค่านี้ต่างกันไปตามรุ่น จึงให้ระบบไล่หาชื่อที่มีจริงตอนใช้งาน
+        adp: [], adpLabel: 'Instrument_UCS',
+        pttype: ['UCS', 'WEL'], ageMin: null, ageMax: null,
+        propFilter: { value: 'Instrument_UCS', income: '02' },
+        checks: []
     }
 };
 
@@ -9495,6 +9627,46 @@ app.post('/api/get-feeschedule-simple', async (req, res) => {
         const age = fsAgeExpr(isPg);
         const q = (list) => list.map(c => `'${c}'`).join(',');
         const yn = (expr) => `CASE WHEN ${expr} THEN 'Y' ELSE 'N' END`;
+
+        // คัดกรองจากคุณสมบัติของเวชภัณฑ์ (กองทุน Instrument)
+        // ชื่อคอลัมน์ที่เก็บชื่อคุณสมบัติต่างกันไปตามรุ่น จึงไล่หาชื่อที่มีจริงก่อน
+        let propWhere = null, propItemFrom = null;
+        if (S.propFilter) {
+            let propCol = null;
+            for (const c of ['name', 'drugitems_property_name', 'property_name']) {
+                if (await fsHasColumn(cfg, 'drugitems_property', c)) { propCol = c; break; }
+            }
+            if (!propCol) {
+                return res.json({
+                    success: false,
+                    error: 'ไม่พบคอลัมน์ชื่อคุณสมบัติในตาราง drugitems_property — ฐานข้อมูลนี้อาจไม่รองรับกองทุนนี้'
+                });
+            }
+            // หมวดค่าใช้จ่าย (opitemrece.income) ระบุมาก็กรองเพิ่ม เช่นกองทุน Instrument ใช้หมวด 02
+            const incCond = S.propFilter.income ? ` AND oi.income = '${S.propFilter.income}'` : '';
+            propWhere = `EXISTS (
+                    SELECT 1 FROM opitemrece oi
+                    JOIN drugitems_property_list pl ON pl.icode = oi.icode
+                    JOIN drugitems_property pp ON pp.drugitems_property_id = pl.drugitems_property_id
+                    WHERE oi.vn = ov.vn${incCond} AND pp.${propCol} = '${S.propFilter.value}')`;
+            // รายการที่เข้าเงื่อนไข เอาไว้แสดงในตารางแทนคอลัมน์ ADP
+            propItemFrom = `
+                    FROM opitemrece oi3
+                    JOIN drugitems_property_list pl3 ON pl3.icode = oi3.icode
+                    JOIN drugitems_property pp3 ON pp3.drugitems_property_id = pl3.drugitems_property_id
+                    LEFT JOIN nondrugitems n3 ON n3.icode = oi3.icode
+                    WHERE oi3.vn = ov.vn${S.propFilter.income ? ` AND oi3.income = '${S.propFilter.income}'` : ''}
+                        AND pp3.${propCol} = '${S.propFilter.value}'`;
+        }
+
+        // ICD10TM ที่ผูกผ่าน er_oper_code (กองทุนฝังเข็ม)
+        // เส้นทาง: opitemrece -> nondrugitems (ตาม ADP code) -> er_oper_code (ตาม icode) -> icd10tm
+        let ER_TM_COL = null;
+        if (S.checks.some(c => c.kind === 'er_icd10tm')) {
+            for (const c of ['icd10tm', 'icd10tm_code', 'icd10tm_operation_code']) {
+                if (await fsHasColumn(cfg, 'er_oper_code', c)) { ER_TM_COL = c; break; }
+            }
+        }
 
         // ICD10TM ต้องรู้ชื่อคอลัมน์จริงใน dttm ก่อน (แต่ละรุ่นเขียนไม่เหมือนกัน)
         let TM_COL = null, TM_SRC = null;
@@ -9518,6 +9690,15 @@ app.post('/api/get-feeschedule-simple', async (req, res) => {
             if (c.kind === 'icd9')
                 return `(EXISTS (SELECT 1 FROM doctor_operation dq WHERE dq.vn = ov.vn AND dq.icd9 IN (${q(c.codes)}))
                          OR EXISTS (SELECT 1 FROM ovstdiag dv WHERE dv.vn = ov.vn AND dv.icd10 IN (${q(c.codes)})))`;
+            if (c.kind === 'er_icd10tm') {
+                // ไม่มีคอลัมน์ในฐานข้อมูลนี้ ถือว่าเช็คไม่ได้ ให้ตกเป็นไม่ผ่านแล้วแจ้งในข้อความ
+                if (!ER_TM_COL) return '1=0';
+                return `EXISTS (
+                    SELECT 1 FROM opitemrece oe
+                    JOIN nondrugitems ne ON ne.icode = oe.icode AND ne.nhso_adp_code IN (${q(c.adp || S.adp)})
+                    JOIN er_oper_code ec ON ec.icode = ne.icode
+                    WHERE oe.vn = ov.vn AND ec.${ER_TM_COL} IN (${q(c.codes)}))`;
+            }
             // icd10tm : ผูกผ่านรายการค่าใช้จ่าย opitemrece -> dttm
             return `EXISTS (SELECT 1 FROM opitemrece ot JOIN dttm dt ON dt.icode = ot.icode
                             WHERE ot.vn = ov.vn AND dt.${TM_COL} IN (${q(c.codes)}))`;
@@ -9531,9 +9712,19 @@ app.post('/api/get-feeschedule-simple', async (req, res) => {
 
         const dxAgg   = fsAgg(isPg, 'd2.icd10', `FROM ovstdiag d2 WHERE d2.vn = ov.vn`);
         const icd9Agg = fsAgg(isPg, 'dop.icd9', `FROM doctor_operation dop WHERE dop.vn = ov.vn AND dop.icd9 IS NOT NULL AND dop.icd9 <> ''`);
-        const adpItemAgg = fsAgg(isPg, 'n3.name', `FROM opitemrece o3 JOIN nondrugitems n3 ON n3.icode = o3.icode WHERE o3.vn = ov.vn AND n3.nhso_adp_code IN (${q(S.adp)})`);
+        // กองทุนที่คัดกรองด้วยคุณสมบัติเวชภัณฑ์ ให้แสดงชื่อรายการที่เข้าเงื่อนไขแทนรายการตาม ADP
+        const adpItemAgg = propItemFrom
+            ? fsAgg(isPg, 'n3.name', propItemFrom)
+            : fsAgg(isPg, 'n3.name', `FROM opitemrece o3 JOIN nondrugitems n3 ON n3.icode = o3.icode WHERE o3.vn = ov.vn AND n3.nhso_adp_code IN (${q(S.adp)})`);
         const badAdpAgg  = fsAgg(isPg, 'nx.nhso_adp_code', `FROM opitemrece ox JOIN nondrugitems nx ON nx.icode = ox.icode WHERE ox.vn = ov.vn AND nx.nhso_adp_code IN (${q(SIMPLE_BAD_ADP)})`);
         const adpAllAgg  = fsAgg(isPg, 'n4.nhso_adp_code', `FROM opitemrece o4 JOIN nondrugitems n4 ON n4.icode = o4.icode WHERE o4.vn = ov.vn AND n4.nhso_adp_code IS NOT NULL AND n4.nhso_adp_code <> ''`);
+        // ค่า ICD10TM ของค่าใช้จ่ายจริง เอามาแสดงให้เห็นว่าตั้งไว้เป็นอะไร
+        const erTmAgg = ER_TM_COL ? fsAgg(isPg, `ec2.${ER_TM_COL}`, `
+                    FROM opitemrece oe2
+                    JOIN nondrugitems ne2 ON ne2.icode = oe2.icode AND ne2.nhso_adp_code IN (${q(S.adp)})
+                    JOIN er_oper_code ec2 ON ec2.icode = ne2.icode
+                    WHERE oe2.vn = ov.vn AND ec2.${ER_TM_COL} IS NOT NULL AND ec2.${ER_TM_COL} <> ''`) : `NULL`;
+
         const tmAgg = TM_COL ? fsAgg(isPg, `dt2.${TM_COL}`,
             `FROM opitemrece ot2 JOIN dttm dt2 ON dt2.icode = ot2.icode
              WHERE ot2.vn = ov.vn AND dt2.${TM_COL} IS NOT NULL AND dt2.${TM_COL} <> ''`) : null;
@@ -9550,7 +9741,9 @@ app.post('/api/get-feeschedule-simple', async (req, res) => {
         const ptList = S.pttype || SIMPLE_PTTYPE;
 
         // ป้ายชื่อคอลัมน์ ADP — รหัสที่เป็นช่วงยาว ๆ ย่อเป็น ตัวแรก-ตัวสุดท้าย ไม่งั้นหัวตารางยาวเกิน
-        const adpLabel = S.adp.length > 3 ? (S.adp[0] + '-' + S.adp[S.adp.length - 1]) : S.adp.join('/');
+        const itemHead = !S.adp.length ? 'รายการ' : 'รายการ ADP';
+        const adpLabel = !S.adp.length ? (S.adpLabel || 'ที่เข้าเงื่อนไข')
+            : S.adp.length > 3 ? (S.adp[0] + '-' + S.adp[S.adp.length - 1]) : S.adp.join('/');
 
         const sql = `
             SELECT DISTINCT
@@ -9572,19 +9765,21 @@ ${flagCols}
                 ${dxAgg}                                  AS "ICD10 ในวิสิต",
                 ${icd9Agg}                                AS "ICD9 ในวิสิต",
                 ${tmAgg ? tmAgg + '                       AS "ICD10TM ในวิสิต",' : ''}
-                ${adpItemAgg}                             AS "รายการ ADP ${adpLabel}",
+                ${S.checks.some(c => c.kind === 'er_icd10tm') ? erTmAgg + ' AS "ICD10TM ของค่าใช้จ่าย",' : ''}
+                ${adpItemAgg}                             AS "${itemHead} ${adpLabel}",
                 ${badAdpAgg}                              AS "ADP ที่ต้องตัด",
                 ${adpAllAgg}                              AS "ADP code ทั้งหมดในวิสิต"
             FROM ovst ov
             INNER JOIN patient pt ON pt.hn = ov.hn
             LEFT  JOIN pttype ptt ON ptt.pttype = ov.pttype
             WHERE ov.vstdate BETWEEN ${ph(1)} AND ${ph(2)}
-                -- ลำดับที่ 1 ต้องมีค่าใช้จ่าย ADP ${S.adp.join(' หรือ ')}
-                AND EXISTS (
+                -- เงื่อนไขค่าใช้จ่าย: ปกติดูจาก ADP code
+                -- กองทุนที่คัดกรองด้วยวิธีอื่นให้ใส่ adpWhere มาแทน (เช่น Instrument)
+                AND ${propWhere || S.adpWhere || `EXISTS (
                     SELECT 1 FROM opitemrece o
                     JOIN nondrugitems n ON n.icode = o.icode
                     WHERE o.vn = ov.vn AND n.nhso_adp_code IN (${q(S.adp)})
-                )
+                )`}
                 -- ลำดับที่ 2 คนไทยเท่านั้น
                 AND pt.nationality = '99'
                 -- ช่วงอายุ (1=1 คือกองทุนที่ไม่จำกัดอายุ)
@@ -9642,7 +9837,13 @@ ${flagCols}
             o['ICD10 ในวิสิต'] = r['ICD10 ในวิสิต'];
             o['ICD9 ในวิสิต'] = r['ICD9 ในวิสิต'];
             if (tmAgg) o['ICD10TM ในวิสิต'] = r['ICD10TM ในวิสิต'];
-            o['รายการ ADP ' + adpLabel] = r['รายการ ADP ' + adpLabel];
+            if (S.checks.some(c => c.kind === 'er_icd10tm')) {
+                var erTm = r['ICD10TM ของค่าใช้จ่าย'];
+                o['ICD10TM ของค่าใช้จ่าย'] =
+                    (erTm === null || erTm === undefined || String(erTm).trim() === '')
+                        ? 'ตรวจสอบข้อมูล ICD10TM' : String(erTm).trim();
+            }
+            o[itemHead + ' ' + adpLabel] = r[itemHead + ' ' + adpLabel];
             o['ADP ที่ต้องตัด'] = r['ADP ที่ต้องตัด'];
             o['ADP code ทั้งหมดในวิสิต'] = r['ADP code ทั้งหมดในวิสิต'];
             return o;
@@ -9671,14 +9872,20 @@ ${flagCols}
 // ----------------------------------------------------------------------------
 // รหัสมาจาก SIMPLE_FUNDS ฝั่ง server ตาม sub ที่ส่งมา ไม่รับรหัสอิสระจากหน้าเว็บ
 // เงื่อนไขที่ยอมรับหลายรหัส (pick) จะลงรหัสที่ผู้ใช้เลือกจาก dropdown (pickCode)
-// ถ้าส่งค่าที่ไม่อยู่ในรายการมา จะถอยไปใช้ตัวแรกของกลุ่มนั้น
+// กองทุนที่มีกลุ่ม "อันใดอันหนึ่ง" หลายกลุ่ม จะส่งมาหลายค่า (pickCode, pickCode2, ...)
+// แต่ละกลุ่มหยิบเฉพาะค่าที่เป็นรหัสของกลุ่มตัวเอง ที่เหลือถอยไปใช้ตัวแรกของกลุ่ม
 // ICD10TM ไม่เติมให้ เพราะต้องลงหัตถการในโปรแกรมหลัก
 // เช็คซ้ำก่อนเขียนทุกรายการ ถ้ามีอยู่แล้วจะข้าม
 // ============================================================================
 app.post('/api/add-feeschedule-simple-missing', async (req, res) => {
     const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
     try {
-        const { host, port, database, user, password, type, vns, sub, pickCode } = req.body;
+        const { host, port, database, user, password, type, vns, sub } = req.body;
+        // รับค่าที่เลือกจาก dropdown ทุกอัน (pickCode, pickCode2, ...)
+        const picks = Object.keys(req.body)
+            .filter(k => /^pickCode\d*$/.test(k))
+            .map(k => req.body[k])
+            .filter(v => typeof v === 'string' && v);
         if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
 
         const S = SIMPLE_FUNDS[sub];
@@ -9726,8 +9933,9 @@ app.post('/api/add-feeschedule-simple-missing', async (req, res) => {
                         }
                         if (hit.length) { detail.skip.push('มี ' + c.label + ' อยู่แล้ว'); skipped++; continue; }
 
-                        // เลือกรหัสที่จะลง: ตามที่ผู้ใช้เลือก ถ้าไม่ถูกต้องใช้ตัวแรก
-                        const code = (c.pick && c.codes.indexOf(pickCode) !== -1) ? pickCode : c.codes[0];
+                        // เลือกรหัสที่จะลง: ตามที่ผู้ใช้เลือกไว้ของกลุ่มนี้ ถ้าไม่มีก็ใช้ตัวแรก
+                        const chosen = c.pick ? picks.filter(p => c.codes.indexOf(p) !== -1)[0] : null;
+                        const code = chosen || c.codes[0];
 
                         if (isPg) {
                             const sid = (await q(`SELECT get_serialnumber('ovst_diag_id') AS sid`))[0].sid;
@@ -10211,9 +10419,352 @@ app.post('/api/add-feeschedule-cancer-fix', async (req, res) => {
 });
 
 // ============================================================================
+// Fee Schedule — กองทุนบริการประคับประคอง (Palliative care)
+// ----------------------------------------------------------------------------
+// ตรวจสอบตามลำดับ
+//   ลำดับที่ 1  สิทธิ UCS, WEL
+//   ลำดับที่ 2  ต้องเป็นคนไทย patient.nationality = '99'
+//   ลำดับที่ 3  ต้องมีค่าใช้จ่าย ADP 55911 และ Cons01 ครบทั้งคู่
+//               มีตัวใดตัวหนึ่งก็ดึงมาแสดง แล้วให้ Tools เพิ่มตัวที่ขาด
+//   ลำดับที่ 4  ต้องมีวินิจฉัย Z515 และ Z718 ครบทั้งคู่ — ขาดตัวไหน Tools เติมให้ได้
+//   ลำดับที่ 5  ADP กับ ICD9 ต้องมาเป็นคู่ ตรวจเฉพาะวิสิตที่มีฝั่งใดฝั่งหนึ่งอยู่แล้ว
+//               เงื่อนไข 1 : ADP 52321           คู่กับ ICD9 9396
+//               เงื่อนไข 2 : ADP 55811 หรือ 55812 คู่กับ ICD9 9357
+//               ขาดฝั่งไหน Tools เติมฝั่งนั้นให้ (ขาด ADP ฝั่งเงื่อนไข 2 เลือกรหัสจาก dropdown)
+//               ไม่มีทั้งคู่ = ไม่ใช่บริการกลุ่มนี้ จึงไม่ตรวจ
+//   ลำดับที่ 6  ต้องไม่มี ADP WALKIN / ER-EXT — ถ้ามี Tools ลบออกให้ได้
+//
+// ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง (ลำดับ 3 ขอแค่มีตัวใดตัวหนึ่ง)
+// ลำดับ 3-6 เป็นผลตรวจที่ติดธงไว้ให้จัดการ
+// ============================================================================
+const PAL_ADP_PAIR   = ['55911', 'Cons01'];       // ต้องมีครบทั้งคู่
+const PAL_DX_PAIR    = ['Z515', 'Z718'];          // ต้องมีครบทั้งคู่
+const PAL_BAD_ADP    = ['WALKIN', 'ER-EXT'];
+// ลำดับที่ 5 — มี ADP ตัวใดตัวหนึ่งในกลุ่ม ต้องมี ICD9 ที่กำหนดคู่กัน
+const PAL_COND_RULES = [
+    // addAdp = รหัสที่จะเติมให้เมื่อมี ICD9 แล้วแต่ยังไม่มี ADP
+    // เงื่อนไข 2 รับได้สองรหัส ผู้ใช้เลือกเองจาก dropdown (palAdp5581) ค่าตั้งต้นคือ 55811
+    { adp: ['52321'],          icd9: '9396', addAdp: '52321', label: 'ADP 52321 คู่กับ ICD9 9396' },
+    { adp: ['55811', '55812'], icd9: '9357', addAdp: '55811', pickKey: 'palAdp5581',
+      label: 'ADP 55811/55812 คู่กับ ICD9 9357' }
+];
+
+app.post('/api/get-feeschedule-palliative', async (req, res) => {
+    try {
+        const cfg = req.body;
+        const { dateFrom, dateTo } = cfg;
+        const isPg = cfg.type === 'postgresql';
+        const ph = (n) => isPg ? `$${n}` : '?';
+        const q = (list) => list.map(c => `'${c}'`).join(',');
+        const yn = (expr) => `CASE WHEN ${expr} THEN 'Y' ELSE 'N' END`;
+
+        const hasAdp = (codes) => `EXISTS (
+                    SELECT 1 FROM opitemrece oa JOIN nondrugitems na ON na.icode = oa.icode
+                    WHERE oa.vn = ov.vn AND na.nhso_adp_code IN (${q(codes)}))`;
+        const hasDx = (code) => `EXISTS (SELECT 1 FROM ovstdiag dd WHERE dd.vn = ov.vn AND dd.icd10 = '${code}')`;
+        // ICD9 อ่านทั้งสองที่ตามที่โปรแกรมนี้ใช้อยู่
+        const hasIcd9 = (code) => `(EXISTS (SELECT 1 FROM doctor_operation dq WHERE dq.vn = ov.vn AND dq.icd9 = '${code}')
+                                    OR EXISTS (SELECT 1 FROM ovstdiag dv WHERE dv.vn = ov.vn AND dv.icd10 = '${code}'))`;
+
+        const flagCols = []
+            .concat(PAL_ADP_PAIR.map((c, i) => `                ${yn(hasAdp([c]))} AS "f_adp${i}",`))
+            .concat(PAL_DX_PAIR.map((c, i)  => `                ${yn(hasDx(c))}    AS "f_dx${i}",`))
+            .concat(PAL_COND_RULES.map((r, i) => [
+                `                ${yn(hasAdp(r.adp))}     AS "f_cadp${i}",`,
+                `                ${yn(hasIcd9(r.icd9))}   AS "f_cicd${i}",`
+            ].join('\n')))
+            .join('\n');
+
+        const dxAgg = fsAgg(isPg, 'd2.icd10', `FROM ovstdiag d2 WHERE d2.vn = ov.vn`);
+        const icd9Agg = fsAgg(isPg, 'dop.icd9', `FROM doctor_operation dop WHERE dop.vn = ov.vn AND dop.icd9 IS NOT NULL AND dop.icd9 <> ''`);
+        const badAdpAgg = fsAgg(isPg, 'nx.nhso_adp_code', `FROM opitemrece ox JOIN nondrugitems nx ON nx.icode = ox.icode WHERE ox.vn = ov.vn AND nx.nhso_adp_code IN (${q(PAL_BAD_ADP)})`);
+        const adpAllAgg = fsAgg(isPg, 'n4.nhso_adp_code', `FROM opitemrece o4 JOIN nondrugitems n4 ON n4.icode = o4.icode WHERE o4.vn = ov.vn AND n4.nhso_adp_code IS NOT NULL AND n4.nhso_adp_code <> ''`);
+
+        const sql = `
+            SELECT DISTINCT
+                ov.vstdate                                AS "วันที่รับบริการ",
+                ov.vsttime                                AS "เวลารับบริการ",
+                ov.hn                                     AS "HN",
+                ov.vn                                     AS "VN",
+                CONCAT(pt.pname, pt.fname, ' ', pt.lname) AS "ชื่อ-นามสกุล",
+                pt.cid                                    AS "เลขบัตรประชาชน",
+                pt.nationality                            AS "สัญชาติ",
+                ov.pttype                                 AS "รหัสสิทธิ",
+                ptt.name                                  AS "ชื่อสิทธิ",
+                ptt.hipdata_code                          AS "hipdata_code",
+${flagCols}
+                ${yn(hasAdp(PAL_BAD_ADP))}                AS "f_bad",
+                ${dxAgg}                                  AS "ICD10 ในวิสิต",
+                ${icd9Agg}                                AS "ICD9 ในวิสิต",
+                ${badAdpAgg}                              AS "ADP ที่ต้องตัด",
+                ${adpAllAgg}                              AS "ADP code ทั้งหมดในวิสิต"
+            FROM ovst ov
+            INNER JOIN patient pt ON pt.hn = ov.hn
+            LEFT  JOIN pttype ptt ON ptt.pttype = ov.pttype
+            WHERE ov.vstdate BETWEEN ${ph(1)} AND ${ph(2)}
+                -- ลำดับที่ 1 สิทธิ UCS / WEL
+                AND ov.pttype IN (
+                    SELECT p2.pttype FROM pttype p2 WHERE p2.hipdata_code IN ('UCS','WEL')
+                )
+                -- ลำดับที่ 2 คนไทยเท่านั้น
+                AND pt.nationality = '99'
+                -- ลำดับที่ 3 ต้องมี ADP 55911 หรือ Cons01 อย่างน้อยหนึ่งตัว
+                AND ${hasAdp(PAL_ADP_PAIR)}
+            ORDER BY ov.vstdate, ov.vn
+        `;
+
+        const raw = fsNormRows(await fsRun(cfg, sql, [dateFrom, dateTo]));
+        const Y = (v) => String(v === undefined || v === null ? 'N' : v).toUpperCase() === 'Y';
+
+        const rows = raw.map(r => {
+            // ลำดับที่ 3 — ADP ที่ยังขาดในคู่
+            const missAdp = PAL_ADP_PAIR.filter((c, i) => !Y(r['f_adp' + i]));
+            // ลำดับที่ 4 — วินิจฉัยที่ยังขาดในคู่
+            const missDx  = PAL_DX_PAIR.filter((c, i) => !Y(r['f_dx' + i]));
+            // ลำดับที่ 5 — คู่ ADP/ICD9 ตรวจสองทาง ไม่มีทั้งคู่ถือว่าไม่เกี่ยว จึงข้าม
+            const missCond = [];
+            PAL_COND_RULES.forEach((rule, i) => {
+                const hasAdpRule = Y(r['f_cadp' + i]);
+                const hasIcdRule = Y(r['f_cicd' + i]);
+                if (hasAdpRule === hasIcdRule) return;        // ครบทั้งคู่ หรือไม่มีเลย
+                missCond.push(Object.assign({ need: hasAdpRule ? 'icd9' : 'adp' }, rule));
+            });
+
+            const bad = Y(r.f_bad);
+
+            const problems = [];
+            if (missAdp.length)  problems.push('ต้องเพิ่ม ADP ' + missAdp.join('/'));
+            if (missDx.length)   problems.push('ต้องเพิ่มวินิจฉัย ' + missDx.join('/'));
+            missCond.forEach(rule => problems.push(rule.need === 'icd9'
+                ? 'ต้องเพิ่ม ICD9 ' + rule.icd9 + ' (เพราะมี ADP ' + rule.adp.join('/') + ')'
+                : 'ต้องเพิ่ม ADP ' + rule.adp.join('/') + ' (เพราะมี ICD9 ' + rule.icd9 + ')'));
+            if (bad)             problems.push('ต้องตัด ADP ' + PAL_BAD_ADP.join('/'));
+
+            const canAdd = missAdp.length > 0 || missDx.length > 0 || missCond.length > 0;
+
+            const o = {
+                'วันที่รับบริการ': r['วันที่รับบริการ'],
+                'เวลารับบริการ': r['เวลารับบริการ'],
+                'HN': r['HN'], 'VN': r['VN'],
+                'สถานะ': problems.length ? 'ไม่สมบูรณ์' : 'สมบูรณ์',
+                'สิ่งที่ต้องแก้': problems.join(' · ') || '-',
+                'ต้องเพิ่ม': canAdd ? 'Y' : 'N',
+                'ต้องตัด': bad ? 'Y' : 'N',
+                'ชื่อ-นามสกุล': r['ชื่อ-นามสกุล'],
+                'เลขบัตรประชาชน': r['เลขบัตรประชาชน'],
+                'สัญชาติ': r['สัญชาติ'],
+                'รหัสสิทธิ': r['รหัสสิทธิ'],
+                'ชื่อสิทธิ': r['ชื่อสิทธิ']
+            };
+            PAL_ADP_PAIR.forEach((c, i) => { o['ADP ' + c] = Y(r['f_adp' + i]) ? 'มี' : 'ไม่มี'; });
+            PAL_DX_PAIR.forEach((c, i)  => { o['วินิจฉัย ' + c] = Y(r['f_dx' + i]) ? 'มี' : 'ไม่มี'; });
+            PAL_COND_RULES.forEach((rule, i) => {
+                const hasThisAdp = Y(r['f_cadp' + i]);
+                const hasThisIcd = Y(r['f_cicd' + i]);
+                const skip = !hasThisAdp && !hasThisIcd;     // ไม่มีทั้งคู่ = ไม่ใช่บริการกลุ่มนี้
+                o['ADP ' + rule.adp.join('/')] = skip ? 'ไม่ต้องตรวจ' : (hasThisAdp ? 'มี' : 'ไม่มี');
+                o['ICD9 ' + rule.icd9]        = skip ? 'ไม่ต้องตรวจ' : (hasThisIcd ? 'มี' : 'ไม่มี');
+            });
+            o['ICD10 ในวิสิต'] = r['ICD10 ในวิสิต'];
+            o['ICD9 ในวิสิต'] = r['ICD9 ในวิสิต'];
+            o['ADP ที่ต้องตัด'] = r['ADP ที่ต้องตัด'];
+            o['ADP code ทั้งหมดในวิสิต'] = r['ADP code ทั้งหมดในวิสิต'];
+
+            // ช่องที่ต้องระบายแดงบนหน้าจอ
+            o['_bad'] = [].concat(
+                missAdp.map(c => 'ADP ' + c),
+                missDx.map(c => 'วินิจฉัย ' + c),
+                missCond.map(rule => rule.need === 'icd9' ? 'ICD9 ' + rule.icd9 : 'ADP ' + rule.adp.join('/')),
+                bad ? ['ADP ที่ต้องตัด'] : []);
+            return o;
+        });
+
+        const needFix    = rows.filter(r => r['ต้องเพิ่ม'] === 'Y').length;
+        const needCut    = rows.filter(r => r['ต้องตัด'] === 'Y').length;
+        const incomplete = rows.filter(r => r['สถานะ'] === 'ไม่สมบูรณ์').length;
+
+        res.json({
+            success: true, data: rows, count: rows.length,
+            needFix, needCut, incomplete, cuttable: !!needCut,
+            pttypeUsed: 'UCS/WEL'
+        });
+    } catch (error) {
+        console.error('feeschedule-palliative error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+
+// ============================================================================
+// ประคับประคอง — Tools เติมสิ่งที่ขาดให้วิสิตที่เลือก
+//   - ADP 55911 / Cons01 ที่ขาด           -> opitemrece
+//   - วินิจฉัย Z515 / Z718 ที่ขาด          -> ovstdiag
+//   - ICD9 ตามเงื่อนไขที่ผูกกับ ADP ที่พบ  -> ovstdiag
+// คำนวณใหม่ฝั่ง server ทุกครั้ง ไม่เชื่อค่าที่ส่งมาจากหน้าเว็บ
+// เช็คซ้ำก่อนเขียนทุกรายการ ถ้ามีอยู่แล้วจะข้าม
+// ============================================================================
+app.post('/api/add-feeschedule-palliative-missing', async (req, res) => {
+    const unlock = await fsLockWrites();   // ต่อคิว กันสองคำขอเขียนพร้อมกัน
+    try {
+        const cfg = req.body;
+        const { host, port, database, user, password, type, vns } = cfg;
+        if (!vns || !vns.length) return res.json({ success: false, error: 'ไม่มีรายการที่เลือก' });
+
+        const isPg = type === 'postgresql';
+        const P = (n) => isPg ? `$${n}` : '?';
+
+        const colSql = isPg
+            ? `SELECT column_name FROM information_schema.columns WHERE table_name = 'opitemrece'`
+            : `SELECT column_name FROM information_schema.columns WHERE table_schema = ? AND table_name = 'opitemrece'`;
+        const colRows = await fsRun(cfg, colSql, isPg ? [] : [database]);
+        const oprCols = new Set(colRows.map(r => String(r.column_name || r.COLUMN_NAME).toLowerCase()));
+
+        const conn = isPg
+            ? new PgClient({ host, port: parseInt(port), database, user, password, connectionTimeoutMillis: 60000 })
+            : await mysql.createConnection({ host, port, user, password, database, connectTimeout: 60000 });
+        if (isPg) await conn.connect();
+
+        const q = async (sql, params) => {
+            if (isPg) return (await conn.query(sql, params || [])).rows;
+            const [r] = await conn.execute(sql, params || []);
+            return r;
+        };
+
+        let addedDiag = 0, addedItem = 0, skipped = 0, failed = 0;
+        const errors = [], results = [];
+
+        try {
+            for (const vn of vns) {
+                const detail = { vn: vn, diag: [], item: [], skip: [], error: null };
+                try {
+                    const ov = await q(`SELECT vn, hn, vstdate, vsttime, doctor, pttype FROM ovst WHERE vn = ${P(1)}`, [vn]);
+                    if (!ov.length) { detail.error = 'ไม่พบวิสิตนี้'; failed++; results.push(detail); continue; }
+                    const v = ov[0];
+
+                    // ---- ใส่วินิจฉัย/ICD9 ลง ovstdiag ----
+                    const addDx = async (code, what) => {
+                        const dup = await q(
+                            `SELECT 1 AS x FROM ovstdiag WHERE vn = ${P(1)} AND icd10 = ${P(2)}`, [vn, code]);
+                        let alsoOp = [];
+                        if (!dup.length) {
+                            alsoOp = await q(
+                                `SELECT 1 AS x FROM doctor_operation WHERE vn = ${P(1)} AND icd9 = ${P(2)}`, [vn, code]);
+                        }
+                        if (dup.length || alsoOp.length) { detail.skip.push(what + ' ' + code + ' มีอยู่แล้ว'); skipped++; return; }
+
+                        if (isPg) {
+                            const sid = (await q(`SELECT get_serialnumber('ovst_diag_id') AS sid`))[0].sid;
+                            await q(
+                                `INSERT INTO ovstdiag (ovst_diag_id, vn, icd10, hn, vstdate, vsttime, diagtype, doctor, staff, update_datetime)
+                                 VALUES ($1,$2,$3,$4,$5,$6,'4',$7,$8,NOW())`,
+                                [sid, v.vn, code, v.hn, v.vstdate, v.vsttime, v.doctor, v.doctor]);
+                        } else {
+                            await q(
+                                `INSERT INTO ovstdiag (ovst_diag_id, vn, icd10, hn, vstdate, vsttime, diagtype, doctor, staff, update_datetime)
+                                 VALUES (get_serialnumber('ovst_diag_id'),?,?,?,?,?,'4',?,?,NOW())`,
+                                [v.vn, code, v.hn, v.vstdate, v.vsttime, v.doctor, v.doctor]);
+                        }
+                        detail.diag.push(code);
+                        addedDiag++;
+                    };
+
+                    // ---- ใส่ค่าใช้จ่าย ADP ลง opitemrece (เอาเฉพาะรายการที่เปิดใช้งาน) ----
+                    const addAdp = async (code) => {
+                        const dupI = await q(
+                            `SELECT 1 AS x FROM opitemrece o JOIN nondrugitems n ON n.icode = o.icode
+                             WHERE o.vn = ${P(1)} AND n.nhso_adp_code = ${P(2)}`, [vn, code]);
+                        if (dupI.length) { detail.skip.push('ADP ' + code + ' มีอยู่แล้ว'); skipped++; return; }
+
+                        const items = await q(
+                            `SELECT icode, name, price, income FROM nondrugitems
+                             WHERE nhso_adp_code = ${P(1)} AND istatus = '1' ORDER BY icode`, [code]);
+                        if (!items.length) {
+                            detail.skip.push(`ไม่พบรายการ ADP ${code} ที่เปิดใช้งาน (istatus='1')`);
+                            skipped++;
+                            return;
+                        }
+                        const it = items[0];
+                        const price = Number(it.price || 0);
+                        const want = {
+                            vn: v.vn, hn: v.hn, vstdate: v.vstdate, vsttime: v.vsttime,
+                            icode: it.icode, qty: 1, unitprice: price, sum_price: price,
+                            paidst: '02', income: it.income, doctor: v.doctor, staff: v.doctor,
+                            pttype: v.pttype
+                        };
+                        const cols = Object.keys(want).filter(c => oprCols.has(c));
+                        const vals = cols.map(c => want[c]);
+                        const marks = cols.map((_, i) => isPg ? `$${i + 1}` : '?').join(',');
+                        await q(`INSERT INTO opitemrece (${cols.join(',')}) VALUES (${marks})`, vals);
+                        detail.item.push('ADP ' + code + ' icode ' + it.icode + ' ราคา ' + price);
+                        addedItem++;
+                    };
+
+                    // ลำดับที่ 3 — ADP ที่ต้องมีครบคู่
+                    for (const code of PAL_ADP_PAIR) await addAdp(code);
+                    // ลำดับที่ 4 — วินิจฉัยที่ต้องมีครบคู่
+                    for (const code of PAL_DX_PAIR) await addDx(code, 'วินิจฉัย');
+
+                    // ลำดับที่ 5 — คู่ ADP/ICD9 เติมเฉพาะฝั่งที่ขาด ไม่มีทั้งคู่ถือว่าไม่เกี่ยว
+                    for (const rule of PAL_COND_RULES) {
+                        const marks = rule.adp.map((_, i) => P(i + 2)).join(',');
+                        const hitAdp = await q(
+                            `SELECT 1 AS x FROM opitemrece o JOIN nondrugitems n ON n.icode = o.icode
+                             WHERE o.vn = ${P(1)} AND n.nhso_adp_code IN (${marks})`, [vn].concat(rule.adp));
+                        // ICD9 อ่านทั้งสองที่ตามที่โปรแกรมนี้ใช้อยู่
+                        let hitIcd = await q(
+                            `SELECT 1 AS x FROM ovstdiag WHERE vn = ${P(1)} AND icd10 = ${P(2)}`,
+                            [vn, rule.icd9]);
+                        if (!hitIcd.length) {
+                            hitIcd = await q(
+                                `SELECT 1 AS x FROM doctor_operation WHERE vn = ${P(1)} AND icd9 = ${P(2)}`,
+                                [vn, rule.icd9]);
+                        }
+
+                        if (!hitAdp.length && !hitIcd.length) {
+                            detail.skip.push('ไม่มีทั้ง ADP ' + rule.adp.join('/') + ' และ ICD9 ' + rule.icd9 + ' จึงไม่ต้องเติม');
+                            continue;
+                        }
+                        if (hitAdp.length && hitIcd.length) {
+                            detail.skip.push('ADP ' + rule.adp.join('/') + ' คู่กับ ICD9 ' + rule.icd9 + ' ครบแล้ว');
+                            skipped++;
+                            continue;
+                        }
+                        if (!hitIcd.length) {
+                            await addDx(rule.icd9, 'ICD9');
+                        } else {
+                            // มี ICD9 แล้วแต่ยังไม่มี ADP — เติมรหัสที่ผู้ใช้เลือกไว้ ถ้าไม่ได้เลือกใช้ค่าตั้งต้น
+                            const wanted = rule.pickKey && rule.adp.indexOf(cfg[rule.pickKey]) !== -1
+                                ? cfg[rule.pickKey] : rule.addAdp;
+                            await addAdp(wanted);
+                        }
+                    }
+                } catch (e) {
+                    detail.error = e.message; failed++; errors.push(`${vn}: ${e.message}`);
+                }
+                results.push(detail);
+            }
+        } finally {
+            await conn.end();
+        }
+
+        res.json({
+            success: true,
+            addedDiag, addedItem, skipped, failed, errors, results,
+            diagNoun: 'วินิจฉัย Z515/Z718 และ ICD9 ตามเงื่อนไข',
+            itemNoun: 'ADP 55911/Cons01'
+        });
+    } catch (error) {
+        console.error('add-feeschedule-palliative-missing error:', error);
+        res.json({ success: false, error: error.message });
+    } finally {
+        unlock();
+    }
+});
+
+// ============================================================================
 // Fee Schedule — กองทุนฟอกเลือดด้วยเครื่องไตเทียม (HD)
 // ----------------------------------------------------------------------------
-// ฐาน: visit ที่มีวินิจฉัย ICD10 = 'N185'
+// ฐาน (ลำดับที่ 1-3): สิทธิ UCS/WEL + คนไทย + มีค่าใช้จ่าย ADP HD0001-HD0005 อย่างน้อยหนึ่งตัว
 // แล้วตรวจต่อทีละเงื่อนไข (ใช้เฉพาะเมื่อมี ADP code ตัวนั้นในวิสิต)
 //   HD0001 -> ต้องมี ADP 4905 และ ICD9 3895
 //   HD0002 -> ต้องมี ICD9 3927
@@ -10266,6 +10817,7 @@ app.post('/api/get-feeschedule-hd', async (req, res) => {
                 ov.vn                                     AS "VN",
                 CONCAT(pt.pname, pt.fname, ' ', pt.lname) AS "ชื่อ-นามสกุล",
                 pt.cid                                    AS "เลขบัตรประชาชน",
+                pt.nationality                            AS "สัญชาติ",
                 ov.pttype                                 AS "รหัสสิทธิ",
                 ptt.name                                  AS "ชื่อสิทธิ",
                 ${dxAgg}                                  AS "ICD10 ในวิสิต",
@@ -10276,7 +10828,17 @@ app.post('/api/get-feeschedule-hd', async (req, res) => {
             INNER JOIN patient pt ON pt.hn = ov.hn
             LEFT  JOIN pttype ptt ON ptt.pttype = ov.pttype
             WHERE ov.vstdate BETWEEN ${ph(1)} AND ${ph(2)}
-                AND EXISTS (SELECT 1 FROM ovstdiag dn WHERE dn.vn = ov.vn AND dn.icd10 = 'N185')
+                -- ลำดับที่ 1 สิทธิ UCS / WEL
+                AND ov.pttype IN (
+                    SELECT p2.pttype FROM pttype p2 WHERE p2.hipdata_code IN ('UCS','WEL')
+                )
+                -- ลำดับที่ 2 คนไทยเท่านั้น
+                AND pt.nationality = '99'
+                -- ลำดับที่ 3 ต้องมีค่าใช้จ่าย ADP HD0001-HD0005 อย่างน้อยหนึ่งตัว
+                AND EXISTS (
+                    SELECT 1 FROM opitemrece oh JOIN nondrugitems nh ON nh.icode = oh.icode
+                    WHERE oh.vn = ov.vn AND nh.nhso_adp_code IN ('HD0001','HD0002','HD0003','HD0004','HD0005')
+                )
             ORDER BY ov.vstdate, ov.vn
         `;
 
@@ -10301,6 +10863,7 @@ app.post('/api/get-feeschedule-hd', async (req, res) => {
                 'VN': r['VN'],
                 'ชื่อ-นามสกุล': r['ชื่อ-นามสกุล'],
                 'เลขบัตรประชาชน': r['เลขบัตรประชาชน'],
+                'สัญชาติ': r['สัญชาติ'],
                 'รหัสสิทธิ': r['รหัสสิทธิ'],
                 'ชื่อสิทธิ': r['ชื่อสิทธิ'],
                 'ADP HD ที่พบ': hdFound.join(', ') || '-',

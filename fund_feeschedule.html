@@ -451,7 +451,19 @@
                 </div>
                 <div class="file-menu-item" data-file="hd-dialysis">
                     <div class="file-menu-item-title">กองทุนฟอกเลือดด้วยเครื่องไตเทียม (HD)</div>
-                    <div class="file-menu-item-code">Hemodialysis</div>
+                    <div class="file-menu-item-code">Hemodialysis · ADP HD0001-HD0005 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="acupuncture-stroke">
+                    <div class="file-menu-item-title">กองทุนฝังเข็มร่วมกับกระตุ้นไฟฟ้า (โรคหลอดเลือดสมอง)</div>
+                    <div class="file-menu-item-code">Acupuncture · ADP 58001 · I60-I69 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="palliative">
+                    <div class="file-menu-item-title">กองทุนบริการประคับประคอง (Palliative care)</div>
+                    <div class="file-menu-item-code">Palliative · ADP 55911 + Cons01 · UCS/WEL</div>
+                </div>
+                <div class="file-menu-item" data-file="instrument">
+                    <div class="file-menu-item-title">กองทุน Instrument</div>
+                    <div class="file-menu-item-code">Instrument_UCS · ค่าใช้จ่ายหมวด 02 · UCS/WEL</div>
                 </div>
             </div>
 
@@ -672,10 +684,10 @@
                 }]
             },
             'hd-dialysis': {
-                about: ['นำคนที่วินิจฉัย = N185 มาแสดง แล้วตรวจสอบต่อด้วยเงื่อนไขต่อไปนี้', 'เงื่อนไขที่ 1 ถ้ามีค่าใช้จ่าย ADP Code = HD0001 จะต้องมีค่าใช้จ่าย ADP Code = 4905 และ ICD9 = 3895 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 2 ถ้ามีค่าใช้จ่าย ADP Code = HD0002 จะต้องมี ICD9 = 3927 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 3 ถ้ามีค่าใช้จ่าย ADP Code = HD0003 จะต้องมี ICD9 = 3993 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 4 ถ้ามีค่าใช้จ่าย ADP Code = HD0004 จะต้องมี ICD9 = 3895 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 5 ถ้ามีค่าใช้จ่าย ADP Code = HD0005 จะต้องมี ICD9 = 3950 ถ้าไม่มีให้เพิ่ม'],
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องมีค่าใช้จ่าย ADP Code = HD0001 หรือ HD0002 หรือ HD0003 หรือ HD0004 หรือ HD0005 (อันใดอันหนึ่ง)', 'ลำดับที่ 4 เมื่อเข้าเงื่อนไขลำดับที่ 1 ถึง 3 แล้ว ตรวจต่อ 5 เงื่อนไขนี้ ทำเฉพาะเงื่อนไขที่พบ ADP ของมันในวิสิต', 'เงื่อนไขที่ 1 ถ้ามีค่าใช้จ่าย ADP Code = HD0001 จะต้องมีค่าใช้จ่าย ADP Code = 4905 และ ICD9 = 3895 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 2 ถ้ามีค่าใช้จ่าย ADP Code = HD0002 จะต้องมี ICD9 = 3927 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 3 ถ้ามีค่าใช้จ่าย ADP Code = HD0003 จะต้องมี ICD9 = 3993 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 4 ถ้ามีค่าใช้จ่าย ADP Code = HD0004 จะต้องมี ICD9 = 3895 ถ้าไม่มีให้เพิ่ม', 'เงื่อนไขที่ 5 ถ้ามีค่าใช้จ่าย ADP Code = HD0005 จะต้องมี ICD9 = 3950 ถ้าไม่มีให้เพิ่ม'],
                 endpoint: '/api/get-feeschedule-hd',
                 title: '🩸 กองทุนฟอกเลือดด้วยเครื่องไตเทียม (HD)',
-                cond: 'วินิจฉัย N185 · ตรวจต่อ 5 เงื่อนไข: HD0001→ADP 4905+ICD9 3895 · HD0002→ICD9 3927 · HD0003→ICD9 3993 · HD0004→ICD9 3895 · HD0005→ICD9 3950',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP HD0001-HD0005 · ลำดับ 4: HD0001→ADP 4905+ICD9 3895 · HD0002→ICD9 3927 · HD0003→ICD9 3993 · HD0004→ICD9 3895 · HD0005→ICD9 3950',
                 fixEndpoint: '/api/add-feeschedule-hd-missing',
                 fixNoun: 'ICD9 ลง ovstdiag และ ADP ลง opitemrece',
                 canFilter: true
@@ -989,6 +1001,73 @@
                 cutEndpoint: '/api/delete-feeschedule-walkin-items',
                 cutNoun: 'ADP WALKIN หรือ ER-EXT'
             },
+            'acupuncture-stroke': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องมีค่าใช้จ่าย ADP Code = 58001', 'ลำดับที่ 4 ต้องมีวินิจฉัย I60 - I69 (อันใดอันหนึ่งตามช่วง) — ถ้าไม่มี เลือกได้ 2 ทาง: เติมวินิจฉัยที่ขาด (เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม) หรือกดปุ่มสีน้ำตาลเพื่อถอดค่าใช้จ่าย ADP 58001 ออกจากวิสิตนั้น จะได้ไม่ถูกส่งเบิก', 'ลำดับที่ 5 ต้องมีวินิจฉัย U78110 - U78117 (อันใดอันหนึ่งตามช่วง) — ถ้าไม่มี Tools เติมให้ได้ เลือกรหัสจาก dropdown ข้างปุ่มเพิ่ม', 'ลำดับที่ 6 ต้องมี ICD10TM = 9991801 หรือ 9991810 หรือ 9991811 หรือ 9021801 หรือ 9031801 — อ่านจากค่าใช้จ่าย icode ที่ ADP code = 58001 ใน nondrugitems ไปหาหัตถการในตาราง er_oper_code แล้วดึงฟิลด์ icd10tm มาแสดง ถ้าไม่มีจะขึ้นว่า "ตรวจสอบข้อมูล ICD10TM"', 'ลำดับที่ 7 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับ 4, 5 และ 7 Tools แก้ให้ได้ · ลำดับ 6 แจ้งอย่างเดียว ต้องไปผูก ICD10TM ให้หัตถการในโปรแกรมหลักเอง', 'ปุ่มลบ ADP 58001 ใช้รายการที่ติ๊กไว้ในคอลัมน์ "เพิ่ม" ชุดเดียวกัน และจะถอดให้เฉพาะวิสิตที่ยังมีวินิจฉัยขาดอยู่จริงเท่านั้น'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'acupuncture-stroke',
+                title: '🪡 กองทุนบริการฝังเข็มร่วมกับกระตุ้นไฟฟ้า (ผู้ป่วยโรคหลอดเลือดสมอง)',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP 58001 · ลำดับ 4: ต้องมี I60-I69 · ลำดับ 5: ต้องมี U78110-U78117 · ลำดับ 6: ICD10TM ที่ผูกกับค่าใช้จ่าย · ลำดับ 7: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-simple-missing',
+                fixNoun: 'วินิจฉัย I6x และ U7811x ลง ovstdiag',
+                fixAlt: {
+                    endpoint: '/api/delete-feeschedule-simple-adp',
+                    button: '🗑️ ลบค่าใช้จ่าย ADP 58001 ของวิสิตที่เลือก',
+                    noun: 'ค่าใช้จ่าย ADP 58001'
+                },
+                fixChoice: [{
+                    key: 'pickCode',
+                    label: 'ลำดับ 4 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'I60', label: 'I60' }, { value: 'I61', label: 'I61' },
+                        { value: 'I62', label: 'I62' }, { value: 'I63', label: 'I63' },
+                        { value: 'I64', label: 'I64' }, { value: 'I65', label: 'I65' },
+                        { value: 'I66', label: 'I66' }, { value: 'I67', label: 'I67' },
+                        { value: 'I68', label: 'I68' }, { value: 'I69', label: 'I69' }
+                    ]
+                }, {
+                    key: 'pickCode2',
+                    label: 'ลำดับ 5 ลงวินิจฉัย:',
+                    options: [
+                        { value: 'U78110', label: 'U78110' }, { value: 'U78111', label: 'U78111' },
+                        { value: 'U78112', label: 'U78112' }, { value: 'U78113', label: 'U78113' },
+                        { value: 'U78114', label: 'U78114' }, { value: 'U78115', label: 'U78115' },
+                        { value: 'U78116', label: 'U78116' }, { value: 'U78117', label: 'U78117' }
+                    ]
+                }],
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'palliative': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องมีค่าใช้จ่าย ADP Code = 55911 และ Cons01 ครบทั้ง 2 รายการ — มีรายการใดรายการหนึ่งจะถูกดึงมาแสดง แล้ว Tools เพิ่มรายการที่ขาดลง opitemrece ให้ได้', 'ลำดับที่ 4 ต้องมี Diagnosis ร่วม คือ Z515 และ Z718 ครบทั้ง 2 รายการ — ขาดตัวไหน Tools เติมลง ovstdiag ให้ได้', 'ลำดับที่ 5 ค่าใช้จ่ายที่ต้องมาคู่กับ ICD9 ตรวจเฉพาะวิสิตที่มีฝั่งใดฝั่งหนึ่งอยู่แล้ว', '   เงื่อนไขที่ 1 ADP Code = 52321 ต้องมี ICD9 9396 ร่วมด้วย — ขาดฝั่งไหน Tools เติมฝั่งนั้นให้', '   เงื่อนไขที่ 2 ADP Code = 55811 หรือ 55812 ต้องมี ICD9 9357 ร่วมด้วย — ถ้าขาดฝั่ง ADP เลือกรหัสที่จะลงจาก dropdown ข้างปุ่มเพิ่ม', 'ลำดับที่ 6 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง (ลำดับ 3 ขอแค่มีรายการใดรายการหนึ่ง)', 'ลำดับ 3-6 เป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'ลำดับที่ 5 ถ้าไม่มีทั้ง ADP และ ICD9 ถือว่าไม่ใช่บริการกลุ่มนั้น จึงไม่ตรวจ', 'ICD9 ตรวจจากทั้ง doctor_operation.icd9 และ ovstdiag.icd10 · ตอนเติมจะเขียนลง ovstdiag'],
+                endpoint: '/api/get-feeschedule-palliative',
+                title: '🕊️ กองทุนบริการประคับประคอง (Palliative care)',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ADP 55911 + Cons01 ครบทั้งคู่ · ลำดับ 4: ต้องมี Z515 + Z718 · ลำดับ 5: ADP 52321↔ICD9 9396 และ ADP 55811/55812↔ICD9 9357 · ลำดับ 6: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                fixEndpoint: '/api/add-feeschedule-palliative-missing',
+                fixNoun: 'ADP 55911/Cons01 ลง opitemrece และวินิจฉัย Z515/Z718 กับ ICD9 ตามเงื่อนไข ลง ovstdiag',
+                fixChoice: [{
+                    key: 'palAdp5581',
+                    label: 'ลำดับ 5 เงื่อนไข 2 ถ้าขาด ADP ให้ลง:',
+                    options: [
+                        { value: '55811', label: '55811' },
+                        { value: '55812', label: '55812' }
+                    ]
+                }],
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
+            'instrument': {
+                about: ['ลำดับที่ 1 ต้องเป็นคนไข้กลุ่มสิทธิ UCS, WEL', 'ลำดับที่ 2 ต้องเป็นคนไทย (patient.nationality = 99)', 'ลำดับที่ 3 ต้องมีค่าใช้จ่ายในหมวด 02 ที่เป็นเวชภัณฑ์คุณสมบัติ "Instrument_UCS" — เอา icode ใน opitemrece ไปเทียบ icode ใน drugitems_property_list เอา drugitems_property_id ไปเทียบในตาราง drugitems_property แล้วต้องได้ค่า Instrument_UCS', 'ลำดับที่ 4 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT — ถ้ามี Tools ลบออกให้ได้', '---', 'ลำดับ 1-3 เป็นเงื่อนไขคัดกรอง ถ้าไม่เข้าเงื่อนไขจะไม่ถูกดึงมาแสดง', 'ลำดับ 4 เป็นผลตรวจ ดึงมาแสดงทั้งหมดแล้วติดธงไว้ที่คอลัมน์ สถานะ / สิ่งที่ต้องแก้', 'คอลัมน์ "รายการ Instrument_UCS" แสดงชื่อเวชภัณฑ์ที่เข้าเงื่อนไขในวิสิตนั้น'],
+                endpoint: '/api/get-feeschedule-simple', sub: 'instrument',
+                title: '🩺 กองทุน Instrument',
+                cond: 'ลำดับ 1: สิทธิ UCS/WEL · ลำดับ 2: สัญชาติไทย (99) · ลำดับ 3: ค่าใช้จ่ายหมวด 02 คุณสมบัติ Instrument_UCS · ลำดับ 4: ต้องไม่มี WALKIN/ER-EXT',
+                canFilter: true,
+                cutWalkin: true,
+                cutEndpoint: '/api/delete-feeschedule-walkin-items',
+                cutNoun: 'ADP WALKIN หรือ ER-EXT'
+            },
             'fp-implant-remove': {
                 about: ['เงื่อนไขร่วม: ทุกสิทธิ (UCS,WEL,OFC,SSS) · คนไทย national=99 · ผู้หญิง sex=2 · อายุ 15 - 49 ปี', '---', 'ลำดับที่ 1 ตรวจสอบว่าคนไข้จะต้องมีค่าใช้จ่าย ADP Code = FP002_2 (ไม่เกิน 1 ครั้ง/3 ปี)', 'ลำดับที่ 2 เมื่อคนไข้เข้าเงื่อนไขลำดับที่ 1 แล้ว ให้ตรวจสอบต่อว่า คนไข้มีวินิจฉัย Z308 และ ICD9 = 9923 หรือไม่ ถ้าไม่มี Tools สามารถให้ Add เพิ่มเข้าไปได้', 'ลำดับที่ 3 ต้องไม่มีค่าใช้จ่าย ADP Code = WALKIN หรือ ER-EXT ถ้ามี Tools สามารถลบออกได้', '---', 'หน้าจอมีปุ่มกรอง แสดงเฉพาะข้อมูลที่ไม่สมบูรณ์ และแสดงเฉพาะข้อมูลที่สมบูรณ์'],
                 endpoint: '/api/get-feeschedule-family-planning', sub: 'fp-implant-remove',
@@ -1114,6 +1193,13 @@
             return ok ? v : fc.options[0].value;
         }
 
+        // กองทุนหนึ่งมี dropdown ได้หลายอัน (fixChoice เป็นก้อนเดียวหรือเป็น array ก็ได้)
+        function fundChoiceList(menu) {
+            var fc = (FUND_ENDPOINTS[menu] || {}).fixChoice;
+            if (!fc) return [];
+            return Array.isArray(fc) ? fc : [fc];
+        }
+
         function fundChoiceSet(key, v) {
             var menu = window.currentFileView;
             var all = fundChoiceLoad();
@@ -1126,18 +1212,18 @@
 
         function fundChoiceBar() {
             var menu = window.currentFileView;
-            var fc = (FUND_ENDPOINTS[menu] || {}).fixChoice;
-            if (!fc) return '';
-            var cur = fundChoiceGet(menu, fc);
-            var opts = fc.options.map(function (o) {
-                return '<option value="' + tblEsc(o.value) + '"' + (o.value === cur ? ' selected' : '') + '>' +
-                       tblEsc(o.label) + '</option>';
+            return fundChoiceList(menu).map(function (fc) {
+                var cur = fundChoiceGet(menu, fc);
+                var opts = fc.options.map(function (o) {
+                    return '<option value="' + tblEsc(o.value) + '"' + (o.value === cur ? ' selected' : '') + '>' +
+                           tblEsc(o.label) + '</option>';
+                }).join('');
+                return '<label style="display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#8d6e63;">' +
+                       tblEsc(fc.label) +
+                       '<select onchange="fundChoiceSet(' + String.fromCharCode(39) + fc.key + String.fromCharCode(39) + ', this.value)"' +
+                       ' style="padding:5px 8px; border:1px solid #ffcdd2; border-radius:7px; font-size:12px;">' +
+                       opts + '</select></label>';
             }).join('');
-            return '<label style="display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#8d6e63;">' +
-                   tblEsc(fc.label) +
-                   '<select onchange="fundChoiceSet(' + String.fromCharCode(39) + fc.key + String.fromCharCode(39) + ', this.value)"' +
-                   ' style="padding:5px 8px; border:1px solid #ffcdd2; border-radius:7px; font-size:12px;">' +
-                   opts + '</select></label>';
         }
 
         function fundOptBar() {
@@ -1448,6 +1534,13 @@
                      '<input type="checkbox" onclick="toggleAllFix(this)"' + (picked2 && picked2 === opts.fixCount ? ' checked' : '') + '> เลือกทั้งหมดที่ต้องเพิ่ม (ทุกหน้า)</label>' +
                      '<span style="font-size:12px; color:#8d6e63;">เลือกไว้ <b>' + picked2 + '</b> วิสิต</span>' +
                      fundChoiceBar() +
+                     // ปุ่มทางเลือกของบางกองทุน: แทนที่จะเติมข้อมูล เลือกถอดค่าใช้จ่ายออกก็ได้
+                     (fundNow.fixAlt
+                        ? '<button onclick="fixAltSelected()"' + (window.tblBusy ? ' disabled' : '') +
+                          ' style="padding:8px 16px; background:' + (window.tblBusy ? '#bcaaa4' : '#6d4c41') + '; color:white; border:none;' +
+                          ' border-radius:8px; font-size:13px; font-weight:600; cursor:' + (window.tblBusy ? 'wait' : 'pointer') + ';">' +
+                          (window.tblBusy ? '⏳ กำลังทำงาน...' : esc(fundNow.fixAlt.button)) + '</button>'
+                        : '') +
                      '</div>';
             }
 
@@ -2063,10 +2156,12 @@
             if (!fund.fixEndpoint) { alert('เมนูนี้ไม่รองรับการเพิ่มข้อมูล'); return; }
 
             // เมนูที่ให้เลือกรหัสเอง ส่งค่าที่เลือกไปด้วย และบอกไว้ในกล่องยืนยัน
-            var choice = fund.fixChoice
-                ? fundChoiceGet(window.currentFileView, fund.fixChoice) : null;
-            var choiceLine = choice
-                ? String.fromCharCode(10) + fund.fixChoice.label + ' ' + choice : '';
+            var choices = fundChoiceList(window.currentFileView).map(function (fc) {
+                return { key: fc.key, label: fc.label, value: fundChoiceGet(window.currentFileView, fc) };
+            });
+            var choiceLine = choices.map(function (c) {
+                return String.fromCharCode(10) + c.label + ' ' + c.value;
+            }).join('');
 
             if (!confirm('ยืนยันเพิ่มข้อมูลที่ขาดลงฐานข้อมูลจริง' + String.fromCharCode(10) +
                          'จำนวน ' + vns.length + ' วิสิต' + String.fromCharCode(10) +
@@ -2084,7 +2179,7 @@
                     user: cfg.user, password: cfg.password, type: cfg.type, vns: vns,
                     sub: fund.sub || null
                 };
-                if (choice) payload[fund.fixChoice.key] = choice;
+                choices.forEach(function (c) { if (c.value) payload[c.key] = c.value; });
 
                 var res = await fetch(apiBase + fund.fixEndpoint, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2111,6 +2206,53 @@
                                      String.fromCharCode(10) + d.errors.join(String.fromCharCode(10));
                 alert(msg);
                 searchData();   // โหลดใหม่ให้เห็นผล
+            } catch (e) {
+                alert('❌ ' + e.message);
+            } finally {
+                window.tblBusy = false;
+                if (window.tbl && window.tbl.rows) paintTable();
+            }
+        }
+
+        // ---------- ทางเลือกแทนการเติมข้อมูล: ถอดค่าใช้จ่ายของกองทุนออก ----------
+        // ใช้รายการที่ติ๊กไว้ในคอลัมน์ "เพิ่ม" ชุดเดียวกัน เพราะเป็นทางเลือกของข้อเดียวกัน
+        // ฝั่ง server จะประเมินใหม่เอง วิสิตที่ข้อมูลครบแล้วจะไม่ถูกถอดค่าใช้จ่าย
+        async function fixAltSelected() {
+            if (window.tblBusy) return;
+            var vns = Object.keys(window.tbl.selFix || {});
+            if (!vns.length) { alert('กรุณาเลือกวิสิตก่อน (ติ๊กที่คอลัมน์ เพิ่ม)'); return; }
+
+            var fund = FUND_ENDPOINTS[window.currentFileView] || {};
+            var alt = fund.fixAlt;
+            if (!alt) { alert('เมนูนี้ไม่มีตัวเลือกนี้'); return; }
+
+            if (!confirm('ยืนยันลบ ' + alt.noun + ' ออกจากฐานข้อมูลจริง' + String.fromCharCode(10) +
+                         'จำนวน ' + vns.length + ' วิสิต' + String.fromCharCode(10, 10) +
+                         'ระบบจะตรวจซ้ำก่อนลบ วิสิตที่ข้อมูลครบแล้วจะข้ามไป' + String.fromCharCode(10) +
+                         'รายการที่ลบแล้วจะย้อนกลับเองไม่ได้')) return;
+
+            var cfg = getDatabaseConfig();
+            var apiBase = (cfg.apiUrl ? cfg.apiUrl.replace(/\/$/, '') : window.location.origin);
+            window.tblBusy = true;
+            paintTable();
+            try {
+                var res = await fetch(apiBase + alt.endpoint, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: cfg.host, port: cfg.port, database: cfg.database,
+                        user: cfg.user, password: cfg.password, type: cfg.type,
+                        vns: vns, sub: fund.sub || null
+                    })
+                });
+                var d = await res.json();
+                if (!d.success) { alert('❌ ' + d.error); return; }
+
+                var msg = '✅ ลบ ' + alt.noun + ' แล้ว ' + d.removedRows + ' รายการ จาก ' + d.deleted + ' วิสิต';
+                if (d.skipped) msg += String.fromCharCode(10) + 'ข้าม ' + d.skipped + ' วิสิต (ข้อมูลครบแล้ว)';
+                if (d.failed)  msg += String.fromCharCode(10) + '❌ ไม่สำเร็จ ' + d.failed + ' วิสิต:' +
+                                      String.fromCharCode(10) + d.errors.join(String.fromCharCode(10));
+                alert(msg);
+                searchData();
             } catch (e) {
                 alert('❌ ' + e.message);
             } finally {
